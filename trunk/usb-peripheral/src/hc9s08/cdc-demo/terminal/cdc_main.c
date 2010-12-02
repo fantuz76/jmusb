@@ -30,6 +30,7 @@
 #include "usb_cdc.h"
 #include "terminal/hcc_terminal.h"
 #include "utils/utils.h"
+#include "protocol.h"
 
 
 /****************************************************************************
@@ -83,13 +84,16 @@ int main()
   usb_cfg_init();
 
   cdc_init();
-  terminal_init(cdc_putch, cdc_getch, cdc_kbhit);
-  (void)terminal_add_cmd((command_t*)&led_cmd);
+  //terminal_init(cdc_putch, cdc_getch, cdc_kbhit);
+  //(void)terminal_add_cmd((command_t*)&led_cmd);
+  
+  comm_init(cdc_putch, cdc_getch, cdc_kbhit);
 
   /* This loop will gateway charactert from the UART to the USB and back. */
   while(1)
   {
-    terminal_process();
+    comm_process();
+    //terminal_process();
     cdc_process();
   }
   return(0);
