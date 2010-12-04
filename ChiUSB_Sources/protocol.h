@@ -2,6 +2,9 @@
 #define __PROTOCOLH
 
 
+
+#define REQ_ERR_0 0x41
+
 // Lunghezza Massima in byte dati su USB (compresi checksum, length etc..)
 #define MAX_LEN_CMD       40
 #define MAX_LEN_PAYLOAD   MAX_LEN_CMD-3

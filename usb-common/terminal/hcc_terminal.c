@@ -69,28 +69,6 @@ static command_t * cmds[MAX_CMDS];
 static int (*putch)(char);
 static int (*getch)(void);
 static int (*kbhit)(void);
-/*****************************************************************************
- * Name:
- *    print
- * In:
- *    s: string
- * Out:
- *    n/a
- *
- * Description:
- *    Print the specified string.
- * Assumptions:
- *
- *****************************************************************************/
-void print(char *s)
-{
-  while(*s)
-  {
-    while(*s != (char)putch(*s))
-      ;
-    s++;
-  }
-}
 
 /*****************************************************************************
  * Name:

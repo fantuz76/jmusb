@@ -39,6 +39,30 @@ void ResetPkt_ndx(void){
 
 
 /*****************************************************************************
+ * Name:
+ *    print
+ * In:
+ *    s: string
+ * Out:
+ *    n/a
+ *
+ * Description:
+ *    Print the specified string.
+ * Assumptions:
+ *
+ *****************************************************************************/
+void print(char *s)
+{
+  while(*s)
+  {
+    while(*s != (char)putch(*s))
+      ;
+    s++;
+  }
+}
+
+
+/*****************************************************************************
 * Name:
 *    comm_init
 * In:
@@ -120,7 +144,7 @@ void USB_PktSend(byte *_toSend, byte _len)
   byte cnt=0, byteToSend, cks=0;
   
   byteToSend = FIRST_BYTE_EMPTY;  
-  if (_len==1) byteToSend |= 0x01;
+  if (_len>0) byteToSend |= 0x01;
   
   
   // Primo Byte
@@ -129,7 +153,7 @@ void USB_PktSend(byte *_toSend, byte _len)
   cks += byteToSend;
 
   // Byte Length
-  if (_len==1){    
+  if (_len>0){    
     byteToSend = _len;
     while(byteToSend != (char)cdc_putch(byteToSend))
       ;
@@ -240,7 +264,7 @@ void comm_process(void)
       if (usbPayloadLen==0) {      
         USB_PktSend(USBtoSend,0); 
       } else {
-        switch (usbrxar[usbPayloadLen+1]) {
+        switch (usbrxar[usbNumByteLen+1]) {
           case 0x33:
             USBtoSend[0] = 0x30;
             USBtoSend[1] = 0x31;
@@ -251,7 +275,8 @@ void comm_process(void)
           break;
 
 
-          case 0x41:
+          case REQ_ERR_0:
+            
             USBtoSend[0] = 0x40;
             USBtoSend[1] = 0x40;
             if (SW1_ACTIVE()) {
