@@ -2,8 +2,13 @@
 #define __PROTOCOLH
 
 
+#define REQ_HELLO         0x21
+#define REQ_LIST_INTERV   0x31
+#define REQ_ERR_0         0x41
 
-#define REQ_ERR_0 0x41
+
+
+#define INTERVENTO_LENGTH 24
 
 // Lunghezza Massima in byte dati su USB (compresi checksum, length etc..)
 #define MAX_LEN_CMD       40

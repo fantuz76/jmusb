@@ -16,6 +16,7 @@ RTSHC08.C.o (ansiis.lib)                Model: SMALL,         Lang: ANSI-C
 Start08.c.o                             Model: SMALL,         Lang: ANSI-C
 target.c.o                              Model: SMALL,         Lang: ANSI-C
 usb.c.o                                 Model: SMALL,         Lang: ANSI-C
+utils.c.o                               Model: SMALL,         Lang: ANSI-C
 cdc_main.c.o                            Model: SMALL,         Lang: ANSI-C
 cdct_usb_config.c.o                     Model: SMALL,         Lang: ANSI-C
 usb_cdc.c.o                             Model: SMALL,         Lang: ANSI-C
@@ -29,8 +30,8 @@ Entry point: 0xC07B (_Startup)
 _startupData is allocated at 0xC084 and uses 6 Bytes
 extern struct _tagStartup {
   unsigned nofZeroOut     1
-  _Range   pZeroOut       0x100     273
-  _Copy    *toCopyDownBeg 0xD549
+  _Range   pZeroOut       0x100     297
+  _Copy    *toCopyDownBeg 0xD622
 } _startupData;
 
 *********************************************************************************************
@@ -41,8 +42,8 @@ Section Name                    Size  Type     From       To       Segment
 .init                            132     R     0xC000     0xC083   ROM
 .startData                        18     R     0xC084     0xC095   ROM
 .rodata                          279     R     0xC096     0xC1AC   ROM
-.text                           5020     R     0xC1AD     0xD548   ROM
-.copy                             12     R     0xD549     0xD554   ROM
+.text                           5237     R     0xC1AD     0xD621   ROM
+.copy                             12     R     0xD622     0xD62D   ROM
 .abs_section_fff0                  2     R     0xFFF0     0xFFF1   .absSeg0
 .abs_section_0                     1   N/I        0x0        0x0   .absSeg1
 .abs_section_1                     1   N/I        0x1        0x1   .absSeg2
@@ -189,14 +190,14 @@ Section Name                    Size  Type     From       To       Segment
 .abs_section_1810                  2   N/I     0x1810     0x1811   .absSeg143
 .abs_section_1812                  2   N/I     0x1812     0x1813   .absSeg144
 .abs_section_1814                  2   N/I     0x1814     0x1815   .absSeg145
-.bss                             265   R/W      0x107      0x20F   RAM
-.common                            1   R/W      0x210      0x210   RAM
-.stack                           128   R/W      0x211      0x290   RAM
+.bss                             289   R/W      0x107      0x227   RAM
+.common                            1   R/W      0x228      0x228   RAM
+.stack                           128   R/W      0x229      0x2A8   RAM
 .vectSeg146_vect                   2     R     0xFFFE     0xFFFF   .vectSeg146
 
 Summary of section sizes per section type:
-READ_ONLY (R):        1559 (dec:     5465)
-READ_WRITE (R/W):      191 (dec:      401)
+READ_ONLY (R):        1632 (dec:     5682)
+READ_WRITE (R/W):      1A9 (dec:      425)
 NO_INIT (N/I):          A7 (dec:      167)
 
 *********************************************************************************************
@@ -234,7 +235,7 @@ MODULE:                 -- Start08.c.o --
 - VARIABLES:
      _startupData                              C084       6       6       4   .startData  
 - LABELS:
-     __SEG_END_SSTACK                           291       0       0       1               
+     __SEG_END_SSTACK                           2A9       0       0       1               
 MODULE:                 -- target.c.o --
 - PROCEDURES:
      init_clock                                C325      29      41       1   .text       
@@ -274,21 +275,25 @@ MODULE:                 -- usb.c.o --
      new_address                                109       1       1       4   .bss        
      ep_info                                    10A      6C     108     134   .bss        
      _Vector_7                                 FFF0       2       2       0   .abs_section_fff0
+MODULE:                 -- utils.c.o --
+- PROCEDURES:
+     _memcpy                                   D05B      38      56       1   .text       
+- VARIABLES:
 MODULE:                 -- cdc_main.c.o --
 - PROCEDURES:
-     main                                      D05B      23      35       1   .text       
+     main                                      D093      23      35       1   .text       
 - VARIABLES:
 MODULE:                 -- cdct_usb_config.c.o --
 - PROCEDURES:
-     get_device_descriptor                     D07E       4       4       1   .text       
-     is_cfgd_index                             D082       A      10       2   .text       
-     get_cfg_descriptor                        D08C       8       8       1   .text       
-     is_str_index                              D094       9       9       1   .text       
-     get_str_descriptor                        D09D       8       8       2   .text       
-     is_ifc_ndx                                D0A5      1A      26       1   .text       
-     is_ep_ndx                                 D0BF      24      36       1   .text       
-     get_ep_descriptor                         D0E3      27      39       1   .text       
-     usb_cfg_init                              D10A       3       3       1   .text       
+     get_device_descriptor                     D0B6       4       4       1   .text       
+     is_cfgd_index                             D0BA       A      10       2   .text       
+     get_cfg_descriptor                        D0C4       8       8       1   .text       
+     is_str_index                              D0CC       9       9       1   .text       
+     get_str_descriptor                        D0D5       8       8       2   .text       
+     is_ifc_ndx                                D0DD      1A      26       1   .text       
+     is_ep_ndx                                 D0F7      24      36       1   .text       
+     get_ep_descriptor                         D11B      27      39       1   .text       
+     usb_cfg_init                              D142       3       3       1   .text       
 - VARIABLES:
      string_descriptor0                        C096       4       4       1   .rodata     
      str_manufacturer                          C09A      1A      26       1   .rodata     
@@ -302,17 +307,17 @@ MODULE:                 -- cdct_usb_config.c.o --
      usb_config_descriptor                     C16A      43      67       4   .rodata     
 MODULE:                 -- usb_cdc.c.o --
 - PROCEDURES:
-     usb_bus_error_event                       D10D       1       1       1   .text       
-     usb_suspend_event                         D10E       1       1       1   .text       
-     usb_wakeup_event                          D10F       1       1       1   .text       
-     usb_reset_event                           D110       1       1       1   .text       
-     got_line_coding                           D111       8       8       1   .text       
-     usb_ep0_callback                          D119      DF     223       1   .text       
-     cdc_getch                                 D1F8      18      24       2   .text       
-     cdc_kbhit                                 D210       F      15       2   .text       
-     cdc_putch                                 D21F      3A      58       5   .text       
-     cdc_init                                  D259      1A      26       1   .text       
-     cdc_process                               D273      B4     180       2   .text       
+     usb_bus_error_event                       D145       1       1       1   .text       
+     usb_suspend_event                         D146       1       1       1   .text       
+     usb_wakeup_event                          D147       1       1       1   .text       
+     usb_reset_event                           D148       1       1       1   .text       
+     got_line_coding                           D149       8       8       1   .text       
+     usb_ep0_callback                          D151      DF     223       1   .text       
+     cdc_getch                                 D230      18      24       2   .text       
+     cdc_kbhit                                 D248       F      15       2   .text       
+     cdc_putch                                 D257      3A      58       5   .text       
+     cdc_init                                  D291      1A      26       1   .text       
+     cdc_process                               D2AB      B4     180       2   .text       
 - VARIABLES:
      line_coding                                100       7       7       2   .data       
      rx_buffer                                  176      20      32       2   .bss        
@@ -475,19 +480,23 @@ MODULE:                 -- MC9S08JM16.C.o --
      _DBGF                                     1814       2       2       0   .abs_section_1814
 MODULE:                 -- protocol.c.o --
 - PROCEDURES:
-     ResetPkt_ndx                              D327      12      18       5   .text       
-     comm_init                                 D339      1D      29       1   .text       
-     USB_PktSend                               D356      78     120       1   .text       
-     comm_process                              D3CE     17B     379       6   .text       
+     ResetPkt_ndx                              D35F      12      18       5   .text       
+     comm_init                                 D371      1D      29       1   .text       
+     USB_PktSend                               D38E      78     120       4   .text       
+     USB_SendHello                             D406      24      36       1   .text       
+     ReadIntervento                            D42A      16      22       1   .text       
+     USB_SendTuttiInterventi                   D440      6A     106       1   .text       
+     comm_process                              D4AA     178     376       6   .text       
 - VARIABLES:
      usbNumByteLen                              1DF       1       1       7   .bss        
      usbPayloadLen                              1E0       1       1       5   .bss        
      usbrxar                                    1E1      28      40       7   .bss        
      usbrxar_ndx                                209       1       1       7   .bss        
-     putch                                      20A       2       2       1   .bss        
-     getch                                      20C       2       2       1   .bss        
-     kbhit                                      20E       2       2       1   .bss        
-     _USB_flags1                                210       1       1       3   .common     
+     arrIntervento                              20A      18      24       2   .bss        
+     putch                                      222       2       2       1   .bss        
+     getch                                      224       2       2       1   .bss        
+     kbhit                                      226       2       2       1   .bss        
+     _USB_flags1                                228       1       1       3   .common     
 
 *********************************************************************************************
 MODULE STATISTIC
@@ -497,11 +506,12 @@ MODULE STATISTIC
   Start08.c.o                                  0    132      0
   target.c.o                                   0     98      0
   usb.c.o                                    111   3284      2
+  utils.c.o                                    0     56      0
   cdc_main.c.o                                 0     35      0
   cdct_usb_config.c.o                          0    143    279
   usb_cdc.c.o                                112    538      0
   MC9S08JM16.C.o                             167      0      0
-  protocol.c.o                                50    546      0
+  protocol.c.o                                74    707      0
   other                                      128     20     12
 
 *********************************************************************************************
@@ -515,18 +525,19 @@ SECTION: ".text"
   ep2bdtndx usb_get_rx_pptr send_zero_packet usb_init usb_setup_ep set_config 
   enter_default_state usb_stop_ep_tx usb_stop_ep_rx ready_ep_tx ready_ep_rx 
   disable_ep _usb_send usb_send _usb_receive usb_receive cb_set_address 
-  usb_stm_ctrl0 usb_it_handler main get_device_descriptor is_cfgd_index 
+  usb_stm_ctrl0 usb_it_handler _memcpy main get_device_descriptor is_cfgd_index 
   get_cfg_descriptor is_str_index get_str_descriptor is_ifc_ndx is_ep_ndx 
   get_ep_descriptor usb_cfg_init usb_bus_error_event usb_suspend_event 
   usb_wakeup_event usb_reset_event got_line_coding usb_ep0_callback cdc_getch 
   cdc_kbhit cdc_putch cdc_init cdc_process ResetPkt_ndx comm_init USB_PktSend 
-  comm_process 
+  USB_SendHello ReadIntervento USB_SendTuttiInterventi comm_process 
 SECTION: ".data"
   line_coding 
 SECTION: ".bss"
   usb_current_config usb_state new_address ep_info rx_buffer rx_length rx_ndx 
   cur_tx_buffer tx_buffer1 tx_buffer2 tx_ndx new_line_coding ctrl_line_state 
-  uart_state usbNumByteLen usbPayloadLen usbrxar usbrxar_ndx putch getch kbhit 
+  uart_state usbNumByteLen usbPayloadLen usbrxar usbrxar_ndx arrIntervento 
+  putch getch kbhit 
 SECTION: ".init"
   loadByte Init _Startup 
 SECTION: ".rodata"
@@ -956,10 +967,11 @@ OBJECT LIST SORTED BY ADDRESS
      usbPayloadLen                              1E0       1       1       5   .bss        
      usbrxar                                    1E1      28      40       7   .bss        
      usbrxar_ndx                                209       1       1       7   .bss        
-     putch                                      20A       2       2       1   .bss        
-     getch                                      20C       2       2       1   .bss        
-     kbhit                                      20E       2       2       1   .bss        
-     _USB_flags1                                210       1       1       3   .common     
+     arrIntervento                              20A      18      24       2   .bss        
+     putch                                      222       2       2       1   .bss        
+     getch                                      224       2       2       1   .bss        
+     kbhit                                      226       2       2       1   .bss        
+     _USB_flags1                                228       1       1       3   .common     
      _SRS                                      1800       1       1       0   .abs_section_1800
      _SBDFR                                    1801       1       1       0   .abs_section_1801
      _SOPT1                                    1802       1       1       1   .abs_section_1802
@@ -1055,31 +1067,35 @@ OBJECT LIST SORTED BY ADDRESS
      cb_set_address                            CC16      1A      26       1   .text       
      usb_stm_ctrl0                             CC30     266     614      24   .text       
      usb_it_handler                            CE96     1C5     453      14   .text       
-     main                                      D05B      23      35       1   .text       
-     get_device_descriptor                     D07E       4       4       1   .text       
-     is_cfgd_index                             D082       A      10       2   .text       
-     get_cfg_descriptor                        D08C       8       8       1   .text       
-     is_str_index                              D094       9       9       1   .text       
-     get_str_descriptor                        D09D       8       8       2   .text       
-     is_ifc_ndx                                D0A5      1A      26       1   .text       
-     is_ep_ndx                                 D0BF      24      36       1   .text       
-     get_ep_descriptor                         D0E3      27      39       1   .text       
-     usb_cfg_init                              D10A       3       3       1   .text       
-     usb_bus_error_event                       D10D       1       1       1   .text       
-     usb_suspend_event                         D10E       1       1       1   .text       
-     usb_wakeup_event                          D10F       1       1       1   .text       
-     usb_reset_event                           D110       1       1       1   .text       
-     got_line_coding                           D111       8       8       1   .text       
-     usb_ep0_callback                          D119      DF     223       1   .text       
-     cdc_getch                                 D1F8      18      24       2   .text       
-     cdc_kbhit                                 D210       F      15       2   .text       
-     cdc_putch                                 D21F      3A      58       5   .text       
-     cdc_init                                  D259      1A      26       1   .text       
-     cdc_process                               D273      B4     180       2   .text       
-     ResetPkt_ndx                              D327      12      18       5   .text       
-     comm_init                                 D339      1D      29       1   .text       
-     USB_PktSend                               D356      78     120       1   .text       
-     comm_process                              D3CE     17B     379       6   .text       
+     _memcpy                                   D05B      38      56       1   .text       
+     main                                      D093      23      35       1   .text       
+     get_device_descriptor                     D0B6       4       4       1   .text       
+     is_cfgd_index                             D0BA       A      10       2   .text       
+     get_cfg_descriptor                        D0C4       8       8       1   .text       
+     is_str_index                              D0CC       9       9       1   .text       
+     get_str_descriptor                        D0D5       8       8       2   .text       
+     is_ifc_ndx                                D0DD      1A      26       1   .text       
+     is_ep_ndx                                 D0F7      24      36       1   .text       
+     get_ep_descriptor                         D11B      27      39       1   .text       
+     usb_cfg_init                              D142       3       3       1   .text       
+     usb_bus_error_event                       D145       1       1       1   .text       
+     usb_suspend_event                         D146       1       1       1   .text       
+     usb_wakeup_event                          D147       1       1       1   .text       
+     usb_reset_event                           D148       1       1       1   .text       
+     got_line_coding                           D149       8       8       1   .text       
+     usb_ep0_callback                          D151      DF     223       1   .text       
+     cdc_getch                                 D230      18      24       2   .text       
+     cdc_kbhit                                 D248       F      15       2   .text       
+     cdc_putch                                 D257      3A      58       5   .text       
+     cdc_init                                  D291      1A      26       1   .text       
+     cdc_process                               D2AB      B4     180       2   .text       
+     ResetPkt_ndx                              D35F      12      18       5   .text       
+     comm_init                                 D371      1D      29       1   .text       
+     USB_PktSend                               D38E      78     120       4   .text       
+     USB_SendHello                             D406      24      36       1   .text       
+     ReadIntervento                            D42A      16      22       1   .text       
+     USB_SendTuttiInterventi                   D440      6A     106       1   .text       
+     comm_process                              D4AA     178     376       6   .text       
      _Vector_7                                 FFF0       2       2       0   .abs_section_fff0
 
 *********************************************************************************************
@@ -1105,12 +1121,14 @@ RTSHC08.C.o (ansiis.lib):
   _CONV_FAR_TO_LINEAR _CONV_LINEAR_TO_FAR 
 usb.c.o:
   usb_stop usb_abort_ep 
+utils.c.o:
+  itoah itoa strtoi _memset 
 cdc_main.c.o:
   cmd_led 
 usb_cdc.c.o:
   cdc_line_coding_changed cdc_get_line_coding 
 protocol.c.o:
-  print ParseFirstByte 
+  print 
 NOT USED VARIABLES
 RTSHC08.C.o (ansiis.lib):
   _PowOfTwo_8 _PowOfTwo_16 _PowOfTwo_32 errno 
@@ -1120,13 +1138,13 @@ cdc_main.c.o:
 *********************************************************************************************
 COPYDOWN SECTION
 ---------------------------------------------------------------------------------------------
-------- ROM-ADDRESS: 0xD549 ---- SIZE       4 ---
+------- ROM-ADDRESS: 0xD622 ---- SIZE       4 ---
 Filling bytes inserted
  00060101
-------- ROM-ADDRESS: 0xD54D ---- RAM-ADDRESS: 0x101 ---- SIZE       6 ---
+------- ROM-ADDRESS: 0xD626 ---- RAM-ADDRESS: 0x101 ---- SIZE       6 ---
 Name of initialized Object : line_coding:1
  C201000000 08
-------- ROM-ADDRESS: 0xD553 ---- SIZE       2 ---
+------- ROM-ADDRESS: 0xD62C ---- SIZE       2 ---
 Filling bytes inserted
  0000
 
@@ -1203,9 +1221,13 @@ ResetPkt_ndx              USES usbrxar_ndx usbPayloadLen usbNumByteLen
                                 _USB_flags1 
 comm_init                 USES usbrxar ResetPkt_ndx putch getch kbhit 
 USB_PktSend               USES cdc_putch 
+USB_SendHello             USES USB_PktSend 
+ReadIntervento            USES arrIntervento 
+USB_SendTuttiInterventi   USES ReadIntervento _memcpy USB_PktSend 
 comm_process              USES comm_process cdc_getch usbrxar_ndx usbrxar 
                                 ResetPkt_ndx usbNumByteLen usbPayloadLen _ICMP _USB_flags1 
-                                _PTGD USB_PktSend cdc_kbhit 
+                                USB_SendHello USB_SendTuttiInterventi _PTGD USB_PktSend 
+                                cdc_kbhit 
 _Vector_7                 USES usb_it_handler 
 
 *********************************************************************************************
@@ -1317,10 +1339,22 @@ DEPENDENCY TREE
  |  |  |  
  |  |  +- _ICMP               
  |  |  |    
- |  |  +- USB_PktSend         
+ |  |  +- USB_SendHello       
  |  |  |  | 
- |  |  |  +- cdc_putch            (see above)
+ |  |  |  +- USB_PktSend         
+ |  |  |     | 
+ |  |  |     +- cdc_putch            (see above)
+ |  |  |        
+ |  |  +- USB_SendTuttiInterventi
+ |  |  |  | 
+ |  |  |  +- ReadIntervento      
+ |  |  |  |    
+ |  |  |  +- _memcpy             
+ |  |  |  |    
+ |  |  |  +- USB_PktSend          (see above)
  |  |  |     
+ |  |  +- USB_PktSend          (see above)
+ |  |  |  
  |  |  +- cdc_kbhit            (see above)
  |  |     
  |  +- cdc_process          (see above)
@@ -1441,6 +1475,6 @@ STATISTIC SECTION
 
 ExeFile:
 --------
-Number of blocks to be downloaded: 5
-Total size of all blocks to be downloaded: 5465
+Number of blocks to be downloaded: 6
+Total size of all blocks to be downloaded: 5682
 

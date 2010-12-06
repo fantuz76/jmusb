@@ -2,6 +2,8 @@
 #include "terminal/hcc_terminal.h"
 #include "protocol.h"
 #include <stdtypes.h>
+#include <utils.h>
+
 
 
 /*****************************************************************************
@@ -16,6 +18,8 @@ static char usbrxar[MAX_LEN_CMD];
 static byte usbrxar_ndx;
 
 
+static byte arrIntervento[24];
+
 byte_def _USB_flags1;
 #define USB_flags1    _USB_flags1.BYTE
 #define USBPktReady   _USB_flags1.BIT.B0
@@ -28,6 +32,7 @@ byte_def _USB_flags1;
 static int (*putch)(char);
 static int (*getch)(void);
 static int (*kbhit)(void);
+
 
 
 void ResetPkt_ndx(void){
@@ -94,34 +99,13 @@ void comm_init(int (*putch_)(char), int (*getch_)(void), int(*kbhit_)(void))
 
   //print_greeting();
   //print_prompt();
+  
 }                                
 
 
 
-/*****************************************************************************
-* Name:
-*    ParseFirstByte
-* In:
-*    N/A
-*
-* Out:
-*    N/A
-*
-* Description:
-*    
-*
-* Assumptions:
-*    --
-*****************************************************************************/
-byte ParseFirstByte(byte _byteToParse) 
-{
-  if ((_byteToParse & 0xF0) == FIRST_BYTE_EMPTY) {    
-    usbNumByteLen = (_byteToParse & 0x03);
-  } else {
-    // Error - pkt unknown
-    return(0);        
-  }  
-}
+
+
 
 
 
@@ -135,7 +119,8 @@ byte ParseFirstByte(byte _byteToParse)
  *    n/a
  *
  * Description:
- *    Print the specified string.
+ *    Send Pkt
+ *    FIRST_BYTE + (LENGTH) + PAYLOAD + CHKSUM
  * Assumptions:
  *
  *****************************************************************************/
@@ -177,9 +162,88 @@ void USB_PktSend(byte *_toSend, byte _len)
   
 }
    
+
+
+
+
+/*****************************************************************************
+ * Name:
+ *    USB_SendHello
+ * In:
+ *    _toSend: 
+ * Out:
+ *    n/a
+ *
+ * Description:
+ *      Send Hello
+ * Assumptions:
+ *
+ *****************************************************************************/
+void USB_SendHello(void)
+{
+  byte _myarr[MAX_LEN_PAYLOAD];
+
+  // Invia matricola e ore lavoro e...
+  _myarr[0] = 0x01;
+  _myarr[1] = 0x23;
+  _myarr[2] = 0x45;
+  _myarr[3] = 0x67;
+  
+  _myarr[4] = 0x55;
+  _myarr[5] = 0x55;
+  _myarr[6] = 0x55;
+  _myarr[7] = 0x55;
+  USB_PktSend(_myarr,8);   
+
+}
+    
  
- 
+
+
+
+byte *ReadIntervento(void) {
+byte i;
+  for (i=0; i<INTERVENTO_LENGTH;i++) arrIntervento[i]=i*2;   // valori a caso;
+  return(arrIntervento);  
+  
+}
    
+
+
+/*****************************************************************************
+ * Name:
+ *    USB_SendTuttiInterventi
+ * In:
+ *    _toSend: 
+ * Out:
+ *    n/a
+ *
+ * Description:
+ *      Send Hello
+ * Assumptions:
+ *
+ *****************************************************************************/
+void USB_SendTuttiInterventi(void)
+{
+  word cntInt;
+  byte _myarr[MAX_LEN_PAYLOAD];
+  byte *ritFun;
+  
+  
+  for (cntInt=0;cntInt<335;cntInt++) {    
+    ritFun = ReadIntervento();
+    _memcpy(_myarr,ritFun, INTERVENTO_LENGTH);
+    USB_PktSend(_myarr,24);   
+  }
+  
+  
+  // Termino inviando una serie di 24 0xFF
+  for (cntInt=0;cntInt<INTERVENTO_LENGTH;cntInt++) _myarr[cntInt] = 0xFF;  
+  USB_PktSend(_myarr,24);   
+  
+}
+    
+    
                       
 /*****************************************************************************
 * Name:
@@ -265,15 +329,15 @@ void comm_process(void)
         USB_PktSend(USBtoSend,0); 
       } else {
         switch (usbrxar[usbNumByteLen+1]) {
-          case 0x33:
-            USBtoSend[0] = 0x30;
-            USBtoSend[1] = 0x31;
-            USBtoSend[2] = 0x32;
-            USBtoSend[3] = 0x33;
-            
-            USB_PktSend(USBtoSend,3);          
+
+          case REQ_HELLO:
+          USB_SendHello();
           break;
 
+
+          case REQ_LIST_INTERV:          
+            USB_SendTuttiInterventi();      
+          break;
 
           case REQ_ERR_0:
             
