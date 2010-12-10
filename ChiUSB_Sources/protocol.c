@@ -4,6 +4,8 @@
 #include <stdtypes.h>
 #include <utils.h>
 
+#include <stdlib.h>
+
 
 
 /*****************************************************************************
@@ -85,6 +87,9 @@ void print(char *s)
 *****************************************************************************/
 void comm_init(int (*putch_)(char), int (*getch_)(void), int(*kbhit_)(void))
 {
+
+unsigned int iseed = (unsigned int)23;
+
   usbrxar[sizeof(usbrxar)-1]='\0';
   
   
@@ -99,6 +104,8 @@ void comm_init(int (*putch_)(char), int (*getch_)(void), int(*kbhit_)(void))
 
   //print_greeting();
   //print_prompt();
+  
+  srand(iseed);
   
 }                                
 
@@ -203,7 +210,50 @@ void USB_SendHello(void)
 
 byte *ReadIntervento(void) {
 byte i;
-  for (i=0; i<INTERVENTO_LENGTH;i++) arrIntervento[i]=i*2;   // valori a caso;
+
+  arrIntervento[0] = 1;
+  
+  
+  
+  arrIntervento[1] = 0;
+  for (i=2; i<4;i++) {
+    arrIntervento[i]=(byte) (rand());   // valori a caso;
+  }
+  
+  
+  arrIntervento[5] = 0x01;
+  arrIntervento[6] = 0x2C;
+
+  arrIntervento[7] = 0x01;
+  arrIntervento[8] = 0x2D;
+
+  arrIntervento[9] = 0x01;
+  arrIntervento[10] = 0x2E;
+
+  arrIntervento[11] = 0x1B;
+  arrIntervento[12] = 0x58;
+
+  arrIntervento[13] = 0x1B;
+  arrIntervento[14] = 0x59;
+
+  arrIntervento[15] = 0x1B;
+  arrIntervento[16] = 0x5A;
+
+
+  arrIntervento[17] = 0x0F;
+  arrIntervento[18] = 0x44;
+
+
+  arrIntervento[19] = 0x04;
+  arrIntervento[20] = 0xCD;
+  
+  
+  arrIntervento[21] = 0x62;
+  
+  arrIntervento[22] = 0x00;
+  arrIntervento[23] = 0x66;
+
+    
   return(arrIntervento);  
   
 }
@@ -230,7 +280,7 @@ void USB_SendTuttiInterventi(void)
   byte *ritFun;
   
   
-  for (cntInt=0;cntInt<335;cntInt++) {    
+  for (cntInt=0;cntInt<42;cntInt++) {    
     ritFun = ReadIntervento();
     _memcpy(_myarr,ritFun, INTERVENTO_LENGTH);
     USB_PktSend(_myarr,24);   
