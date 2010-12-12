@@ -716,7 +716,7 @@ static void _usb_send(hcc_u8 ep)
     bndx=ep2bdtndx(ep, 0);
     
     /* Copy data to packet buffer. */
-    for(x=0; x< l; x++)
+    for(x=0; x< (byte)l; x++)
     {
       ((hcc_u8*)(BDT_BASE+(BDT_ADDR(bndx)<<2)))[x]=*(hcc_u8*)ep_info[ep].address;
       ep_info[ep].address=((hcc_u8*)ep_info[ep].address)+1;      

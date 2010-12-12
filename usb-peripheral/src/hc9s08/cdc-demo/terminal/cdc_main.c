@@ -28,7 +28,7 @@
 #include "usb-drv/usb.h"
 #include "target.h"
 #include "usb_cdc.h"
-#include "terminal/hcc_terminal.h"
+//#include "terminal/hcc_terminal.h"
 #include "utils/utils.h"
 #include "protocol.h"
 
@@ -56,26 +56,8 @@
 /****************************************************************************
  ************************** Function definitions ****************************
  ***************************************************************************/
-static void cmd_led(char *param)
-{
-  static led_on=0;
-  param++;  
-  if (led_on)
-  {
-    led_on=0;
-    PTED_PTED2=0;
-  }
-  else
-  {
-    led_on=1;
-    PTED_PTED2=1;
-  }
 
-}
 
-static const command_t led_cmd = {
-  "led", cmd_led, "Toggles leds state."
-};
 
 int main()
 {
@@ -87,13 +69,12 @@ int main()
   //terminal_init(cdc_putch, cdc_getch, cdc_kbhit);
   //(void)terminal_add_cmd((command_t*)&led_cmd);
   
-  comm_init(cdc_putch, cdc_getch, cdc_kbhit);
+  comm_init();
 
   /* This loop will gateway charactert from the UART to the USB and back. */
   while(1)
   {
     comm_process();
-    //terminal_process();
     cdc_process();
   }
   return(0);

@@ -7,11 +7,11 @@
 #define REQ_ERR_0         0x41
 
 
-
+#define NUM_MAX_INTERV    335
 #define INTERVENTO_LENGTH 24
 
 // Lunghezza Massima in byte dati su USB (compresi checksum, length etc..)
-#define MAX_LEN_CMD       40
+#define MAX_LEN_CMD       30
 #define MAX_LEN_PAYLOAD   MAX_LEN_CMD-3
 
 #define FIRST_BYTE_EMPTY  0x80
@@ -33,7 +33,7 @@ typedef union {
   
 
 
-void comm_init(int (*putch_)(char), int (*getch_)(void), int(*kbhit_)(void));
+void comm_init(void);
 void comm_process(void);
 
 

@@ -4,7 +4,7 @@
 #include <stdtypes.h>
 #include <utils.h>
 
-#include <stdlib.h>
+//#include <stdlib.h>
 
 
 
@@ -20,9 +20,9 @@ static char usbrxar[MAX_LEN_CMD];
 static byte usbrxar_ndx;
 
 
-static byte arrIntervento[24];
+static byte arrIntervento[INTERVENTO_LENGTH];
 
-byte_def _USB_flags1;
+static byte_def _USB_flags1;
 #define USB_flags1    _USB_flags1.BYTE
 #define USBPktReady   _USB_flags1.BIT.B0
 //#define xxx    _USB_flags1.BIT.B1
@@ -30,10 +30,6 @@ byte_def _USB_flags1;
 //static byte n_cmd;
 //static command_t * cmds[MAX_CMDS];
 
-
-static int (*putch)(char);
-static int (*getch)(void);
-static int (*kbhit)(void);
 
 
 
@@ -62,7 +58,7 @@ void print(char *s)
 {
   while(*s)
   {
-    while(*s != (char)putch(*s))
+    while(*s != (char)cdc_putch(*s))
       ;
     s++;
   }
@@ -85,10 +81,8 @@ void print(char *s)
 * Assumptions:
 *    --
 *****************************************************************************/
-void comm_init(int (*putch_)(char), int (*getch_)(void), int(*kbhit_)(void))
+void comm_init(void)
 {
-
-unsigned int iseed = (unsigned int)23;
 
   usbrxar[sizeof(usbrxar)-1]='\0';
   
@@ -98,14 +92,14 @@ unsigned int iseed = (unsigned int)23;
   //cmds[0]=(void *)&help_cmd;
   //n_cmd=1;
   
-  putch=putch_;
-  getch=getch_;
-  kbhit=kbhit_;
+  //putch=putch_;
+  //getch=getch_;
+  //kbhit=kbhit_;
 
   //print_greeting();
   //print_prompt();
   
-  srand(iseed);
+  
   
 }                                
 
@@ -190,17 +184,20 @@ void USB_SendHello(void)
 {
   byte _myarr[MAX_LEN_PAYLOAD];
 
+  _myarr[0] = REQ_HELLO;  // Indica risposta ad Hello
+  
+  
   // Invia matricola e ore lavoro e...
-  _myarr[0] = 0x01;
   _myarr[1] = 0x23;
   _myarr[2] = 0x45;
-  _myarr[3] = 0x67;
-  
+  _myarr[3] = 0x67;    
   _myarr[4] = 0x55;
+  
   _myarr[5] = 0x55;
   _myarr[6] = 0x55;
   _myarr[7] = 0x55;
-  USB_PktSend(_myarr,8);   
+  _myarr[7] = 0x44;
+  USB_PktSend(_myarr,9);   
 
 }
     
@@ -208,17 +205,16 @@ void USB_SendHello(void)
 
 
 
-byte *ReadIntervento(void) {
-byte i;
+byte *ReadIntervento(word _PosMem) {
 
   arrIntervento[0] = 1;
   
   
   
   arrIntervento[1] = 0;
-  for (i=2; i<4;i++) {
-    arrIntervento[i]=(byte) (rand());   // valori a caso;
-  }
+  arrIntervento[1] = 0;
+  arrIntervento[3] = _PosMem;
+  arrIntervento[1] = _PosMem;
   
   
   arrIntervento[5] = 0x01;
@@ -278,19 +274,20 @@ void USB_SendTuttiInterventi(void)
   word cntInt;
   byte _myarr[MAX_LEN_PAYLOAD];
   byte *ritFun;
+
+    
+  cntInt = 0;
+  do {
+    ritFun = ReadIntervento(cntInt++);
+    _memcpy(_myarr,ritFun, INTERVENTO_LENGTH);          
+    USB_PktSend(_myarr,INTERVENTO_LENGTH); 
+  } while ((ritFun[0] != 0xFF) && (cntInt < NUM_MAX_INTERV));
   
-  
-  for (cntInt=0;cntInt<42;cntInt++) {    
-    ritFun = ReadIntervento();
-    _memcpy(_myarr,ritFun, INTERVENTO_LENGTH);
-    USB_PktSend(_myarr,24);   
+  // Se uscito per raggiunto NUM_MAX_INTERV -> invio messaggio con tutti 0xFF
+  if (cntInt >= NUM_MAX_INTERV) {    
+    for (cntInt=0;cntInt<INTERVENTO_LENGTH;cntInt++) _myarr[cntInt] = 0xFF;  
+    USB_PktSend(_myarr,INTERVENTO_LENGTH);   
   }
-  
-  
-  // Termino inviando una serie di 24 0xFF
-  for (cntInt=0;cntInt<INTERVENTO_LENGTH;cntInt++) _myarr[cntInt] = 0xFF;  
-  USB_PktSend(_myarr,24);   
-  
 }
     
     
@@ -364,7 +361,7 @@ void comm_process(void)
     
     } else {
       // altro?
-      ResetPkt_ndx();
+      //ResetPkt_ndx();
       
     }
     
@@ -376,7 +373,7 @@ void comm_process(void)
       // Analizzare messaggio ricevuto
       
       if (usbPayloadLen==0) {      
-        USB_PktSend(USBtoSend,0); 
+        //USB_PktSend(USBtoSend,0); 
       } else {
         switch (usbrxar[usbNumByteLen+1]) {
 
