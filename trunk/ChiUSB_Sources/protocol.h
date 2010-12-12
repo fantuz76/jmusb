@@ -7,7 +7,7 @@
 #define REQ_ERR_0         0x41
 
 
-#define NUM_MAX_INTERV    335
+#define NUM_MAX_INTERV    0
 #define INTERVENTO_LENGTH 24
 
 // Lunghezza Massima in byte dati su USB (compresi checksum, length etc..)
