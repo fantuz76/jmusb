@@ -4,7 +4,9 @@ NAMES END /* CodeWarrior will pass all the needed files to the linker by command
 
 SEGMENTS /* Here all RAM/ROM areas of the device are listed. Used in PLACEMENT below. */
     Z_RAM                    =  READ_WRITE   0x00B0 TO 0x00FF;
-    RAM                      =  READ_WRITE   0x0100 TO 0x04AF;
+    RAM                      =  READ_WRITE   0x0100 TO 0x042F;
+    STK                      =  READ_WRITE   0x0430 TO 0x04AF;  // aggiunto segmento stack per non overlappare le variabili
+    
     RAM1                     =  READ_WRITE   0x1860 TO 0x195F;
     ROM                      =  READ_ONLY    0xC000 TO 0xFFAD;
     ROM1                     =  READ_ONLY    0xFFC0 TO 0xFFC3;
@@ -29,6 +31,7 @@ PLACEMENT /* Here all predefined and user segments are placed into the SEGMENTS 
 END
 
 
-STACKSIZE 0x80
+//STACKSIZE 0x80
+STACKTOP 0x04AF
 
 VECTOR 0 _Startup /* Reset vector: this is the default entry point for an application. */
