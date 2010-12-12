@@ -207,14 +207,14 @@ void USB_SendHello(void)
 
 byte *ReadIntervento(word _PosMem) {
 
-  arrIntervento[0] = 1;
+  arrIntervento[0] = 16;
   
   
   
   arrIntervento[1] = 0;
-  arrIntervento[1] = 0;
+  arrIntervento[2] = 0;
   arrIntervento[3] = _PosMem;
-  arrIntervento[1] = _PosMem;
+  arrIntervento[4] = _PosMem;
   
   
   arrIntervento[5] = 0x01;
