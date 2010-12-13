@@ -31,7 +31,7 @@ _startupData is allocated at 0xC088 and uses 6 Bytes
 extern struct _tagStartup {
   unsigned nofZeroOut     1
   _Range   pZeroOut       0x100     281
-  _Copy    *toCopyDownBeg 0xDD5D
+  _Copy    *toCopyDownBeg 0xDD89
 } _startupData;
 
 *********************************************************************************************
@@ -42,8 +42,8 @@ Section Name                    Size  Type     From       To       Segment
 .init                            136     R     0xC000     0xC087   ROM
 .startData                        18     R     0xC088     0xC099   ROM
 .rodata                          279     R     0xC09A     0xC1B0   ROM
-.text                           7084     R     0xC1B1     0xDD5C   ROM
-.copy                             12     R     0xDD5D     0xDD68   ROM
+.text                           7128     R     0xC1B1     0xDD88   ROM
+.copy                             12     R     0xDD89     0xDD94   ROM
 .abs_section_fff0                  2     R     0xFFF0     0xFFF1   .absSeg0
 .abs_section_0                     1   N/I        0x0        0x0   .absSeg1
 .abs_section_1                     1   N/I        0x1        0x1   .absSeg2
@@ -195,7 +195,7 @@ Section Name                    Size  Type     From       To       Segment
 .vectSeg146_vect                   2     R     0xFFFE     0xFFFF   .vectSeg146
 
 Summary of section sizes per section type:
-READ_ONLY (R):        1D6D (dec:     7533)
+READ_ONLY (R):        1D99 (dec:     7577)
 READ_WRITE (R/W):      199 (dec:      409)
 NO_INIT (N/I):          A7 (dec:      167)
 
@@ -488,10 +488,10 @@ MODULE:                 -- protocol.c.o --
      ResetPkt_ndx                              D9B2      13      19       4   .text       
      comm_init                                 D9C5       7       7       1   .text       
      USB_PktSend                               D9CC      B1     177       4   .text       
-     USB_SendHello                             DA7D      34      52       1   .text       
-     ReadIntervento                            DAB1      71     113       1   .text       
-     USB_SendTuttiInterventi                   DB22      7F     127       1   .text       
-     comm_process                              DBA1     1BC     444       5   .text       
+     USB_SendHello                             DA7D      46      70       1   .text       
+     ReadIntervento                            DAC3      71     113       1   .text       
+     USB_SendTuttiInterventi                   DB34      99     153       1   .text       
+     comm_process                              DBCD     1BC     444       5   .text       
 - VARIABLES:
      usbNumByteLen                              1DF       1       1       7   .bss        
      usbPayloadLen                              1E0       1       1       7   .bss        
@@ -513,7 +513,7 @@ MODULE STATISTIC
   cdct_usb_config.c.o                          0    195    279
   usb_cdc.c.o                                112    734      0
   MC9S08JM16.C.o                             167      0      0
-  protocol.c.o                                58    939      0
+  protocol.c.o                                58    983      0
   other                                      128     20     12
 
 *********************************************************************************************
@@ -1097,10 +1097,10 @@ OBJECT LIST SORTED BY ADDRESS
      ResetPkt_ndx                              D9B2      13      19       4   .text       
      comm_init                                 D9C5       7       7       1   .text       
      USB_PktSend                               D9CC      B1     177       4   .text       
-     USB_SendHello                             DA7D      34      52       1   .text       
-     ReadIntervento                            DAB1      71     113       1   .text       
-     USB_SendTuttiInterventi                   DB22      7F     127       1   .text       
-     comm_process                              DBA1     1BC     444       5   .text       
+     USB_SendHello                             DA7D      46      70       1   .text       
+     ReadIntervento                            DAC3      71     113       1   .text       
+     USB_SendTuttiInterventi                   DB34      99     153       1   .text       
+     comm_process                              DBCD     1BC     444       5   .text       
      _Vector_7                                 FFF0       2       2       0   .abs_section_fff0
 
 *********************************************************************************************
@@ -1138,13 +1138,13 @@ RTSHC08.C.o (ansiis.lib):
 *********************************************************************************************
 COPYDOWN SECTION
 ---------------------------------------------------------------------------------------------
-------- ROM-ADDRESS: 0xDD5D ---- SIZE       4 ---
+------- ROM-ADDRESS: 0xDD89 ---- SIZE       4 ---
 Filling bytes inserted
  00060101
-------- ROM-ADDRESS: 0xDD61 ---- RAM-ADDRESS: 0x101 ---- SIZE       6 ---
+------- ROM-ADDRESS: 0xDD8D ---- RAM-ADDRESS: 0x101 ---- SIZE       6 ---
 Name of initialized Object : line_coding:1
  C201000000 08
-------- ROM-ADDRESS: 0xDD67 ---- SIZE       2 ---
+------- ROM-ADDRESS: 0xDD93 ---- SIZE       2 ---
 Filling bytes inserted
  0000
 
@@ -1504,5 +1504,5 @@ STATISTIC SECTION
 ExeFile:
 --------
 Number of blocks to be downloaded: 5
-Total size of all blocks to be downloaded: 7533
+Total size of all blocks to be downloaded: 7577
 
