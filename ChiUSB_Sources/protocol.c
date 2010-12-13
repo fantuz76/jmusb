@@ -187,17 +187,29 @@ void USB_SendHello(void)
   _myarr[0] = REQ_HELLO;  // Indica risposta ad Hello
   
   
-  // Invia matricola e ore lavoro e...
-  _myarr[1] = 0x23;
-  _myarr[2] = 0x45;
+  // Invia matricola 
+  _myarr[1] = 'a';//0x23;
+  _myarr[2] = 'b';//0x45;
   _myarr[3] = 0x67;    
   _myarr[4] = 0x55;
   
-  _myarr[5] = 0x55;
-  _myarr[6] = 0x55;
+  // Ore lavoro 
+  _myarr[5] = 0x00;
+  _myarr[6] = 0x03;
   _myarr[7] = 0x55;
-  _myarr[7] = 0x44;
-  USB_PktSend(_myarr,9);   
+  _myarr[8] = 0x44;
+  
+  
+  // Fw Ver
+  _myarr[9] = 0x01;
+  _myarr[10] = 0x02;
+
+  
+  // Hw Ver
+  _myarr[11] = 0x03;
+  _myarr[12] = 0x04;
+  
+  USB_PktSend(_myarr,13);   
 
 }
     
