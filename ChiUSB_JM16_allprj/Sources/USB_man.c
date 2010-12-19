@@ -3,7 +3,7 @@
 #include <stdtypes.h>
 #include <utils.h>
 
-//#include <stdlib.h>
+#include <stdlib.h>
 #include <string.h>
 
 
@@ -82,6 +82,7 @@ void comm_init(void)
    
   ResetPkt_ndx();
 
+  srand(122);
   
   //putch=putch_;
   //getch=getch_;
@@ -210,10 +211,27 @@ void USB_SendHello(void)
 
 byte *ReadIntervento(word _PosMem) {
 
-  arrIntervento[0] = 16;
+  
+  // Tipo intervento casuale
+  arrIntervento[0] = 1+(rand() % 28);
   
   
+  if (arrIntervento[0] == 0 )  arrIntervento[0] = 1;  
+  if (arrIntervento[0] == 19 )  {
+    arrIntervento[0] = 20;
+  }
   
+  if ((arrIntervento[0] > 2) && (arrIntervento[0]<10))  {
+    arrIntervento[0] = 1+(rand() % 28);
+    if ((arrIntervento[0] > 2) && (arrIntervento[0]<10))  {
+
+      arrIntervento[0] = 1+(rand() % 28);
+      if ((arrIntervento[0] > 2) && (arrIntervento[0]<10))  {
+        arrIntervento[0] = 18;  
+      }    
+    }
+  } 
+
   arrIntervento[1] = 0;
   arrIntervento[2] = 0;
   arrIntervento[3] = _PosMem;
