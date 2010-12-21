@@ -322,8 +322,8 @@ void USB_SendTuttiInterventi(void)
 * Out:
 *    N/A
 *
-* Description:
-*    
+* Description: Gestione comunicazione USB
+*                
 *
 * Assumptions:
 *    --
@@ -334,42 +334,40 @@ void comm_process(void)
   byte USBtoSend[MAX_LEN_PAYLOAD];
   byte i;
   byte cks;
-  // finchè c'è qualcosa nel buffer USB
-  // Se ci sono più di 32 byte entro + volte qua
   
+  
+  // finchè c'è qualcosa nel buffer USB
+  // Se ci sono più di 32 byte entro + volte qua  
   while((cdc_kbhit)())
-  {
-      
+  {      
     char c;
     c=(char)(cdc_getch)();        
     usbrxar[usbrxar_ndx++]=c;
     
-    if (usbrxar_ndx >= MAX_LEN_CMD)   // Overflow
+    if (usbrxar_ndx >= MAX_LEN_CMD)   // Overflow 
       ResetPkt_ndx();
     
    
     
     if (usbrxar_ndx-1==0) {    
-      // primo byte rx
+      // --> è primo byte rx
       if ((usbrxar[usbrxar_ndx-1] & 0xF0) == FIRST_BYTE_EMPTY) {        
         // C'è la Lunghezza?  
-        usbNumByteLen = (usbrxar[usbrxar_ndx-1] & 0x01);        
-                    
-      } else {
-        // Error - pkt unknown
-        ResetPkt_ndx();
+        usbNumByteLen = (usbrxar[usbrxar_ndx-1] & 0x01);
+      } else {        
+        ResetPkt_ndx();         // Error - pkt unknown
       }      
 
     } else if ( (usbNumByteLen==1) &&  (usbrxar_ndx-1==1)) {
-      // Sono in lunghezza      
+      // --> Sono in lunghezza      
         usbPayloadLen = usbrxar[1];         
     
     } else if ((usbrxar_ndx-1 >= usbNumByteLen+1)  && (usbrxar_ndx-1 < usbPayloadLen+usbNumByteLen+1)) {
-      // Sono in PayLoad
+      // --> Sono in PayLoad
             
       
     } else if (usbrxar_ndx-1 == usbPayloadLen+usbNumByteLen+1) {
-      // Sono in ChkSum
+      // --> Sono in ChkSum
       for (i=0,cks=0; i<usbrxar_ndx-1; cks += usbrxar[i++]);
               
       if (cks != usbrxar[i])
@@ -412,16 +410,13 @@ void comm_process(void)
             USBtoSend[0] = 0x40;
             USBtoSend[1] = 0x40;
             if (SW1_ACTIVE()) {
-              USBtoSend[0] |= 0x05;
-              
+              USBtoSend[0] |= 0x05;              
             }
 
             if (SW2_ACTIVE()) {
-              USBtoSend[1] |= 0x07;
-              
+              USBtoSend[1] |= 0x07;              
             }
-          
-            
+                      
             USBtoSend[2] = 0x42;
             USBtoSend[3] = 0x43;
             
@@ -436,64 +431,9 @@ void comm_process(void)
       
       }
       
-
       ResetPkt_ndx();      
       
     }
     
-    
-    
-    
-    
-    // echo
-    //while(c!=(char)(putch)(c))
-    //  ;
-      
-    //if (c=='\r')
-    //{
-    //  while('\n'!=(char)(putch)('\n'))
-    //    ;
-    //}
-    // Execute command if enter is received, or usbrxar is full./
-   /* if ((c=='\r') || (usbrxar_ndx == sizeof(usbrxar)-2))
-    {
-      //int start=skipp_space(usbrxar, 0);
-      //int end=find_word(usbrxar, start);
-      int x=0;
-
-      // Separate command string from parameters, and close parameters string.
-      //usbrxar[end]=usbrxar[usbrxar_ndx]='\0';
-
-      // Identify command. 
-      //x=find_command(usbrxar+start);
-      // Command not found. 
-
-     // if (x == -1)
-      {
-     //   print("Unknown command!\r\n");
-      }
-     // else
-      {
-        //(*cmds[x]->func)(usbrxar+end+1);
-      }
-      usbrxar_ndx=0;
-//      print_prompt();
-    }
-    else
-    { // Put character to usbrxar.
-      if (c=='\b')
-      {
-        if (usbrxar_ndx > 0)
-        {
-          usbrxar[usbrxar_ndx]='\0';
-          usbrxar_ndx--;
-        }
-      }
-      else
-      {
-        usbrxar[usbrxar_ndx++]=c;
-      }
-    }        
-         */  
   }
 }
