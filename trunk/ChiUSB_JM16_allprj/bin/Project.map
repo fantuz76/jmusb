@@ -1,5 +1,5 @@
 
-PROGRAM "c:\Documents and Settings\sfantu.LANDIR\Documenti\Freescale\USB - JM60 - Ch\microJm_USB\ChiUSB_JM16_allprj\bin\Project.abs"
+PROGRAM "I:\Documenti\Electronic\microJm_USB\ChiUSB_JM16_allprj\bin\Project.abs"
 
 *********************************************************************************************
 TARGET SECTION
@@ -7,7 +7,7 @@ TARGET SECTION
 Processor   : Freescale HC08
 Memory Model: SMALL
 File Format : ELF\DWARF 2.0
-Linker      : SmartLinker V-5.0.34 Build 8120, Apr 30 2008
+Linker      : SmartLinker V-5.0.30 Build 7285, Oct 13 2007
 
 *********************************************************************************************
 FILE SECTION
@@ -32,7 +32,7 @@ _startupData is allocated at 0xC088 and uses 6 Bytes
 extern struct _tagStartup {
   unsigned nofZeroOut     1
   _Range   pZeroOut       0x100     285
-  _Copy    *toCopyDownBeg 0xE035
+  _Copy    *toCopyDownBeg 0xE03F
 } _startupData;
 
 *********************************************************************************************
@@ -43,8 +43,8 @@ Section Name                    Size  Type     From       To       Segment
 .init                            136     R     0xC000     0xC087   ROM
 .startData                        18     R     0xC088     0xC099   ROM
 .rodata                          279     R     0xC09A     0xC1B0   ROM
-.text                           7812     R     0xC1B1     0xE034   ROM
-.copy                             14     R     0xE035     0xE042   ROM
+.text                           7822     R     0xC1B1     0xE03E   ROM
+.copy                             14     R     0xE03F     0xE04C   ROM
 .abs_section_fff0                  2     R     0xFFF0     0xFFF1   .absSeg0
 .abs_section_0                     1   N/I        0x0        0x0   .absSeg1
 .abs_section_1                     1   N/I        0x1        0x1   .absSeg2
@@ -92,112 +92,113 @@ Section Name                    Size  Type     From       To       Segment
 .abs_section_4a                    1   N/I       0x4A       0x4A   .absSeg44
 .abs_section_4b                    1   N/I       0x4B       0x4B   .absSeg45
 .abs_section_4c                    1   N/I       0x4C       0x4C   .absSeg46
-.abs_section_50                    1   N/I       0x50       0x50   .absSeg47
-.abs_section_51                    1   N/I       0x51       0x51   .absSeg48
-.abs_section_52                    1   N/I       0x52       0x52   .absSeg49
-.abs_section_53                    1   N/I       0x53       0x53   .absSeg50
-.abs_section_58                    1   N/I       0x58       0x58   .absSeg51
-.abs_section_59                    1   N/I       0x59       0x59   .absSeg52
-.abs_section_5a                    1   N/I       0x5A       0x5A   .absSeg53
-.abs_section_5b                    1   N/I       0x5B       0x5B   .absSeg54
-.abs_section_5c                    1   N/I       0x5C       0x5C   .absSeg55
-.abs_section_5d                    1   N/I       0x5D       0x5D   .absSeg56
-.abs_section_60                    1   N/I       0x60       0x60   .absSeg57
-.abs_section_65                    1   N/I       0x65       0x65   .absSeg58
-.abs_section_68                    1   N/I       0x68       0x68   .absSeg59
-.abs_section_6c                    1   N/I       0x6C       0x6C   .absSeg60
-.abs_section_6d                    1   N/I       0x6D       0x6D   .absSeg61
-.abs_section_6e                    1   N/I       0x6E       0x6E   .absSeg62
-.abs_section_70                    1   N/I       0x70       0x70   .absSeg63
-.abs_section_71                    1   N/I       0x71       0x71   .absSeg64
-.abs_section_72                    1   N/I       0x72       0x72   .absSeg65
-.abs_section_73                    1   N/I       0x73       0x73   .absSeg66
-.abs_section_80                    1   N/I       0x80       0x80   .absSeg67
-.abs_section_88                    1   N/I       0x88       0x88   .absSeg68
-.abs_section_89                    1   N/I       0x89       0x89   .absSeg69
-.abs_section_8a                    1   N/I       0x8A       0x8A   .absSeg70
-.abs_section_90                    1   N/I       0x90       0x90   .absSeg71
-.abs_section_91                    1   N/I       0x91       0x91   .absSeg72
-.abs_section_92                    1   N/I       0x92       0x92   .absSeg73
-.abs_section_93                    1   N/I       0x93       0x93   .absSeg74
-.abs_section_94                    1   N/I       0x94       0x94   .absSeg75
-.abs_section_95                    1   N/I       0x95       0x95   .absSeg76
-.abs_section_96                    1   N/I       0x96       0x96   .absSeg77
-.abs_section_97                    1   N/I       0x97       0x97   .absSeg78
-.abs_section_98                    1   N/I       0x98       0x98   .absSeg79
-.abs_section_9d                    1   N/I       0x9D       0x9D   .absSeg80
-.abs_section_9e                    1   N/I       0x9E       0x9E   .absSeg81
-.abs_section_9f                    1   N/I       0x9F       0x9F   .absSeg82
-.abs_section_a0                    1   N/I       0xA0       0xA0   .absSeg83
-.abs_section_a1                    1   N/I       0xA1       0xA1   .absSeg84
-.abs_section_a2                    1   N/I       0xA2       0xA2   .absSeg85
-.abs_section_a3                    1   N/I       0xA3       0xA3   .absSeg86
-.abs_section_1800                  1   N/I     0x1800     0x1800   .absSeg87
-.abs_section_1801                  1   N/I     0x1801     0x1801   .absSeg88
-.abs_section_1802                  1   N/I     0x1802     0x1802   .absSeg89
-.abs_section_1803                  1   N/I     0x1803     0x1803   .absSeg90
-.abs_section_1809                  1   N/I     0x1809     0x1809   .absSeg91
-.abs_section_180a                  1   N/I     0x180A     0x180A   .absSeg92
-.abs_section_1816                  1   N/I     0x1816     0x1816   .absSeg93
-.abs_section_1817                  1   N/I     0x1817     0x1817   .absSeg94
-.abs_section_1818                  1   N/I     0x1818     0x1818   .absSeg95
-.abs_section_1820                  1   N/I     0x1820     0x1820   .absSeg96
-.abs_section_1821                  1   N/I     0x1821     0x1821   .absSeg97
-.abs_section_1823                  1   N/I     0x1823     0x1823   .absSeg98
-.abs_section_1824                  1   N/I     0x1824     0x1824   .absSeg99
-.abs_section_1825                  1   N/I     0x1825     0x1825   .absSeg100
-.abs_section_1826                  1   N/I     0x1826     0x1826   .absSeg101
-.abs_section_1840                  1   N/I     0x1840     0x1840   .absSeg102
-.abs_section_1841                  1   N/I     0x1841     0x1841   .absSeg103
-.abs_section_1842                  1   N/I     0x1842     0x1842   .absSeg104
-.abs_section_1844                  1   N/I     0x1844     0x1844   .absSeg105
-.abs_section_1845                  1   N/I     0x1845     0x1845   .absSeg106
-.abs_section_1846                  1   N/I     0x1846     0x1846   .absSeg107
-.abs_section_1848                  1   N/I     0x1848     0x1848   .absSeg108
-.abs_section_1849                  1   N/I     0x1849     0x1849   .absSeg109
-.abs_section_184a                  1   N/I     0x184A     0x184A   .absSeg110
-.abs_section_184c                  1   N/I     0x184C     0x184C   .absSeg111
-.abs_section_184d                  1   N/I     0x184D     0x184D   .absSeg112
-.abs_section_184e                  1   N/I     0x184E     0x184E   .absSeg113
-.abs_section_1850                  1   N/I     0x1850     0x1850   .absSeg114
-.abs_section_1851                  1   N/I     0x1851     0x1851   .absSeg115
-.abs_section_1852                  1   N/I     0x1852     0x1852   .absSeg116
-.abs_section_1854                  1   N/I     0x1854     0x1854   .absSeg117
-.abs_section_1855                  1   N/I     0x1855     0x1855   .absSeg118
-.abs_section_1856                  1   N/I     0x1856     0x1856   .absSeg119
-.abs_section_1858                  1   N/I     0x1858     0x1858   .absSeg120
-.abs_section_1859                  1   N/I     0x1859     0x1859   .absSeg121
-.abs_section_185a                  1   N/I     0x185A     0x185A   .absSeg122
-.abs_section_12                    2   N/I       0x12       0x13   .absSeg123
-.abs_section_14                    2   N/I       0x14       0x15   .absSeg124
-.abs_section_21                    2   N/I       0x21       0x22   .absSeg125
-.abs_section_23                    2   N/I       0x23       0x24   .absSeg126
-.abs_section_26                    2   N/I       0x26       0x27   .absSeg127
-.abs_section_29                    2   N/I       0x29       0x2A   .absSeg128
-.abs_section_2c                    2   N/I       0x2C       0x2D   .absSeg129
-.abs_section_2f                    2   N/I       0x2F       0x30   .absSeg130
-.abs_section_38                    2   N/I       0x38       0x39   .absSeg131
-.abs_section_40                    2   N/I       0x40       0x41   .absSeg132
-.abs_section_54                    2   N/I       0x54       0x55   .absSeg133
-.abs_section_56                    2   N/I       0x56       0x57   .absSeg134
-.abs_section_61                    2   N/I       0x61       0x62   .absSeg135
-.abs_section_63                    2   N/I       0x63       0x64   .absSeg136
-.abs_section_66                    2   N/I       0x66       0x67   .absSeg137
-.abs_section_69                    2   N/I       0x69       0x6A   .absSeg138
-.abs_section_74                    2   N/I       0x74       0x75   .absSeg139
-.abs_section_76                    2   N/I       0x76       0x77   .absSeg140
-.abs_section_1806                  2   N/I     0x1806     0x1807   .absSeg141
-.abs_section_1810                  2   N/I     0x1810     0x1811   .absSeg142
-.abs_section_1812                  2   N/I     0x1812     0x1813   .absSeg143
-.abs_section_1814                  2   N/I     0x1814     0x1815   .absSeg144
+.abs_section_4d                    1   N/I       0x4D       0x4D   .absSeg47
+.abs_section_50                    1   N/I       0x50       0x50   .absSeg48
+.abs_section_51                    1   N/I       0x51       0x51   .absSeg49
+.abs_section_52                    1   N/I       0x52       0x52   .absSeg50
+.abs_section_53                    1   N/I       0x53       0x53   .absSeg51
+.abs_section_58                    1   N/I       0x58       0x58   .absSeg52
+.abs_section_59                    1   N/I       0x59       0x59   .absSeg53
+.abs_section_5a                    1   N/I       0x5A       0x5A   .absSeg54
+.abs_section_5b                    1   N/I       0x5B       0x5B   .absSeg55
+.abs_section_5c                    1   N/I       0x5C       0x5C   .absSeg56
+.abs_section_5d                    1   N/I       0x5D       0x5D   .absSeg57
+.abs_section_60                    1   N/I       0x60       0x60   .absSeg58
+.abs_section_65                    1   N/I       0x65       0x65   .absSeg59
+.abs_section_68                    1   N/I       0x68       0x68   .absSeg60
+.abs_section_6c                    1   N/I       0x6C       0x6C   .absSeg61
+.abs_section_6d                    1   N/I       0x6D       0x6D   .absSeg62
+.abs_section_6e                    1   N/I       0x6E       0x6E   .absSeg63
+.abs_section_70                    1   N/I       0x70       0x70   .absSeg64
+.abs_section_71                    1   N/I       0x71       0x71   .absSeg65
+.abs_section_72                    1   N/I       0x72       0x72   .absSeg66
+.abs_section_73                    1   N/I       0x73       0x73   .absSeg67
+.abs_section_80                    1   N/I       0x80       0x80   .absSeg68
+.abs_section_88                    1   N/I       0x88       0x88   .absSeg69
+.abs_section_89                    1   N/I       0x89       0x89   .absSeg70
+.abs_section_8a                    1   N/I       0x8A       0x8A   .absSeg71
+.abs_section_90                    1   N/I       0x90       0x90   .absSeg72
+.abs_section_91                    1   N/I       0x91       0x91   .absSeg73
+.abs_section_92                    1   N/I       0x92       0x92   .absSeg74
+.abs_section_93                    1   N/I       0x93       0x93   .absSeg75
+.abs_section_94                    1   N/I       0x94       0x94   .absSeg76
+.abs_section_95                    1   N/I       0x95       0x95   .absSeg77
+.abs_section_96                    1   N/I       0x96       0x96   .absSeg78
+.abs_section_97                    1   N/I       0x97       0x97   .absSeg79
+.abs_section_98                    1   N/I       0x98       0x98   .absSeg80
+.abs_section_9d                    1   N/I       0x9D       0x9D   .absSeg81
+.abs_section_9e                    1   N/I       0x9E       0x9E   .absSeg82
+.abs_section_9f                    1   N/I       0x9F       0x9F   .absSeg83
+.abs_section_a0                    1   N/I       0xA0       0xA0   .absSeg84
+.abs_section_a1                    1   N/I       0xA1       0xA1   .absSeg85
+.abs_section_a2                    1   N/I       0xA2       0xA2   .absSeg86
+.abs_section_a3                    1   N/I       0xA3       0xA3   .absSeg87
+.abs_section_1800                  1   N/I     0x1800     0x1800   .absSeg88
+.abs_section_1801                  1   N/I     0x1801     0x1801   .absSeg89
+.abs_section_1802                  1   N/I     0x1802     0x1802   .absSeg90
+.abs_section_1803                  1   N/I     0x1803     0x1803   .absSeg91
+.abs_section_1809                  1   N/I     0x1809     0x1809   .absSeg92
+.abs_section_180a                  1   N/I     0x180A     0x180A   .absSeg93
+.abs_section_1816                  1   N/I     0x1816     0x1816   .absSeg94
+.abs_section_1817                  1   N/I     0x1817     0x1817   .absSeg95
+.abs_section_1818                  1   N/I     0x1818     0x1818   .absSeg96
+.abs_section_1820                  1   N/I     0x1820     0x1820   .absSeg97
+.abs_section_1821                  1   N/I     0x1821     0x1821   .absSeg98
+.abs_section_1823                  1   N/I     0x1823     0x1823   .absSeg99
+.abs_section_1824                  1   N/I     0x1824     0x1824   .absSeg100
+.abs_section_1825                  1   N/I     0x1825     0x1825   .absSeg101
+.abs_section_1826                  1   N/I     0x1826     0x1826   .absSeg102
+.abs_section_1840                  1   N/I     0x1840     0x1840   .absSeg103
+.abs_section_1841                  1   N/I     0x1841     0x1841   .absSeg104
+.abs_section_1842                  1   N/I     0x1842     0x1842   .absSeg105
+.abs_section_1844                  1   N/I     0x1844     0x1844   .absSeg106
+.abs_section_1845                  1   N/I     0x1845     0x1845   .absSeg107
+.abs_section_1846                  1   N/I     0x1846     0x1846   .absSeg108
+.abs_section_1848                  1   N/I     0x1848     0x1848   .absSeg109
+.abs_section_1849                  1   N/I     0x1849     0x1849   .absSeg110
+.abs_section_184a                  1   N/I     0x184A     0x184A   .absSeg111
+.abs_section_184c                  1   N/I     0x184C     0x184C   .absSeg112
+.abs_section_184d                  1   N/I     0x184D     0x184D   .absSeg113
+.abs_section_184e                  1   N/I     0x184E     0x184E   .absSeg114
+.abs_section_1850                  1   N/I     0x1850     0x1850   .absSeg115
+.abs_section_1851                  1   N/I     0x1851     0x1851   .absSeg116
+.abs_section_1852                  1   N/I     0x1852     0x1852   .absSeg117
+.abs_section_1854                  1   N/I     0x1854     0x1854   .absSeg118
+.abs_section_1855                  1   N/I     0x1855     0x1855   .absSeg119
+.abs_section_1856                  1   N/I     0x1856     0x1856   .absSeg120
+.abs_section_1858                  1   N/I     0x1858     0x1858   .absSeg121
+.abs_section_1859                  1   N/I     0x1859     0x1859   .absSeg122
+.abs_section_185a                  1   N/I     0x185A     0x185A   .absSeg123
+.abs_section_12                    2   N/I       0x12       0x13   .absSeg124
+.abs_section_14                    2   N/I       0x14       0x15   .absSeg125
+.abs_section_21                    2   N/I       0x21       0x22   .absSeg126
+.abs_section_23                    2   N/I       0x23       0x24   .absSeg127
+.abs_section_26                    2   N/I       0x26       0x27   .absSeg128
+.abs_section_29                    2   N/I       0x29       0x2A   .absSeg129
+.abs_section_2c                    2   N/I       0x2C       0x2D   .absSeg130
+.abs_section_2f                    2   N/I       0x2F       0x30   .absSeg131
+.abs_section_38                    2   N/I       0x38       0x39   .absSeg132
+.abs_section_40                    2   N/I       0x40       0x41   .absSeg133
+.abs_section_54                    2   N/I       0x54       0x55   .absSeg134
+.abs_section_56                    2   N/I       0x56       0x57   .absSeg135
+.abs_section_61                    2   N/I       0x61       0x62   .absSeg136
+.abs_section_63                    2   N/I       0x63       0x64   .absSeg137
+.abs_section_66                    2   N/I       0x66       0x67   .absSeg138
+.abs_section_69                    2   N/I       0x69       0x6A   .absSeg139
+.abs_section_74                    2   N/I       0x74       0x75   .absSeg140
+.abs_section_76                    2   N/I       0x76       0x77   .absSeg141
+.abs_section_1806                  2   N/I     0x1806     0x1807   .absSeg142
+.abs_section_1810                  2   N/I     0x1810     0x1811   .absSeg143
+.abs_section_1812                  2   N/I     0x1812     0x1813   .absSeg144
+.abs_section_1814                  2   N/I     0x1814     0x1815   .absSeg145
 .bss                             274   R/W      0x10B      0x21C   RAM
 .stack                           128   R/W      0x430      0x4AF   STK
-.vectSeg145_vect                   2     R     0xFFFE     0xFFFF   .vectSeg145
+.vectSeg146_vect                   2     R     0xFFFE     0xFFFF   .vectSeg146
 
 Summary of section sizes per section type:
-READ_ONLY (R):        2047 (dec:     8263)
+READ_ONLY (R):        2051 (dec:     8273)
 READ_WRITE (R/W):      19D (dec:      413)
-NO_INIT (N/I):          A6 (dec:      166)
+NO_INIT (N/I):          A7 (dec:      167)
 
 *********************************************************************************************
 VECTOR-ALLOCATION SECTION
@@ -281,21 +282,21 @@ MODULE:                 -- usb.c.o --
      usb_get_rx_pptr                           C78B      3A      58       2   .text       
      send_zero_packet                          C7C5      3A      58       2   .text       
      usb_init                                  C7FF      31      49       1   .text       
-     usb_setup_ep                              C830     22F     559       5   .text       
-     set_config                                CA5F      DD     221       4   .text       
-     enter_default_state                       CB3C      26      38       2   .text       
-     usb_stop_ep_tx                            CB62      2F      47       3   .text       
-     usb_stop_ep_rx                            CB91      2F      47       3   .text       
-     ready_ep_tx                               CBC0      45      69       2   .text       
-     ready_ep_rx                               CC05      75     117       2   .text       
-     disable_ep                                CC7A       7       7       1   .text       
-     _usb_send                                 CC81     218     536       6   .text       
-     usb_send                                  CE99     126     294       7   .text       
-     _usb_receive                              CFBF     1B7     439       4   .text       
-     usb_receive                               D176      CB     203       2   .text       
-     cb_set_address                            D241      1F      31       1   .text       
-     usb_stm_ctrl0                             D260     36F     879      27   .text       
-     usb_it_handler                            D5CF     255     597      19   .text       
+     usb_setup_ep                              C830     231     561       5   .text       
+     set_config                                CA61      DD     221       4   .text       
+     enter_default_state                       CB3E      26      38       2   .text       
+     usb_stop_ep_tx                            CB64      2F      47       3   .text       
+     usb_stop_ep_rx                            CB93      2F      47       3   .text       
+     ready_ep_tx                               CBC2      45      69       2   .text       
+     ready_ep_rx                               CC07      75     117       2   .text       
+     disable_ep                                CC7C       7       7       1   .text       
+     _usb_send                                 CC83     218     536       6   .text       
+     usb_send                                  CE9B     126     294       7   .text       
+     _usb_receive                              CFC1     1B7     439       4   .text       
+     usb_receive                               D178      CB     203       2   .text       
+     cb_set_address                            D243      1F      31       1   .text       
+     usb_stm_ctrl0                             D262     374     884      27   .text       
+     usb_it_handler                            D5D6     255     597      19   .text       
 - VARIABLES:
      usb_current_config                         10B       1       1       2   .bss        
      usb_state                                  10C       1       1       4   .bss        
@@ -304,15 +305,15 @@ MODULE:                 -- usb.c.o --
      _Vector_7                                 FFF0       2       2       0   .abs_section_fff0
 MODULE:                 -- cdct_usb_config.c.o --
 - PROCEDURES:
-     get_device_descriptor                     D824       4       4       1   .text       
-     is_cfgd_index                             D828       E      14       2   .text       
-     get_cfg_descriptor                        D836       A      10       1   .text       
-     is_str_index                              D840      10      16       1   .text       
-     get_str_descriptor                        D850       8       8       2   .text       
-     is_ifc_ndx                                D858      24      36       1   .text       
-     is_ep_ndx                                 D87C      3C      60       1   .text       
-     get_ep_descriptor                         D8B8      2D      45       1   .text       
-     usb_cfg_init                              D8E5       4       4       1   .text       
+     get_device_descriptor                     D82B       4       4       1   .text       
+     is_cfgd_index                             D82F       E      14       2   .text       
+     get_cfg_descriptor                        D83D       A      10       1   .text       
+     is_str_index                              D847       C      12       1   .text       
+     get_str_descriptor                        D853       8       8       2   .text       
+     is_ifc_ndx                                D85B      24      36       1   .text       
+     is_ep_ndx                                 D87F      3D      61       1   .text       
+     get_ep_descriptor                         D8BC      2E      46       1   .text       
+     usb_cfg_init                              D8EA       4       4       1   .text       
 - VARIABLES:
      string_descriptor0                        C09A       4       4       1   .rodata     
      str_manufacturer                          C09E      1A      26       1   .rodata     
@@ -326,17 +327,17 @@ MODULE:                 -- cdct_usb_config.c.o --
      usb_config_descriptor                     C16E      43      67       4   .rodata     
 MODULE:                 -- usb_cdc.c.o --
 - PROCEDURES:
-     usb_bus_error_event                       D8E9       1       1       1   .text       
-     usb_suspend_event                         D8EA       1       1       1   .text       
-     usb_wakeup_event                          D8EB       1       1       1   .text       
-     usb_reset_event                           D8EC       1       1       1   .text       
-     got_line_coding                           D8ED       8       8       1   .text       
-     usb_ep0_callback                          D8F5     14F     335       3   .text       
-     cdc_getch                                 DA44      1F      31       1   .text       
-     cdc_kbhit                                 DA63      16      22       1   .text       
-     cdc_putch                                 DA79      3B      59       4   .text       
-     cdc_init                                  DAB4      1A      26       1   .text       
-     cdc_process                               DACE      F7     247       3   .text       
+     usb_bus_error_event                       D8EE       1       1       1   .text       
+     usb_suspend_event                         D8EF       1       1       1   .text       
+     usb_wakeup_event                          D8F0       1       1       1   .text       
+     usb_reset_event                           D8F1       1       1       1   .text       
+     got_line_coding                           D8F2       8       8       1   .text       
+     usb_ep0_callback                          D8FA     151     337       3   .text       
+     cdc_getch                                 DA4B      1F      31       1   .text       
+     cdc_kbhit                                 DA6A      16      22       1   .text       
+     cdc_putch                                 DA80      3B      59       4   .text       
+     cdc_init                                  DABB      1A      26       1   .text       
+     cdc_process                               DAD5      F7     247       3   .text       
 - VARIABLES:
      line_coding                                104       7       7       2   .data       
      rx_buffer                                  17A      20      32       2   .bss        
@@ -398,6 +399,7 @@ MODULE:                 -- MC9S08JM16.C.o --
      _MCGTRM                                     4A       1       1       0   .abs_section_4a
      _MCGSC                                      4B       1       1       6   .abs_section_4b
      _MCGC3                                      4C       1       1       1   .abs_section_4c
+     _MCGT                                       4D       1       1       0   .abs_section_4d
      _SPI1C1                                     50       1       1       0   .abs_section_50
      _SPI1C2                                     51       1       1       0   .abs_section_51
      _SPI1BR                                     52       1       1       0   .abs_section_52
@@ -498,17 +500,17 @@ MODULE:                 -- MC9S08JM16.C.o --
      _DBGF                                     1814       2       2       0   .abs_section_1814
 MODULE:                 -- ChiUSB_main.c.o --
 - PROCEDURES:
-     main                                      DBC5      14      20       1   .text       
+     main                                      DBCC      14      20       1   .text       
 - VARIABLES:
 MODULE:                 -- USB_man.c.o --
 - PROCEDURES:
-     ResetPkt_ndx                              DBD9      13      19       4   .text       
-     comm_init                                 DBEC       D      13       1   .text       
-     USB_PktSend                               DBF9      B1     177       4   .text       
-     USB_SendHello                             DCAA      46      70       1   .text       
-     ReadIntervento                            DCF0      F0     240       1   .text       
-     USB_SendTuttiInterventi                   DDE0      99     153       1   .text       
-     comm_process                              DE79     1BC     444       5   .text       
+     ResetPkt_ndx                              DBE0      13      19       4   .text       
+     comm_init                                 DBF3       D      13       1   .text       
+     USB_PktSend                               DC00      B1     177       4   .text       
+     USB_SendHello                             DCB1      46      70       1   .text       
+     ReadIntervento                            DCF7      F0     240       1   .text       
+     USB_SendTuttiInterventi                   DDE7      99     153       2   .text       
+     comm_process                              DE80     1BF     447       5   .text       
 - VARIABLES:
      usbNumByteLen                              1E3       1       1       7   .bss        
      usbPayloadLen                              1E4       1       1       7   .bss        
@@ -526,12 +528,12 @@ MODULE STATISTIC
   STRING.C.o (ansiis.lib)                      0     61      0
   Start08.c.o                                  0    136      0
   target.c.o                                   0    109      0
-  usb.c.o                                    111   4409      2
-  cdct_usb_config.c.o                          0    197    279
-  usb_cdc.c.o                                112    732      0
-  MC9S08JM16.C.o                             166      0      0
+  usb.c.o                                    111   4416      2
+  cdct_usb_config.c.o                          0    195    279
+  usb_cdc.c.o                                112    734      0
+  MC9S08JM16.C.o                             167      0      0
   ChiUSB_main.c.o                              0     20      0
-  USB_man.c.o                                 58   1116      0
+  USB_man.c.o                                 58   1119      0
   other                                      128     20     14
 
 *********************************************************************************************
@@ -662,6 +664,8 @@ SECTION: ".abs_section_4b"
   _MCGSC 
 SECTION: ".abs_section_4c"
   _MCGC3 
+SECTION: ".abs_section_4d"
+  _MCGT 
 SECTION: ".abs_section_50"
   _SPI1C1 
 SECTION: ".abs_section_51"
@@ -919,6 +923,7 @@ OBJECT LIST SORTED BY ADDRESS
      _MCGTRM                                     4A       1       1       0   .abs_section_4a
      _MCGSC                                      4B       1       1       6   .abs_section_4b
      _MCGC3                                      4C       1       1       1   .abs_section_4c
+     _MCGT                                       4D       1       1       0   .abs_section_4d
      _SPI1C1                                     50       1       1       0   .abs_section_50
      _SPI1C2                                     51       1       1       0   .abs_section_51
      _SPI1BR                                     52       1       1       0   .abs_section_52
@@ -1090,49 +1095,49 @@ OBJECT LIST SORTED BY ADDRESS
      usb_get_rx_pptr                           C78B      3A      58       2   .text       
      send_zero_packet                          C7C5      3A      58       2   .text       
      usb_init                                  C7FF      31      49       1   .text       
-     usb_setup_ep                              C830     22F     559       5   .text       
-     set_config                                CA5F      DD     221       4   .text       
-     enter_default_state                       CB3C      26      38       2   .text       
-     usb_stop_ep_tx                            CB62      2F      47       3   .text       
-     usb_stop_ep_rx                            CB91      2F      47       3   .text       
-     ready_ep_tx                               CBC0      45      69       2   .text       
-     ready_ep_rx                               CC05      75     117       2   .text       
-     disable_ep                                CC7A       7       7       1   .text       
-     _usb_send                                 CC81     218     536       6   .text       
-     usb_send                                  CE99     126     294       7   .text       
-     _usb_receive                              CFBF     1B7     439       4   .text       
-     usb_receive                               D176      CB     203       2   .text       
-     cb_set_address                            D241      1F      31       1   .text       
-     usb_stm_ctrl0                             D260     36F     879      27   .text       
-     usb_it_handler                            D5CF     255     597      19   .text       
-     get_device_descriptor                     D824       4       4       1   .text       
-     is_cfgd_index                             D828       E      14       2   .text       
-     get_cfg_descriptor                        D836       A      10       1   .text       
-     is_str_index                              D840      10      16       1   .text       
-     get_str_descriptor                        D850       8       8       2   .text       
-     is_ifc_ndx                                D858      24      36       1   .text       
-     is_ep_ndx                                 D87C      3C      60       1   .text       
-     get_ep_descriptor                         D8B8      2D      45       1   .text       
-     usb_cfg_init                              D8E5       4       4       1   .text       
-     usb_bus_error_event                       D8E9       1       1       1   .text       
-     usb_suspend_event                         D8EA       1       1       1   .text       
-     usb_wakeup_event                          D8EB       1       1       1   .text       
-     usb_reset_event                           D8EC       1       1       1   .text       
-     got_line_coding                           D8ED       8       8       1   .text       
-     usb_ep0_callback                          D8F5     14F     335       3   .text       
-     cdc_getch                                 DA44      1F      31       1   .text       
-     cdc_kbhit                                 DA63      16      22       1   .text       
-     cdc_putch                                 DA79      3B      59       4   .text       
-     cdc_init                                  DAB4      1A      26       1   .text       
-     cdc_process                               DACE      F7     247       3   .text       
-     main                                      DBC5      14      20       1   .text       
-     ResetPkt_ndx                              DBD9      13      19       4   .text       
-     comm_init                                 DBEC       D      13       1   .text       
-     USB_PktSend                               DBF9      B1     177       4   .text       
-     USB_SendHello                             DCAA      46      70       1   .text       
-     ReadIntervento                            DCF0      F0     240       1   .text       
-     USB_SendTuttiInterventi                   DDE0      99     153       1   .text       
-     comm_process                              DE79     1BC     444       5   .text       
+     usb_setup_ep                              C830     231     561       5   .text       
+     set_config                                CA61      DD     221       4   .text       
+     enter_default_state                       CB3E      26      38       2   .text       
+     usb_stop_ep_tx                            CB64      2F      47       3   .text       
+     usb_stop_ep_rx                            CB93      2F      47       3   .text       
+     ready_ep_tx                               CBC2      45      69       2   .text       
+     ready_ep_rx                               CC07      75     117       2   .text       
+     disable_ep                                CC7C       7       7       1   .text       
+     _usb_send                                 CC83     218     536       6   .text       
+     usb_send                                  CE9B     126     294       7   .text       
+     _usb_receive                              CFC1     1B7     439       4   .text       
+     usb_receive                               D178      CB     203       2   .text       
+     cb_set_address                            D243      1F      31       1   .text       
+     usb_stm_ctrl0                             D262     374     884      27   .text       
+     usb_it_handler                            D5D6     255     597      19   .text       
+     get_device_descriptor                     D82B       4       4       1   .text       
+     is_cfgd_index                             D82F       E      14       2   .text       
+     get_cfg_descriptor                        D83D       A      10       1   .text       
+     is_str_index                              D847       C      12       1   .text       
+     get_str_descriptor                        D853       8       8       2   .text       
+     is_ifc_ndx                                D85B      24      36       1   .text       
+     is_ep_ndx                                 D87F      3D      61       1   .text       
+     get_ep_descriptor                         D8BC      2E      46       1   .text       
+     usb_cfg_init                              D8EA       4       4       1   .text       
+     usb_bus_error_event                       D8EE       1       1       1   .text       
+     usb_suspend_event                         D8EF       1       1       1   .text       
+     usb_wakeup_event                          D8F0       1       1       1   .text       
+     usb_reset_event                           D8F1       1       1       1   .text       
+     got_line_coding                           D8F2       8       8       1   .text       
+     usb_ep0_callback                          D8FA     151     337       3   .text       
+     cdc_getch                                 DA4B      1F      31       1   .text       
+     cdc_kbhit                                 DA6A      16      22       1   .text       
+     cdc_putch                                 DA80      3B      59       4   .text       
+     cdc_init                                  DABB      1A      26       1   .text       
+     cdc_process                               DAD5      F7     247       3   .text       
+     main                                      DBCC      14      20       1   .text       
+     ResetPkt_ndx                              DBE0      13      19       4   .text       
+     comm_init                                 DBF3       D      13       1   .text       
+     USB_PktSend                               DC00      B1     177       4   .text       
+     USB_SendHello                             DCB1      46      70       1   .text       
+     ReadIntervento                            DCF7      F0     240       1   .text       
+     USB_SendTuttiInterventi                   DDE7      99     153       2   .text       
+     comm_process                              DE80     1BF     447       5   .text       
      _Vector_7                                 FFF0       2       2       0   .abs_section_fff0
 
 *********************************************************************************************
@@ -1176,19 +1181,19 @@ STRING.C.o (ansiis.lib):
 *********************************************************************************************
 COPYDOWN SECTION
 ---------------------------------------------------------------------------------------------
-------- ROM-ADDRESS: 0xE035 ---- SIZE       4 ---
+------- ROM-ADDRESS: 0xE03F ---- SIZE       4 ---
 Filling bytes inserted
  00080103
-------- ROM-ADDRESS: 0xE039 ---- RAM-ADDRESS: 0x103 ---- SIZE       1 ---
+------- ROM-ADDRESS: 0xE043 ---- RAM-ADDRESS: 0x103 ---- SIZE       1 ---
 Name of initialized Object : seed:3
  01
-------- ROM-ADDRESS: 0xE03A ---- SIZE       1 ---
+------- ROM-ADDRESS: 0xE044 ---- SIZE       1 ---
 Filling bytes inserted
  00
-------- ROM-ADDRESS: 0xE03B ---- RAM-ADDRESS: 0x105 ---- SIZE       6 ---
+------- ROM-ADDRESS: 0xE045 ---- RAM-ADDRESS: 0x105 ---- SIZE       6 ---
 Name of initialized Object : line_coding:1
  C201000000 08
-------- ROM-ADDRESS: 0xE041 ---- SIZE       2 ---
+------- ROM-ADDRESS: 0xE04B ---- SIZE       2 ---
 Filling bytes inserted
  0000
 
@@ -1286,10 +1291,10 @@ USB_PktSend               USES cdc_putch _ICMP
 USB_SendHello             USES USB_PktSend 
 ReadIntervento            USES rand _IMODS_STAR08 arrIntervento 
 USB_SendTuttiInterventi   USES ReadIntervento memcpy USB_PktSend 
-comm_process              USES comm_process cdc_getch usbrxar_ndx usbrxar 
-                                ResetPkt_ndx usbNumByteLen usbPayloadLen _ICMP _USB_flags1 
-                                USB_SendHello USB_SendTuttiInterventi _PTGD USB_PktSend 
-                                cdc_kbhit 
+comm_process              USES USB_SendTuttiInterventi comm_process cdc_getch 
+                                usbrxar_ndx usbrxar ResetPkt_ndx usbNumByteLen 
+                                usbPayloadLen _ICMP _USB_flags1 USB_SendHello _PTGD 
+                                USB_PktSend cdc_kbhit 
 _Vector_7                 USES usb_it_handler 
 
 *********************************************************************************************
@@ -1323,16 +1328,82 @@ DEPENDENCY TREE
  |  |       
  |  +- comm_process        
  |  |  | 
- |  |  +- cdc_getch           
+ |  |  +- USB_SendTuttiInterventi
  |  |  |  | 
- |  |  |  +- _ICMP                (see above)
- |  |  |     
- |  |  +- ResetPkt_ndx         (see above)
- |  |  |  
- |  |  +- _ICMP                (see above)
- |  |  |  
- |  |  +- USB_SendHello       
- |  |  |  | 
+ |  |  |  +- ReadIntervento      
+ |  |  |  |  | 
+ |  |  |  |  +- rand                
+ |  |  |  |  |  | 
+ |  |  |  |  |  +- _LDIVS_RC           
+ |  |  |  |  |  |  | 
+ |  |  |  |  |  |  +- _ENTER_BINARY_L_RC  
+ |  |  |  |  |  |  |  | 
+ |  |  |  |  |  |  |  +- _PUSH_ARGS_L        
+ |  |  |  |  |  |  |       
+ |  |  |  |  |  |  +- _LDIVS_k_is_k_div_j 
+ |  |  |  |  |  |     | 
+ |  |  |  |  |  |     +- _SPLITSIGN_L        
+ |  |  |  |  |  |     |  | 
+ |  |  |  |  |  |     |  +- _ABS_L_HX           
+ |  |  |  |  |  |     |     | 
+ |  |  |  |  |  |     |     +- _NEG_L_HX           
+ |  |  |  |  |  |     |          
+ |  |  |  |  |  |     +- _LDIVMOD            
+ |  |  |  |  |  |     |    
+ |  |  |  |  |  |     +- _NEG_L_HX            (see above)
+ |  |  |  |  |  |        
+ |  |  |  |  |  +- _POP32              
+ |  |  |  |  |  |    
+ |  |  |  |  |  +- _LMODS_RC           
+ |  |  |  |  |  |  | 
+ |  |  |  |  |  |  +- _ENTER_BINARY_L_RC   (see above)
+ |  |  |  |  |  |  |  
+ |  |  |  |  |  |  +- _LMODS_k_is_k_mod_j 
+ |  |  |  |  |  |     | 
+ |  |  |  |  |  |     +- _SPLITSIGN_L         (see above)
+ |  |  |  |  |  |     |  
+ |  |  |  |  |  |     +- _LDIVMOD             (see above)
+ |  |  |  |  |  |     |  
+ |  |  |  |  |  |     +- _NEG_L_HX            (see above)
+ |  |  |  |  |  |        
+ |  |  |  |  |  +- _LMUL_RC            
+ |  |  |  |  |  |  | 
+ |  |  |  |  |  |  +- _ENTER_BINARY_L_RC   (see above)
+ |  |  |  |  |  |  |  
+ |  |  |  |  |  |  +- _LMUL_k_is_k_mul_j  
+ |  |  |  |  |  |     | 
+ |  |  |  |  |  |     +- _k_is_k_plus_j_l    
+ |  |  |  |  |  |     |    
+ |  |  |  |  |  |     +- _k_is_k_plus_j_i    
+ |  |  |  |  |  |          
+ |  |  |  |  |  +- _LSUB               
+ |  |  |  |  |  |  | 
+ |  |  |  |  |  |  +- _ENTER_BINARY_L     
+ |  |  |  |  |  |  |  | 
+ |  |  |  |  |  |  |  +- _PUSH_ARGS_L         (see above)
+ |  |  |  |  |  |  |     
+ |  |  |  |  |  |  +- _LSUB_k_is_k_minus_j
+ |  |  |  |  |  |       
+ |  |  |  |  |  +- _LCMP_RC            
+ |  |  |  |  |  |  | 
+ |  |  |  |  |  |  +- _ENTER_BINARY_L_RC   (see above)
+ |  |  |  |  |  |  |  
+ |  |  |  |  |  |  +- _LCMP_k_rel_j       
+ |  |  |  |  |  |       
+ |  |  |  |  |  +- _LADD_RC            
+ |  |  |  |  |     | 
+ |  |  |  |  |     +- _ENTER_BINARY_L_RC   (see above)
+ |  |  |  |  |     |  
+ |  |  |  |  |     +- _LADD_k_is_k_plus_j 
+ |  |  |  |  |          
+ |  |  |  |  +- _IMODS_STAR08       
+ |  |  |  |     | 
+ |  |  |  |     +- _SPLITSIGN          
+ |  |  |  |        | 
+ |  |  |  |        +- _IDIVMOD            
+ |  |  |  |             
+ |  |  |  +- memcpy              
+ |  |  |  |    
  |  |  |  +- USB_PktSend         
  |  |  |     | 
  |  |  |     +- cdc_putch           
@@ -1351,16 +1422,10 @@ DEPENDENCY TREE
  |  |  |     |     |    
  |  |  |     |     +- usb_get_done        
  |  |  |     |     |  | 
- |  |  |     |     |  +- _LSUB               
- |  |  |     |     |  |  | 
- |  |  |     |     |  |  +- _ENTER_BINARY_L     
- |  |  |     |     |  |  |  | 
- |  |  |     |     |  |  |  +- _PUSH_ARGS_L        
- |  |  |     |     |  |  |       
- |  |  |     |     |  |  +- _LSUB_k_is_k_minus_j
- |  |  |     |     |  |       
- |  |  |     |     |  +- _POP32              
- |  |  |     |     |       
+ |  |  |     |     |  +- _LSUB                (see above)
+ |  |  |     |     |  |  
+ |  |  |     |     |  +- _POP32               (see above)
+ |  |  |     |     |     
  |  |  |     |     +- usb_receive         
  |  |  |     |     |  | 
  |  |  |     |     |  +- _COPY               
@@ -1369,32 +1434,18 @@ DEPENDENCY TREE
  |  |  |     |     |     | 
  |  |  |     |     |     +- ep2bdtndx           
  |  |  |     |     |     |    
- |  |  |     |     |     +- _LMUL_RC            
- |  |  |     |     |     |  | 
- |  |  |     |     |     |  +- _ENTER_BINARY_L_RC  
- |  |  |     |     |     |  |  | 
- |  |  |     |     |     |  |  +- _PUSH_ARGS_L         (see above)
- |  |  |     |     |     |  |     
- |  |  |     |     |     |  +- _LMUL_k_is_k_mul_j  
- |  |  |     |     |     |     | 
- |  |  |     |     |     |     +- _k_is_k_plus_j_l    
- |  |  |     |     |     |     |    
- |  |  |     |     |     |     +- _k_is_k_plus_j_i    
- |  |  |     |     |     |          
- |  |  |     |     |     +- _LADD_RC            
- |  |  |     |     |        | 
- |  |  |     |     |        +- _ENTER_BINARY_L_RC   (see above)
- |  |  |     |     |        |  
- |  |  |     |     |        +- _LADD_k_is_k_plus_j 
- |  |  |     |     |             
+ |  |  |     |     |     +- _LMUL_RC             (see above)
+ |  |  |     |     |     |  
+ |  |  |     |     |     +- _LADD_RC             (see above)
+ |  |  |     |     |        
  |  |  |     |     +- usb_send            
  |  |  |     |        | 
  |  |  |     |        +- _LCMP               
  |  |  |     |        |  | 
  |  |  |     |        |  +- _ENTER_BINARY_L      (see above)
  |  |  |     |        |  |  
- |  |  |     |        |  +- _LCMP_k_rel_j       
- |  |  |     |        |       
+ |  |  |     |        |  +- _LCMP_k_rel_j        (see above)
+ |  |  |     |        |     
  |  |  |     |        +- _COPY                (see above)
  |  |  |     |        |  
  |  |  |     |        +- _irq_disable        
@@ -1429,62 +1480,16 @@ DEPENDENCY TREE
  |  |  |     |           
  |  |  |     +- _ICMP                (see above)
  |  |  |        
- |  |  +- USB_SendTuttiInterventi
+ |  |  +- cdc_getch           
  |  |  |  | 
- |  |  |  +- ReadIntervento      
- |  |  |  |  | 
- |  |  |  |  +- rand                
- |  |  |  |  |  | 
- |  |  |  |  |  +- _LDIVS_RC           
- |  |  |  |  |  |  | 
- |  |  |  |  |  |  +- _ENTER_BINARY_L_RC   (see above)
- |  |  |  |  |  |  |  
- |  |  |  |  |  |  +- _LDIVS_k_is_k_div_j 
- |  |  |  |  |  |     | 
- |  |  |  |  |  |     +- _SPLITSIGN_L        
- |  |  |  |  |  |     |  | 
- |  |  |  |  |  |     |  +- _ABS_L_HX           
- |  |  |  |  |  |     |     | 
- |  |  |  |  |  |     |     +- _NEG_L_HX           
- |  |  |  |  |  |     |          
- |  |  |  |  |  |     +- _LDIVMOD            
- |  |  |  |  |  |     |    
- |  |  |  |  |  |     +- _NEG_L_HX            (see above)
- |  |  |  |  |  |        
- |  |  |  |  |  +- _POP32               (see above)
- |  |  |  |  |  |  
- |  |  |  |  |  +- _LMODS_RC           
- |  |  |  |  |  |  | 
- |  |  |  |  |  |  +- _ENTER_BINARY_L_RC   (see above)
- |  |  |  |  |  |  |  
- |  |  |  |  |  |  +- _LMODS_k_is_k_mod_j 
- |  |  |  |  |  |     | 
- |  |  |  |  |  |     +- _SPLITSIGN_L         (see above)
- |  |  |  |  |  |     |  
- |  |  |  |  |  |     +- _LDIVMOD             (see above)
- |  |  |  |  |  |     |  
- |  |  |  |  |  |     +- _NEG_L_HX            (see above)
- |  |  |  |  |  |        
- |  |  |  |  |  +- _LMUL_RC             (see above)
- |  |  |  |  |  |  
- |  |  |  |  |  +- _LSUB                (see above)
- |  |  |  |  |  |  
- |  |  |  |  |  +- _LCMP_RC            
- |  |  |  |  |  |  | 
- |  |  |  |  |  |  +- _ENTER_BINARY_L_RC   (see above)
- |  |  |  |  |  |  |  
- |  |  |  |  |  |  +- _LCMP_k_rel_j        (see above)
- |  |  |  |  |  |     
- |  |  |  |  |  +- _LADD_RC             (see above)
- |  |  |  |  |     
- |  |  |  |  +- _IMODS_STAR08       
- |  |  |  |     | 
- |  |  |  |     +- _SPLITSIGN          
- |  |  |  |        | 
- |  |  |  |        +- _IDIVMOD            
- |  |  |  |             
- |  |  |  +- memcpy              
- |  |  |  |    
+ |  |  |  +- _ICMP                (see above)
+ |  |  |     
+ |  |  +- ResetPkt_ndx         (see above)
+ |  |  |  
+ |  |  +- _ICMP                (see above)
+ |  |  |  
+ |  |  +- USB_SendHello       
+ |  |  |  | 
  |  |  |  +- USB_PktSend          (see above)
  |  |  |     
  |  |  +- USB_PktSend          (see above)
@@ -1611,6 +1616,6 @@ STATISTIC SECTION
 
 ExeFile:
 --------
-Number of blocks to be downloaded: 5
-Total size of all blocks to be downloaded: 8263
+Number of blocks to be downloaded: 6
+Total size of all blocks to be downloaded: 8273
 
