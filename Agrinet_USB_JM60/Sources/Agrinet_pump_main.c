@@ -97,7 +97,7 @@
 
 __interrupt void AD_conversion_completeISR(void);
 __interrupt void timer1_overflowISR(void); //timer 100 us per relais
-__interrupt void timer2_overflowISR(void);
+__interrupt void timer2_overflowISR(void); //1 ms
 __interrupt void SPI1(void);
 __interrupt void USB_status(void);
 
@@ -118,12 +118,12 @@ void salva_conta_secondi_attivita(void);
 void leggi_conta_secondi_attivita(void);
 void salva_impostazioni(void);
 void lettura_allarme(void);//con allarme_in_lettura <335
-void scrittura_allarme(void);
+void scrittura_allarme_in_eeprom(void);
 char calcolo_del_fattore_di_potenza(long attiva, long reattiva);
 void presenta_menu(unsigned char *menu, char idioma, char lunghezza , char riga_inizio);
 void modifica_unsigned(unsigned int *var, unsigned int min, unsigned int max);
 void presenta_unsigned(unsigned int val, char punto, char riga, char colonna, char n_cifre);
-void presenta_scritta(char *stringa, int offset, char idioma, char lunghezza, char riga,char colonna, char N_caratteri);
+void presenta_scritta(char *stringa, char offset, char idioma, char lunghezza, char riga,char colonna, char N_caratteri);
 void funzione_reset_default(void);
 void calcolo_delle_costanti(void);
 void programmazione(void);
@@ -369,7 +369,7 @@ const char comando_AD[33]={
 0x40,0x41,0x42,0x43,0x44,
 0x40,0x41,0x42,0x43,0x44,
 0x47},
-prepara[10]={0x01,0x02,0x39,0x14,0x55,0x6d,0x7c,0x0c,0x01,0x06};
+prepara[7]={0x01,0x02,0x06,0x0c,0x14,0x3c,0x01};
 
 const int
 delta_Tn=80, //sovra_temperatura limite con corrente nominale = 80°C
@@ -559,8 +559,10 @@ tensione_15V; //V*4.7/(33+4.7) *4096/5 = V*102
 }DAC;
 
 char
+display[34],
 cifre[16], 
-display[2][17],
+buffer_USB[32],//contiene i 24 bytes degli errori
+timer_reset_display,
 cursore_menu,
 funzioni_avanzate,
 comando_display,
@@ -602,7 +604,6 @@ tot_misure;
 unsigned int //timer
 timer_eccitazione_relais,
 timer_rinfresco_display,
-timer_reset_display,
 timer_riavviamento,
 timer_attesa_squilibrio,
 timer_attesa_tensione,
@@ -735,8 +736,7 @@ indirizzo_leggi_eeprom,//0-8192 indirizza il byte in fase di lettura
 ultimo_indirizzo_scrittura,//in bytes
 primo_indirizzo_lettura,//in bytes  mettere primo_indirizzo<ultimo_indirizzo e leggi_eeprom=1;
 ultimo_indirizzo_lettura,//in bytes
-buffer_eeprom[48],
-buffer_USB[32];//contiene i 24 bytes degli errori
+buffer_eeprom[48];
 
 unsigned char //eeprom
 scrivi_eeprom,
@@ -752,11 +752,11 @@ fattore_I2xT,
 sovraccarico_moderato, sovraccarico,
 precedente_lettura_allarme,
 numero_ingresso,
-abilita_reset,
-reset_default,
 allarme_in_lettura; //variabile scritta tramite USB
 
 unsigned char
+reset_default,
+abilita_reset,
 pronto_alla_risposta,//tramite USB
 cosfi[3];
 
@@ -1354,14 +1354,17 @@ fine:
 return risultato; 
 }
 
-__interrupt  void AD_conversion_completeISR(void)
-{ 
+__interrupt void AD_conversion_completeISR(void)
+{
 int k, V23, V31;
 asm
  {
  SEI
  CLRH
  LDX contatore_AD
+ LDA @comando_AD,X
+ AND #$07
+ TAX
  LDA ADCRL
  STA @DAC.I1letta:1,X ;//letture analogiche
  LDA ADCRH
@@ -1545,6 +1548,7 @@ comando_di_conversione:
  BCS per_comando_conversione
  CLRX
 per_comando_conversione:
+ STX contatore_AD
  LDA @comando_AD,X
  STA ADCSC1
  }
@@ -1713,14 +1717,43 @@ asm
 ; PTDD=prepara[contatore_display>>1];
 ; if(contatore_display & 0x0001) BCLR 2,_PTGD; else BSET 3,_PTGD; //E=1, RS=0
 ; contatore_display++;
-; if(contatore_display>19)
+; if(contatore_display>13)
 ;  {
 ;  comando_display=0;
 ;  contatore_display=0;
 ;  }  
 ; }
- LDHX timer_reset_display
- BNE per_attesa
+ LDA timer_reset_display
+ BEQ per_comando_display
+ DECA
+ STA timer_reset_display  
+ CLRA
+ STA contatore_display
+ STA start
+ STA salita_start
+ STA stop
+ STA salita_stop
+ STA toggle_stop
+ STA func
+ STA salita_func
+ STA toggle_func
+ STA meno
+ STA salita_meno
+ STA piu
+ STA salita_piu 
+ STA remoto
+ STA salita_remoto
+ STA reset_default
+ STA timer_rilascio
+ STA timer_rilascio:1
+ LDHX #34
+primo_messaggio:
+ LDA @presentazione_iniziale:-1,X
+ STA @display:-1,X
+ DBNZX primo_messaggio
+ BRA fine
+
+per_comando_display: 
  LDA comando_display
  BEQ scrivi_display
  LDX contatore_display
@@ -1740,12 +1773,11 @@ inc_contatore_display:
  LDA contatore_display
  INCA
  STA contatore_display
- CMP #20
+ CMP #14
  BCS fine
  CLRA
  STA comando_display
  STA contatore_display
- BRA fine
 
 scrivi_display:
 ;    else //normale scrittura
@@ -1782,7 +1814,7 @@ scrivi_display:
 ;     else if(contatore_display==35)
 ;      {
 ;      PTGD &=0xf3; //E=0, RS=0;
-;      Display=0xc0;
+;      Display=0xc0; //
 ;      }
 ;     else if(contatore_display<68)
 ;      {
@@ -1846,15 +1878,13 @@ presenta_carattere:
 vedi_d34:
  BCLR 2,_PTGD;//RS
  BSET 3,_PTGD;//E
- LDA #$0c0
- STA Display;// STA SPID
+ LDA #$c0;//comando per seconda riga
+ STA Display;
  BRA increm_contatore
 vedi_d35:
  CMP #35
  BNE vedi_d36
  BCLR 3,_PTGD;//E
- LDA #$0c0;//comando per seconda riga
- STA Display;// STA SPID
  BRA increm_contatore
 vedi_d36:
  CMP #68
@@ -1863,7 +1893,7 @@ vedi_d36:
  AND #1
  BEQ Assegna_carattere
  BSET 2,_PTGD;//RS
- BCLR 3,_PTGD;//E
+ BCLR 3,_PTGD;//E=0
  BRA increm_contatore
 Assegna_carattere:
  BSET 2,_PTGD;//RS
@@ -1904,15 +1934,6 @@ increm_contatore:
  LDA contatore_display
  INCA
  STA contatore_display
- BRA fine
- 
-per_attesa:
- LDA timer_reset_display:1
- SUB #1
- STA timer_reset_display:1
- LDA timer_reset_display
- SBC #0
- STA timer_reset_display  
 fine:
  }
 }
@@ -2110,10 +2131,17 @@ vedi_relais_avviam:
  BEQ spegni_relais_avviam
  LDHX PWM_relais
  STHX _TPM1C3V
+ LDHX #$7fff
+ STHX _TPM1C4V
+ STHX _TPM1C5V
  BRA fine
 spegni_relais_avviam:
  LDHX #24
  STHX _TPM1C3V  
+ LDHX #-1
+ STHX _TPM1C5V
+ LDHX #$7fff
+ STHX _TPM1C4V
 fine:   
  }
 }
@@ -2573,12 +2601,22 @@ per_timer_commuta_presentazione:
  LDA timer_commuta_presentazione
  SBC #0
  STA timer_commuta_presentazione
- BRA fine 
+ BRA per_LED
 reset_timer_commuta_presentazione:
  LDHX #5000
  STHX timer_commuta_presentazione 
 
-fine: 
+per_LED:
+ LDHX #24
+ STHX TPM2C1V;//2us
+ LDA intervento_allarme
+ BEQ spegni_LED_rosso
+ LDHX #$7fff
+ STHX TPM2C0V
+spegni_LED_rosso:
+ LDHX #24
+ STHX TPM2C0V
+fine:
  }
 }
  
@@ -3250,7 +3288,7 @@ fine:
  }
 }
  
-void scrittura_allarme(void)
+void scrittura_allarme_in_eeprom(void)
 {
 asm
  {
@@ -3351,7 +3389,7 @@ asm
  
 ;for(j=0; j<34; j++)
 ; {
-; display[0][j]=*((char*)(&indirizzo+j));
+; display[j]=*((char*)(&indirizzo+j));
 ; }
  LDA #34
  STA j
@@ -3371,27 +3409,21 @@ ripeti:
  }
 }
 
-void presenta_scritta(char *stringa, int offset, char idioma, char lunghezza, char riga,char colonna, char N_caratteri)
+void presenta_scritta(char *stringa, char offset, char idioma, char lunghezza, char riga,char colonna, char N_caratteri)
 {
 unsigned char j, k;
 int indirizzo;
 asm
  { 
-; indirizzo = stringa + offset + idioma*lunghezza*17;
+; indirizzo = stringa + (offset + idioma*lunghezza)*17;
  LDA idioma
  LDX lunghezza
  MUL
+ ADD offset
  LDX #17
  MUL
  STA indirizzo:1
  STX indirizzo
- 
- LDA indirizzo:1
- ADD offset:1
- STA indirizzo:1
- LDA indirizzo
- ADC offset
- STA indirizzo
  
  LDA indirizzo:1
  ADD stringa:1
@@ -3408,11 +3440,14 @@ asm
   
 ;for(j=0; j<N_caratteri; j++)
 ; {
-; display[0][k+j]=*((char*)(&indirizzo+j));
+; if(k+j<34) display[k+j]=*((char*)(&indirizzo+j));
 ; }
- LDA N_caratteri
- STA j
+ CLR j
 ripeti:
+ LDA k
+ CMP #34
+ BCC fine
+ 
  LDA indirizzo:1
  ADD j
  TAX
@@ -3420,13 +3455,17 @@ ripeti:
  ADC #0
  PSHA
  PULH
- LDA -1,X
- LDA k
- ADD j
- TAX
+ LDA 0,X
+ LDX k
  CLRH
- STA @display:-1,X
- DBNZ j,ripeti
+ STA @display,X
+
+ INC k
+ INC j
+ LDA j
+ CMP N_caratteri
+ BCS ripeti
+fine: 
  }
 }
 
@@ -3679,7 +3718,9 @@ salvataggio_terminato:
  BRA fine
 
 per_default_parametri: 
- LDA #32
+ CMP #2
+ BNE fine
+ LDA #48
  STA j
 assegna_parametri:
  CLRH
@@ -3696,10 +3737,9 @@ assegna_parametri:
  STA conta_secondi_attivita:2
  STA conta_secondi_attivita:3
  STA abilita_reset
- STA abilita_reset:1
  JSR calcolo_delle_costanti
  }
-presenta_scritta((char*)&comando_reset,51,0,1,1,0,16);//reset eseguito
+presenta_scritta((char*)&comando_reset,3,0,1,1,0,16);//reset eseguito
 asm
  {
 fine:
@@ -3970,14 +4010,14 @@ if(toggle_func)//lettura e modifica delle funzioni
   else
    {
    funzioni_avanzate=0;
-   if(cursore_menu==20) presenta_scritta((char*)&abilita_avanzate,17,(char)set.lingua,2,1,0,16);
+   if(cursore_menu==20) presenta_scritta((char*)&abilita_avanzate,1,(char)set.lingua,2,1,0,16);
    }
   if((abilita_reset)&&(reset_default==0)&&(cursore_menu==28))
    {
    reset_default=1;
    indirizzo_scrivi_eeprom=0;
    ultimo_indirizzo_scrittura=8160;
-   presenta_scritta((char*)&comando_reset,34,0,1,1,0,16);//reset iniziato
+   presenta_scritta((char*)&comando_reset,2,0,1,1,0,16);//reset iniziato
    }
   }
  else //if(toggle_stop) modifica del valore
@@ -3987,7 +4027,7 @@ if(toggle_func)//lettura e modifica delle funzioni
    case 0:
     {
     if(piu) set.monofase_trifase=1; else if(meno) set.monofase_trifase=0;
-    if(set.monofase_trifase) presenta_scritta((char*)&presenta_monofase_trifase,17,(char)set.lingua,2,1,0,16);
+    if(set.monofase_trifase) presenta_scritta((char*)&presenta_monofase_trifase,1,(char)set.lingua,2,1,0,16);
     else presenta_scritta((char*)&presenta_monofase_trifase,0,(char)set.lingua,2,1,0,16);
     } break;
    case 1:
@@ -4161,7 +4201,7 @@ if(toggle_func)//lettura e modifica delle funzioni
     {
     if(piu) abilita_reset=1; else if(meno) abilita_reset=0;
     if(abilita_reset) presenta_scritta((char*)&comando_reset,0,0,1,1,0,16);
-    else presenta_scritta((char*)&comando_reset,17,0,1,1,0,16);
+    else presenta_scritta((char*)&comando_reset,1,0,1,1,0,16);
     } break;
    }
   }
@@ -4437,59 +4477,59 @@ if(toggle_func==0)//presenta le letture
      {
      case 1://motore spento
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,34,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,2,(char)set.lingua,21,1,0,16);
       } break;
      case 10://I2xT
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,51,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,3,(char)set.lingua,21,1,0,16);
       } break;
      case 11://sovratensione
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,68,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,4,(char)set.lingua,21,1,0,16);
       } break;
      case 12://sottotensione
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,85,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,5,(char)set.lingua,21,1,0,16);
       } break;
      case 13://mandata chiusa
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,102,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,6,(char)set.lingua,21,1,0,16);
       } break;
      case 14://funzionamento a secco
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,119,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,7,(char)set.lingua,21,1,0,16);
       } break;
      case 15://sovratemperatura motore
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,136,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,8,(char)set.lingua,21,1,0,16);
       } break;
      case 20://I2xT
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,204,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,12,(char)set.lingua,21,1,0,16);
       } break;
      case 21://sovratensione
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,221,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,13,(char)set.lingua,21,1,0,16);
       } break;
      case 22://sottotensione
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,238,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,14,(char)set.lingua,21,1,0,16);
       } break;
      case 23://mandata chiusa
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,255,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,15,(char)set.lingua,21,1,0,16);
       } break;
      case 24://funzionamento a secco
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,272,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,16,(char)set.lingua,21,1,0,16);
       } break;
      case 25://sovratemperatura motore
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,289,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,17,(char)set.lingua,21,1,0,16);
       } break;
      case 26://protezione differenziale
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,306,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,18,(char)set.lingua,21,1,0,16);
       } break;
      }
     } 
@@ -4534,75 +4574,75 @@ if(toggle_func==0)//presenta le letture
      {
      case 1://motore spento
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,34,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,2,(char)set.lingua,21,1,0,16);
       } break;
      case 10://I2xT
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,51,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,3,(char)set.lingua,21,1,0,16);
       } break;
      case 11://sovratensione
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,68,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,4,(char)set.lingua,21,1,0,16);
       } break;
      case 12://sottotensione
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,85,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,5,(char)set.lingua,21,1,0,16);
       } break;
      case 13://mandata chiusa
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,102,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,6,(char)set.lingua,21,1,0,16);
       } break;
      case 14://funzionamento a secco
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,119,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,7,(char)set.lingua,21,1,0,16);
       } break;
      case 15://sovratemperatura motore
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,136,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,8,(char)set.lingua,21,1,0,16);
       } break;
      case 17://squilibrio correnti
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,170,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,10,(char)set.lingua,21,1,0,16);
       } break;
      case 18://dissimmetria tensioni
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,187,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,11,(char)set.lingua,21,1,0,16);
       } break;
      case 20://I2xT
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,204,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,12,(char)set.lingua,21,1,0,16);
       } break;
      case 21://sovratensione
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,221,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,13,(char)set.lingua,21,1,0,16);
       } break;
      case 22://sottotensione
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,238,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,14,(char)set.lingua,21,1,0,16);
       } break;
      case 23://mandata chiusa
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,255,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,15,(char)set.lingua,21,1,0,16);
       } break;
      case 24://funzionamento a secco
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,272,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,16,(char)set.lingua,21,1,0,16);
       } break;
      case 25://sovratemperatura motore
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,289,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,17,(char)set.lingua,21,1,0,16);
       } break;
      case 26://protezione differenziale
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,306,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,18,(char)set.lingua,21,1,0,16);
       } break;
      case 27://squilibrio correnti
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,323,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,19,(char)set.lingua,21,1,0,16);
       } break;
      case 28://dissimmetria tensioni
       {
-      presenta_scritta((unsigned char *)&lettura_allarmi,340,(char)set.lingua,21,1,0,16);
+      presenta_scritta((unsigned char *)&lettura_allarmi,20,(char)set.lingua,21,1,0,16);
       } break;
      }
     } 
@@ -4618,16 +4658,6 @@ if(toggle_func==0)//presenta le letture
    }
   asm //LED
    {
-   BSET 2,_PTFD //Led alimentazione
-   BCLR 3,_PTFD //Led ON
-   BCLR 4,_PTFD //Led ON
-   LDA relais_alimentazione
-   BEQ vedi_allarme
-   BSET 3,_PTFD //Led ON
-  vedi_allarme: 
-   LDA intervento_allarme
-   BEQ fine
-   BSET 4,_PTFD //Led allarme
   fine:
    }
   } 
@@ -5154,15 +5184,21 @@ SPI1C2=0x00;
 SPI1BR=0x43;
  
 //-------uscite LED e PWM--------------------
-PTFDD=0x1c;//uscite LED
+PTFDD=0;//uscite LED e relè
 PTFD=0;
 TPM1C2SC=0x08;//uscite relè
 TPM1C3SC=0x08;
+TPM1C4SC=0x08;//uscite LED
+TPM1C5SC=0x08;
 TPM1MOD=1200;//PWM a 10KHz
 TPM1C2V=24;
 TPM1C3V=24;
-TPM2C0SC=0x04;
+TPM1C4V=24;
+TPM1C5V=24;
+TPM2C0SC=0x08;
+TPM2C1SC=0x08;
 TPM2MOD=12000;//PWM a 1KHz
+TPM2C0V=24;//LED rosso
 TPM2C1V=24;//2us
 
 TPM1CNT=0;
@@ -5250,6 +5286,35 @@ I3_rms=0;
 V1_rms=0;
 V2_rms=0;
 V3_rms=0;
+attesa_invio=0;
+intervento_allarme=0;
+relais_alimentazione=0;
+relais_avviamento=0;
+contatore_display=0;
+contatore_AD=0;
+cursore_menu=0;
+funzioni_avanzate=0;
+numero_ingresso=0;
+abilita_reset=0;
+potenza_media=0;
+reattiva_media=0;
+tensione_media=0;
+corrente_media=0;
+picco_corrente_avviamento=0;
+corrente_test=200;//20A
+dissimmetria=0;
+squilibrio=0;
+prima_accensione=1;
+comando_display=1;
+timer_reset_display=100;
+timer_rinfresco_display=30;
+precedente_segnalazione=registrazione.segnalazione;
+indirizzo_scrivi_eeprom=ultimo_indirizzo_scrittura=indirizzo_conta_secondi_attivita;
+
+asm
+ { 
+ CLI//abilita interrupt
+ }
 start=0;
 salita_start=0;
 stop=0;
@@ -5264,50 +5329,15 @@ piu=0;
 salita_piu=0; 
 remoto=0;
 salita_remoto=0;
-attesa_invio=0;
-intervento_allarme=0;
-relais_alimentazione=0;
-relais_avviamento=0;
-contatore_display=0;
-contatore_AD=0;
-cursore_menu=0;
-funzioni_avanzate=0;
-numero_ingresso=0;
-abilita_reset=0;
+timer_rilascio=0;
 reset_default=0;
-potenza_media=0;
-reattiva_media=0;
-tensione_media=0;
-corrente_media=0;
-picco_corrente_avviamento=0;
-corrente_test=200;//20A
-dissimmetria=0;
-squilibrio=0;
-prima_accensione=1;
-comando_display=1;
-timer_reset_display=500;
-timer_rinfresco_display=30;
-precedente_segnalazione=registrazione.segnalazione;
-indirizzo_scrivi_eeprom=ultimo_indirizzo_scrittura=indirizzo_conta_secondi_attivita;
-
-asm
- { 
- CLI//abilita interrupt
- }
 }
-
 
 /***********************************************************************/
 
 void main(void)
 {
-
-
-  
-
 condizioni_iniziali();
-
-
 USB_comm_init();
 
 for(;;)  /* loop forever */
@@ -5315,20 +5345,20 @@ for(;;)  /* loop forever */
  __RESET_WATCHDOG(); /* feeds the dog */
  leggi_conta_secondi_attivita();
  lettura_impostazioni();
- salva_impostazioni();     
- 
+// salva_impostazioni();
+
  lettura_allarme(); //con allarme_in_lettura <335
  trasmissione_misure_istantanee(); //con allarme_in_lettura = 1000
  trasmissione_tarature(); //con allarme_in_lettura == 2000
- 
- scrittura_allarme();
+
+// scrittura_allarme_in_eeprom();
  salva_conta_secondi_attivita();
  programmazione();
  funzione_reset_default();
  misure_medie();
- presenta_stato_motore();
+// presenta_stato_motore();
  marcia_arresto();
- condizioni_di_allarme();    
+// condizioni_di_allarme();
  
  USB_comm_process();
  }
