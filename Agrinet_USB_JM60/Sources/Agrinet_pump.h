@@ -11,5 +11,5 @@ void trasmissione_tarature(void);
 
 // Var esportate all'esterno
 extern unsigned int allarme_in_lettura;
-extern unsigned int buffer_USB[32];
+extern char buffer_USB[32];
 #endif

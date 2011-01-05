@@ -99,7 +99,7 @@ __interrupt void AD_conversion_completeISR(void);
 __interrupt void timer1_overflowISR(void); //timer 100 us per relais
 __interrupt void timer2_overflowISR(void); //1 ms
 __interrupt void SPI1(void);
-__interrupt void USB_status(void);
+//__interrupt void USB_status(void);
 
 void calcolo_tensione_relais(void);
 void lettura_pulsanti(void);
@@ -761,9 +761,9 @@ pronto_alla_risposta,//tramite USB
 cosfi[3];
 
 
-__interrupt void USB_status(void) //vedi Fantuzzi
-{
-}
+//__interrupt void USB_status(void) //vedi Fantuzzi
+//{
+//}
 
 
 void somma_quadrati(unsigned long *somma, int var)
@@ -5148,6 +5148,9 @@ MCGC1=0x00;
 MCGC2=0x37;
 MCGC3=0x43;
 
+
+
+
 //----portA--------
 PTADD=0; //pulsanti ed abilitazione
 PTAD=0;
@@ -5161,7 +5164,7 @@ ADCSC1=0;
 ADCCFG=0x05;
 ADCCVL=0xff;
 ADCCVL=0xff;
-ADCSC1=0x40;
+//fantuzADCSC1=0x40;
 
 //-----portC non usato---------
 PTCDD=0;
@@ -5179,7 +5182,7 @@ asm
  LDA SPI1S
  LDA SPI1D
  }
-SPI1C1=0xd0;//interruzione abilitata
+//fantuzSPI1C1=0xd0;//interruzione abilitata
 SPI1C2=0x00;
 SPI1BR=0x43;
  
@@ -5203,8 +5206,8 @@ TPM2C1V=24;//2us
 
 TPM1CNT=0;
 TPM2CNT=0;
-TPM1SC=0x68;
-TPM2SC=0x68;
+//fantuzTPM1SC=0x68;
+//fantuzTPM2SC=0x68;
 
 //-----portG  per display  G2 = RSneg, G3 = E----
 PTGDD=0x0c;
@@ -5338,12 +5341,16 @@ reset_default=0;
 void main(void)
 {
 condizioni_iniziali();
+SOPT1_COPT=0;
+  
+  _irq_restore(0);
+  
 USB_comm_init();
 
 for(;;)  /* loop forever */
  {
  __RESET_WATCHDOG(); /* feeds the dog */
- leggi_conta_secondi_attivita();
+/* leggi_conta_secondi_attivita();
  lettura_impostazioni();
 // salva_impostazioni();
 
@@ -5358,8 +5365,9 @@ for(;;)  /* loop forever */
  misure_medie();
 // presenta_stato_motore();
  marcia_arresto();
-// condizioni_di_allarme();
+// condizioni_di_allarme();  */
  
  USB_comm_process();
+ cdc_process();
  }
 }

@@ -1184,7 +1184,8 @@ static callback_state_t usb_stm_ctrl0()
  * Assumptions:
  *
  *****************************************************************************/
-interrupt 7 void usb_it_handler(void)
+//interrupt 7 void usb_it_handler(void)
+__interrupt  void usb_it_handler(void)
 {
   hcc_u8 istr;
 
