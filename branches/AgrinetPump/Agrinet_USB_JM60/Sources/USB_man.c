@@ -44,6 +44,7 @@ void StartTimer(word *_timerToStart, word _valToStart){
 }
 
 byte isTimerStopped(word _timerToCheck){
+  return(FALSE);
   return (_timerToCheck == 0xFFFF);
 }
 
@@ -88,10 +89,7 @@ void print(char *s)
 *****************************************************************************/
 void USB_comm_init(void)
 {
-asm
- {
- SEI
- }
+
   usb_cfg_init();
 
   cdc_init();
@@ -102,10 +100,7 @@ asm
 
   srand(122);
  
- asm
- { 
- CLI//abilita interrupt
- }
+ 
 }                                
 
 
@@ -129,24 +124,21 @@ asm
 void USB_PktSend(byte *_toSend, byte _len)
 {
   byte cnt=0, byteToSend, cks=0;
-
-
-  StartTimer(&TimerUSB_1,4);
-    
+  
   byteToSend = FIRST_BYTE_EMPTY;  
   if (_len>0) byteToSend |= 0x01;
   
   
   // Primo Byte
   while(byteToSend != (char)cdc_putch(byteToSend))
-    if (isTimerStopped(TimerUSB_1)) break;  
+    ;  
   cks += byteToSend;
 
   // Byte Length
   if (_len>0){    
     byteToSend = _len;
     while(byteToSend != (char)cdc_putch(byteToSend))
-      if (isTimerStopped(TimerUSB_1)) break;
+      ;
     cks += byteToSend;
   }
   
@@ -154,7 +146,7 @@ void USB_PktSend(byte *_toSend, byte _len)
   // PayLoad
   while (cnt<_len){  
     while(*_toSend != (char)cdc_putch(*_toSend))
-      if (isTimerStopped(TimerUSB_1)) break;
+      ;
     cks += (*_toSend);
     _toSend++;
     cnt++;
@@ -163,9 +155,10 @@ void USB_PktSend(byte *_toSend, byte _len)
   
   // CheckSum
   while(cks != (char)cdc_putch(cks))
-    if (isTimerStopped(TimerUSB_1)) break;
+    ;
   
 }
+   
 
 
 /*****************************************************************************
@@ -385,6 +378,7 @@ void USB_comm_process(void)
   
   
   //USB_SendTuttiInterventi();
+  //print("CIAO MONDO");
   
   
   // finchè c'è qualcosa nel buffer USB
