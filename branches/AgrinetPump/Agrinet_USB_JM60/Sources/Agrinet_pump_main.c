@@ -16,23 +16,19 @@
 //   pressione troppo alta
 //   sensore_pressione  rotto
 
-//24 bytes trasmessi per un complesso di 8K 335 registrazioni
+//16 bytes trasmessi per un complesso di 8K 504 registrazioni
 // 1 byte = tipo intervento  all'indirizzo binario xxxx xxxx xxx0 0000 o xxxx xxxx xxx1 1000
 // 4 bytes = ora_minuto_secondo  xxxxx.xx.xx  (viene registrata come numero totale di secondi di funzionamento)
-// 2 bytes =tensione1
-// 2 bytes =tensione2
-// 2 bytes =tensione3
-// 2 bytes = corrente1 
-// 2 bytes = corrente2 
-// 2 bytes = corrente3 
+// 2 bytes =tensione_media
+// 2 bytes = corrente_media 
 // 2 bytes = potenza  
 // 2 bytes = pressione
 // 1 byte  = cosfi convenzionale =P/(P^2+Q^2)
 // 2 bytes = temperatura
 
 //tipo intervento:
+// 0 OFF senza intervento protezioni     
 // 1 ON 
-// 2 OFF senza intervento protezioni     
 
 //senza arresto 
 // 10 sovracorrente
@@ -104,30 +100,26 @@ __interrupt void SPI1(void);
 void calcolo_tensione_relais(void);
 void lettura_pulsanti(void);
 void comando_del_display(void);
-long media_quadrati_nel_periodo(unsigned long dividendo, int divisore);
-int media_potenza_nel_periodo(long dividendo, int divisore);
+long media_quadrati_nel_periodo(unsigned long dividendo, char divisore);
+int media_potenza_nel_periodo(long dividendo, char divisore);
 void condizioni_iniziali(void);
-void somma_quadrati(unsigned long *somma, int var);
-long somma_potenze(int x, int y);
+void somma_quadrati(unsigned long *somma_pot, int var);
+void somma_potenze(long *somma, int x, int y);
 void calcolo_offset_misure(unsigned long *offset, int misura);
 void calcolo_valor_medio_potenze(long *media_potenza, int potenza); 
 void calcolo_medie_quadrati(unsigned long *media_quad, unsigned long quad);//160ms
-int valore_efficace(unsigned long quad, int costante);
-void lettura_impostazioni(void);
-void salva_conta_secondi_attivita(void);
-void leggi_conta_secondi_attivita(void);
-void salva_impostazioni(void);
-void lettura_allarme(void);//con allarme_in_lettura <335
-void scrittura_allarme_in_eeprom(void);
-char calcolo_del_fattore_di_potenza(long attiva, long reattiva);
+void valore_efficace(int *efficace, unsigned long quad, int costante);
+char calcolo_del_fattore_di_potenza(int attiva, int reattiva);
+char calcolo_del_fattore_di_potenza_monofase(int attiva, int tensione, int corrente);
 void presenta_menu(unsigned char *menu, char idioma, char lunghezza , char riga_inizio);
 void modifica_unsigned(unsigned int *var, unsigned int min, unsigned int max);
 void presenta_unsigned(unsigned int val, char punto, char riga, char colonna, char n_cifre);
 void presenta_scritta(char *stringa, char offset, char idioma, char lunghezza, char riga,char colonna, char N_caratteri);
-void funzione_reset_default(void);
 void calcolo_delle_costanti(void);
 void programmazione(void);
 void misure_medie(void);
+void Nallarme_ora_minuto_secondo(long secondi, char numero);
+void messaggio_allarme(char indentificazione);
 void presenta_stato_motore(void);
 void protezione_termica(void);
 void disinserzione_condensatore_avviamento(void);
@@ -136,33 +128,47 @@ void marcia_arresto(void);
 void trasmissione_misure_istantanee(void); //con allarme_in_lettura = 1000
 void trasmissione_tarature(void);//con allarme_in_lettura == 2000
 
+void salva_reset_default(void);
+void salva_impostazioni(void);
+void salva_allarme_in_eepprom(void);
+void salva_conta_secondi_attivita(void);
+void lettura_impostazioni(void);
+void lettura_allarme_messo_in_buffer_USB(void);//con allarme_in_lettura <totale_indicazioni_fault
+
 void main(void);
 
-#include <hidef.h> /* for EnableInterrupts macro */
-#include "derivative.h" /* include peripheral declarations */
+//#include <hidef.h> /* for EnableInterrupts macro */
+//#include "derivative.h" /* include peripheral declarations */
+#include <MC9S08JM60.h>
 #include "USB_man.h"
-
 
 const unsigned char
 presentazione_iniziale[2][17]={
 "AGRINET PUMP    ",
 "CONTROL V 01    "},
 
-dati_presentati_in_ON[4][2][17]={
-"   V     W     B",//monofase
-"    A   PF    °C",
-"   V     W     B",//monofase alternato
-"    A   PF    °C",
+comandi_da_effettuare[2][2][17]={
+"FUNC: tarature  ",
+"START:avviamento",
 
-"   V     W     B",//trifase 
+"FUNC: functions ",//inglese
+"START: pump ON  "},
+
+dati_presentati_in_ON[4][2][17]={
+"   V,     W    B",//monofase
+' ',' ',' ',' ','A',' ',' ',' ',' ','P','F',' ',' ',' ',223,'C',0,
+"   V,     W    B",//monofase alternato
+' ',' ',' ',' ','A',' ',' ',' ',' ','P','F',' ',' ',' ',223,'C',0,
+
+"   V,     W    B",//trifase 
 "    A    A     A",
-"   C     W     B",//trifase alternato
+' ',' ',' ',223,'C',' ',' ',' ',' ',' ','W',' ',' ',' ',' ','B',0,//trifase alternato
 ".  PF .  PF.  PF"},
 
 lettura_allarmi[2][21][17]={
-"N   ,     .  .  ",// numero allarme=3cifre, ora=5cifre minuto=2cifre secondo=2cifre
-"      ON        ",
+"N:  ,     -  -  ",// numero allarme=2cifre, ora=5cifre minuto=2cifre secondo=2cifre
 "      OFF       ",
+"      ON        ",
 "Sovracorrente ON",
 "Sovratensione ON",
 "Sottotensione ON",
@@ -182,9 +188,9 @@ lettura_allarmi[2][21][17]={
 "Squilibrio   OFF",
 "Dissimmetria OFF",
 
-"N   ,     .  .  ",// numero allarme=3cifre, ora=5cifre minuto=2cifre secondo=2cifre
-"      ON        ",
+"N:  ,     -  -  ",// inglese
 "      OFF       ",
+"      ON        ",
 "OverCurrent   ON",
 "OverVoltage   ON",
 "UnderVoltage  ON",
@@ -211,164 +217,170 @@ presenta_monofase_trifase[2][2][17]={
 "Single Phase    ",
 "Three Phase     "},
 
-comando_reset[4][17]={
+presenta_tipo_start_stop[2][2][17]={
+"  Manuale       ",
+"  Pressione     ",
+
+"  Manual        ",
+"  Pression      "},
+
+comando_reset[2][17]={
 "  Restart?      ",
-" No Restart?    ",
-"Restart Begun   ",
-"Restart Executed"},
+" No Restart?    "},
+
+in_salvataggio[2][17]={
+"    Save        ",
+"    Data        "},
 
 comando_lingua[2][17]={
 "Italic/Italiano ",
 "English/Inglese "},
 
-abilita_avanzate[2][2][17]={
-"  abilitate     ",
-"non abilitate   ",
-
-"  enabled       ",
-"not enabled     "},
-
-menu_principale[2][64][17]={//Menu' principale: elenco delle funzioni di taratura
-"Monofase/Trifase",
-"                ",
-"TensioneNominale",
-"              V ",
-"CorrenteNominale",
-"              A ",
-"LimiteSovraTens.",
-"              % ",
-"LimiteSottoTens.",
-"              % ",
-"SegnalazioneDis-",
-"simetria:     % ",
-"InterventoDissim",
-"metria:       % ",
-"TempoIntervento ",
-"Err.Volt:      s",
-"LimiteSovraCorr.",
-"              % ",
-"SegnalazioneSqui",
-"librio:       % ",
-"InterventoSquili",
-"brio:         % ",
-"TempoIntervento ",
-"Err.Corr:      s",
-"Limite Corrente ",
-"Disp.:        mA",
-"TempoIntervento ",
-"Dispers.:      s",
-"PressioneEmergen",
-"za:          Bar",
-"PressioneRiaccen",
-"sione:       Bar",
-"PressioneSpegni-",
-"mento:       Bar",
-"Ritardo Ripristi",
-"no Em:         s",
-"Minima Potenza  ",
+menu_principale[2][68][17]={//Menu' principale: elenco delle funzioni di taratura
+"1)Tensione Nomin",//0
+"ale:           V",
+"2)Corrente Nomin",//1
+"ale:           A",
+"3)Limite Sovra  ",//2
+"Tensione:      %",
+"4)Limite Sotto  ",//3
+"Tensione:      %",
+"5)Segnalazione  ",//4
+"Dissimetr:     %",
+"6)Intervento per",//5
+"Dissimetr:     %",
+"7)TempoInterven-",//6
+"to Err.Volt:   s",
+"8)Limite Sovra  ",//7
+"Corrente:      %",
+"9)Segnalazione  ",//8
+"Squilibrio:    %",
+"10)Intervento   ",//9
+"Squilibrio:    %",
+"11)Tempo Interv-",//10
+"entoErr.Amp:   s",
+"12)Limite corren",//11
+"te Disp.:     mA",
+"13)Tempo Interv-",//12
+"ento Disp.:    s",
+"14)Pressione Em-",//13
+"ergenza:     Bar",
+"15)Pressione Ri-",//14
+"accens.:     Bar",
+"16)Pressione Spe",//15
+"gnimento:    Bar",
+"17)Ritardo Ripri",//16
+"stino Em:      s",
+"18)MinimaPotenza",//17
 "Chiusa:        W",
-"RitardoStopMand.",
-"Chiusa:        s",
-"Minima Potenza  ",
+"19)Ritardo Stop ",//18
+"Man.Chiusa:    s",
+"20)MinimaPotenza",//19
 "Secco:         W",
-"RitardoStopFunz.",
+"21)Ritardo Stop ",//20
+"Funz.Secco:    s",
+"22)Ritardo Riacc",//21
 "Secco:         s",
-"RitardoRiaccens.",
-"Secco:         s",
-"FunzioniAvanzate",
+"23)Funzioni     ",//22
+"Avanzate:       ",
+"24)Numero Serie:",//23 sotto chiave
 "                ",
-"Costante Tempo  ",//sotto chiave
+"25)Mono/Tri-fase",//24
+"                ",
+"26)CostanteTempo",//25
 "Rscaldam:      s",
-"Portata Sensore ",
-"Pressione      B",
-"Scala Sensore   ",
-"Temper:     mV/C",
-"Temperatura     ",
-"Attuale:      °C",
-"LimiteIntervento",
-"Temper.:      °C",
-"Scala Sensore I ",
-"diff:      mV/mA",
-"Numero Serie:   ",
+"27)PortataSensor",//26
+"Pressione:     B",
+"28)Scala Sensore",//27
+'T','e','m','p','e','r',':',' ',' ',' ',' ','m','V','/',223,'C',0,
+"29)Temperatura  ",//28
+'A','t','t','u','a','l','e',':',' ',' ',' ',' ',' ',' ',223,'C',0,
+"30)Limite Interv",//29
+'T','e','m','p','e','r','.',':',' ',' ',' ',' ',' ',' ',223,'C',0,
+"31)Scala Sensore",//30
+"I diff:    mA/mA",
+"32)ModoStartStop",//31
 "                ",
-"Dati Costruttore",
+"33)Dati Costrutt",//32
 "                ",
+"34)Presenta     ",//33
+"elenco Allarmi  ",
 
-"Monofase/Trifase",//inglese
+"1)Nomin. voltage",//0 inglese
+"               V",
+"2)Nomin. Current",//1
+"               A",
+"3)Over Voltage  ",//2
+"Limit:         %",
+"4)Under Voltage ",//3
+"Limit:         %",
+"5)Diss. Voltage ",//4
+"Alarm:         %",
+"6)Diss. Voltage ",//5
+"stop           %",
+"7)Error Voltage ",//6
+"time:          s",
+"8)Over Current  ",//7
+"Limit:         %",
+"9)Unbalance Curr",//8
+"Alarm:         %",
+"10)Unbalance Cur",//9
+"Stop:          %",
+"11)Error Current",//10
+"time:          s",
+"12)Leakage Curr.",//11
+"limit:        mA",
+"13)Leakage Curr.",//12
+"time stop:     s",
+"14)Max pressure ",//13
+"Alarm:       Bar",
+"15)ReStart Press",//14
+"sure:        Bar",
+"16)Max Pressure ",//15
+"Stop:        Bar",
+"17)ReStart delay",//16
+"               s",
+"18)MinFlow Power",//17
+"stop:          W",
+"19)MinFlow Power",//18
+"stop delay:    s",
+"20)Min Power dry",//19
+"working:       W",
+"21)Stop delay   ",//20
+"dry work:      s",
+"22)ReStart delay",//21
+"dry work       s",
+"23)Advanced     ",//22
+"Functions       ",
+"24)Serial number",//23 sotto chiave
 "                ",
-"TensioneNominale",
-"              V ",
-"CorrenteNominale",
-"              A ",
-"LimiteSovraTens.",
-"              % ",
-"LimiteSottoTens.",
-"              % ",
-"SegnalazioneDis-",
-"simetria:     % ",
-"InterventoDissim",
-"metria:       % ",
-"TempoIntervento ",
-"Err.Volt:      s",
-"LimiteSovraCorr.",
-"              % ",
-"SegnalazioneSqui",
-"librio:       % ",
-"InterventoSquili",
-"brio:         % ",
-"TempoIntervento ",
-"Err.Corr:      s",
-"Limite Corrente ",
-"Disp.:        mA",
-"TempoIntervento ",
-"Dispers.:      s",
-"PressioneEmergen",
-"za:          Bar",
-"PressioneRiaccen",
-"sione:       Bar",
-"PressioneSpegni-",
-"mento:       Bar",
-"Ritardo Ripristi",
-"no Em:         s",
-"Minima Potenza  ",
-"Chiusa:        W",
-"RitardoStopMand.",
-"Chiusa:        s",
-"Minima Potenza  ",
-"Secco:         W",
-"RitardoStopFunz.",
-"Secco:         s",
-"RitardoRiaccens.",
-"Secco:         s",
-"FunzioniAvanzate",
+"25)Single/Three ",//24
+"phase           ",
+"26)K temp sensor",//25
+"               s",
+"27)Pressure     ",//26
+"Range:         B",
+"28)Range sensor ",//27
+'T','e','m','p','e','r',':',' ',' ',' ',' ','m','V','/',223,'C',0,
+"29)Temperature  ",//28
+'A','c','t','u','a','l',' ',':',' ',' ',' ',' ',' ',' ',223,'C',0,
+"30)Stop Limit   ",//29
+'T','e','m','p','e','r','.',':',' ',' ',' ',' ',' ',' ',223,'C',0,
+"31)Id range:    ",//30
+"           mA/mA",
+"32)StartStopMode",//31
 "                ",
-"Costante Tempo  ",//sotto chiave
-"Rscaldam:      s",
-"Portata Sensore ",
-"Pressione      B",
-"Scala Sensore   ",
-"Temper:     mV/C",
-"Temperatura     ",
-"Attuale:      °C",
-"LimiteIntervento",
-"Temper.:      °C",
-"Scala Sensore I ",
-"diff:      mV/mA",
-"Numero Serie:   ",
-"                ",
-"Dati Costruttore",
+"33)Constructor  ",//32
+"data            ", 
+"34)Alarm History",//33
 "                "};
 
-const char comando_AD[33]={
-0x40,0x41,0x42,0x43,0x44,
-0x40,0x41,0x42,0x43,0x44,
-0x45,
-0x40,0x41,0x42,0x43,0x44,
-0x40,0x41,0x42,0x43,0x44,
-0x46,
-0x40,0x41,0x42,0x43,0x44,
-0x40,0x41,0x42,0x43,0x44,
-0x47},
+const char comando_AD[23]={
+0x42,0x43,0x44,0x40,0x41,0x44,
+0x42,0x43,0x44,0x40,0x41,0x44,
+0x42,0x43,0x45,0x40,0x41,0x46,
+0x42,0x43,0x47,0x40,0x41},
+filtro_pulsanti=21,
 prepara[7]={0x01,0x02,0x06,0x0c,0x14,0x3c,0x01};
 
 const int
@@ -377,14 +389,17 @@ fattore_portata=1966,//16*.15/5*4096 DAC portata
 durata_avviamento=4000, inizio_lettura_I_avviamento=3900,
 tempo_eccitazione_relais=500,//.5s
 chiave_ingresso=123,
-indirizzo_numero_serie=8040,
-indirizzo_conta_secondi_attivita=8136,
+totale_indicazioni_fault=504,//totale delle registrazioni salvate
+primo_indirizzo_funzioni=8064,
+indirizzo_conta_ore=8130,//salva motore_on, numero_segnalazione, conta_ore
+ultimo_indirizzo_funzioni=8160,
+disturbo_I_pos=54,
+disturbo_I_neg=-54,
 
 /*
 organizzazione della eeprom
 0-8039 salvataggio degli allarmi
-8040-8103 dati di funzionamento
-8136-8168 salvataggio dei secondi di attività
+8064-8160 dati di funzionamento
 */
 
 dati_di_fabbrica[48]={
@@ -407,7 +422,7 @@ dati_di_fabbrica[48]={
 100,  //limite_intervento_temper_motore,//°C
 100,  //scala_corrente_differenziale  mA in /mA out
 300,  //limite_corrente_differenziale,//mA
-20,   //ritardo_intervento_differenziale,//ms
+30,   //ritardo_intervento_differenziale,//ms
 10,   //ritardo_funzionamento_dopo_emergenza,//s
 160,  //portata_sensore_pressione BAR*10
 100,  //limite_intervento_pressione Bar*10
@@ -422,8 +437,9 @@ dati_di_fabbrica[48]={
 1,    //lingua
 20,   //temperatura_ambiente
 0,    //motore_on
-0,    //numero_segnalazione;//31
-0,0,0,0,0,0,0,0,0,0,0,0,0 //riserva[13]
+0,    //numero_segnalazione
+0,0,  //conta_ore[2] //34  
+0,0,0,0,0,0,0,0,0,0,0 //riserva[11]
 },
 
 limiti_inferiori[48]={
@@ -446,7 +462,7 @@ limiti_inferiori[48]={
 70,   //limite_intervento_temper_motore,//°C
 1,    //scala_corrente_differenziale  mA in /mA out
 10,   //limite_corrente_differenziale,//mA
-5,    //ritardo_intervento_differenziale,//ms
+20,   //ritardo_intervento_differenziale,//ms
 2,    //ritardo_funzionamento_dopo_emergenza,//s
 40,   //portata_sensore_pressione BAR*10
 40,   //limite_intervento_pressione Bar*10
@@ -461,8 +477,9 @@ limiti_inferiori[48]={
 0,    //lingua
 0,    //temperatura_ambiente
 0,    //motore_on
-0,    //numero_segnalazione;//31
-0,0,0,0,0,0,0,0,0,0,0,0,0 //riserva[13]
+0,    //numero_segnalazione
+0,0,  //conta_ore[2]   
+0,0,0,0,0,0,0,0,0,0,0 //riserva[11]
 },
 
 limiti_superiori[48]={
@@ -485,7 +502,7 @@ limiti_superiori[48]={
 130,  //limite_intervento_temper_motore,//°C
 250,  //scala_corrente_differenziale  mA in /mA out
 500,  //limite_corrente_differenziale,//mA
-100,  //ritardo_intervento_differenziale,//ms
+200,  //ritardo_intervento_differenziale,//ms
 120,  //ritardo_funzionamento_dopo_emergenza,//s
 500,  //portata_sensore_pressione BAR*10
 450,  //limite_intervento_pressione Bar*10
@@ -498,29 +515,30 @@ limiti_superiori[48]={
 400,  //pressione_accensione BAR*10
 440,  //pressione_spegnimento BAR*10
 1,    //lingua
-50,   //temperatura_ambiente
+50,   //temperatura_ambiente //32
 1,    //motore_on
-334,  //numero_segnalazione;//31
-0,0,0,0,0,0,0,0,0,0,0,0,0 //riserva[13]
+503,  //numero_segnalazione
+65535,65535,  //conta_ore[2]   
+0,0,0,0,0,0,0,0,0,0,0 //riserva[11]
 };
 
 struct
 {
 int //dai di funzionamento a partire dall'indirizzo 8040  della eeprom
 numero_serie, //0
-monofase_trifase,
-tensione_nominale,
-limite_sovratensione,
-limite_sottotensione,
-limite_segnalazione_dissimmetria,
-limite_intervento_dissimmetria,
-timeout_protezione_tensione,
-corrente_nominale,
-limite_sovracorrente,
-limite_segnalazione_squilibrio,
-limite_intervento_squilibrio,
-timeout_protezione_squilibrio,
-costante_tau_salita_temperatura,
+monofase_trifase,//0-1
+tensione_nominale,//V
+limite_sovratensione,//%
+limite_sottotensione,//%
+limite_segnalazione_dissimmetria,//%
+limite_intervento_dissimmetria,//%
+timeout_protezione_tensione,//s
+corrente_nominale,//A*10
+limite_sovracorrente,//%
+limite_segnalazione_squilibrio,//%
+limite_intervento_squilibrio,//%
+timeout_protezione_squilibrio,//s
+costante_tau_salita_temperatura,//s
 taratura_temperatura_ambiente,//da modificare per la taratura
 scala_temperatura_motore,//mV/°C
 limite_intervento_temper_motore,//°C
@@ -528,21 +546,22 @@ scala_corrente_differenziale, //mA in /mA out
 limite_corrente_differenziale,//mA
 ritardo_intervento_differenziale,//ms
 ritardo_funzionamento_dopo_emergenza,//s
-portata_sensore_pressione,
-limite_intervento_pressione,
-potenza_minima_mandata_chiusa,
+portata_sensore_pressione,//Bar*10
+limite_intervento_pressione,//Bar*10
+potenza_minima_mandata_chiusa,//W
 ritardo_stop_mandata_chiusa, //s
 potenza_minima_funz_secco, //W
 ritardo_stop_funzionemento_a_secco, //s
 ritardo_riaccensione_a_secco,//s
 modo_start_stop,//remoto o pressione
-pressione_accensione,
-pressione_spegnimento,
-lingua,
-temperatura_ambiente,
-motore_on,
-numero_segnalazione,
-riserva[13];
+pressione_accensione,//Bar*10
+pressione_spegnimento,//Bar*10
+lingua,//0-1
+temperatura_ambiente,//°C
+motore_on,//0-1         
+numero_segnalazione,//0-503
+conta_ore[2],
+riserva[11];
 }set;
 
 struct
@@ -550,8 +569,21 @@ struct
 int //ingressi analogici
 I1letta,//A*.004*5/.512* 4096/5 = A*32
 I3letta,//A*.004*5/.512* 4096/5 = A*32
-V12letta,//V* 33/680/6 /2 *4096/5 = V*3.313
 V13letta,//V* 33/680/6 /2 *4096/5 = V*3.313
+V12letta,//V* 33/680/6 /2 *4096/5 = V*3.313
+Idletta,//corrente differenziale
+sensore_pressione,//V*4096/5 = mA*.15*4096/5 = mA*122.88
+temperatura_letta,
+tensione_15V; //V*4.7/(33+4.7) *4096/5 = V*102
+}DAC0;
+
+struct
+{
+int //ingressi analogici
+I1letta,//A*.004*5/.512* 4096/5 = A*32
+I3letta,//A*.004*5/.512* 4096/5 = A*32
+V13letta,//V* 33/680/6 /2 *4096/5 = V*3.313
+V12letta,//V* 33/680/6 /2 *4096/5 = V*3.313
 Idletta,//corrente differenziale
 sensore_pressione,//V*4096/5 = mA*.15*4096/5 = mA*122.88
 temperatura_letta,
@@ -562,14 +594,29 @@ char
 display[34],
 cifre[16], 
 buffer_USB[32],//contiene i 24 bytes degli errori
-timer_reset_display,
 cursore_menu,
 funzioni_avanzate,
-comando_display,
+comando_display;
+
+unsigned char
+timer_lampeggio_LED_emergenza,
+timer_1min,
+timer_1s,
+timer_20ms,
+timer_mandata_chiusa,
+timer_attesa_secco,
+timer_attesa_tensione,
+timer_attesa_squilibrio,
+timer_reset_display,
+timer_lampeggio,
+timer_rinfresco_display,
+timer_reset,//attesa per esecuzione reset della eeprom
+tot_misure,
+Tot_misure,
 contatore_display,
 contatore_AD;
 
-char
+unsigned char
 start,
 salita_start,
 stop,
@@ -584,9 +631,9 @@ piu,
 salita_piu, 
 remoto,
 salita_remoto,
-intervento_allarme,
 prima_accensione,
 attesa_invio,
+alternanza_presentazione,
 relais_alimentazione,
 relais_avviamento,
 precedente_segnalazione;
@@ -598,25 +645,15 @@ V12,//V* 33/680/6 /2 *4096/5 = V*3.313
 V13,//V* 33/680/6 /2 *4096/5 = V*3.313
 Id,//corrente differenziale
 V1, V2, V3,//V*3.313 * 3
-I2,
-tot_misure;
+I2;
 
 unsigned int //timer
 timer_eccitazione_relais,
-timer_rinfresco_display,
 timer_riavviamento,
-timer_attesa_squilibrio,
-timer_attesa_tensione,
-timer_mandata_chiusa,
-timer_attesa_secco,
 timer_attesa_differenziale,
 timer_commuta_presentazione,
 timer_aggiorna_misure,
 timer_avviamento_monofase,
-timer_lampeggio,
-timer_20ms,
-timer_1s,
-timer_10min,
 timer_inc_dec,
 timer_piu_meno,
 timer_rilascio;//dei pulsanti start e stop
@@ -624,14 +661,15 @@ timer_rilascio;//dei pulsanti start e stop
 unsigned long //offset delle letture
 offset_I1letta,
 offset_I3letta,
-offset_V12letta,
 offset_V13letta,
+offset_V12letta,
 offset_Idletta;
 
 long //letture sommate
 conta_secondi_attivita,
 delta_T,//sovra_temperatura calcolata
 quad_Id,
+somma_quad_Id,
 somma_quad_I1,
 somma_quad_I2,
 somma_quad_I3,
@@ -644,6 +682,12 @@ somma_potenzaI3xV3,
 somma_reattivaI1xV23,
 somma_reattivaI2xV31,
 somma_reattivaI3xV12,
+Somma_potenzaI1xV1,
+Somma_potenzaI2xV2,
+Somma_potenzaI3xV3,
+Somma_reattivaI1xV23,
+Somma_reattivaI2xV31,
+Somma_reattivaI3xV12,
 quad_I1,
 quad_I2,
 quad_I3,
@@ -695,7 +739,7 @@ squilibrio;
 
 struct//dati buffer allarmi
 {
-char segnalazione;//tipo intervento:
+char segnalazione_;//tipo intervento:
              // 1 ON 
              // 2 OFF senza intervento protezioni     
 
@@ -722,43 +766,49 @@ char segnalazione;//tipo intervento:
              // 28 dissimmetria delle tensioni
 unsigned long ora_minuto_secondo;
 int 
-tensione[3],
-corrente[3],
-potenza,
-pressione;
-char cosfi;
-int temperatura;
+tensione_,
+corrente_,
+potenza_,
+pressione_;
+char cosfi_;
+int temperatura_;
 }registrazione;
 
 unsigned int
 indirizzo_scrivi_eeprom,//0-8192 indirizza il byte in fase di scrittura
-indirizzo_leggi_eeprom,//0-8192 indirizza il byte in fase di lettura
+contatore_leggi_eeprom,//0-8192 indirizza il byte in fase di lettura
+ultimo_dato_in_lettura,//in bytes
 ultimo_indirizzo_scrittura,//in bytes
 primo_indirizzo_lettura,//in bytes  mettere primo_indirizzo<ultimo_indirizzo e leggi_eeprom=1;
-ultimo_indirizzo_lettura,//in bytes
 buffer_eeprom[48];
 
 unsigned char //eeprom
 scrivi_eeprom,
-salvataggio_in_corso,
 leggi_eeprom,
-leggi_impostazioni,
+eeprom_impegnata,
+
+reset_default,
+salvataggio_funzioni, //!=0 solo durante il salvataggio delle funzioni o reset eeprom
+salvataggio_allarme,
 salva_conta_secondi,
-leggi_conta_secondi,
+
+lunghezza_salvataggio,//numero bytes da salvare 0-32
+leggi_impostazioni,
+indirizzo_buffer_eeprom,
 conta_dati_scrittura_eeprom;
 
 unsigned int
 fattore_I2xT,
+fattore_Id,
 sovraccarico_moderato, sovraccarico,
 precedente_lettura_allarme,
 numero_ingresso,
 allarme_in_lettura; //variabile scritta tramite USB
 
 unsigned char
-reset_default,
+cosfi[4],
 abilita_reset,
-pronto_alla_risposta,//tramite USB
-cosfi[3];
+pronto_alla_risposta;//tramite USB
 
 
 //__interrupt void USB_status(void) //vedi Fantuzzi
@@ -838,12 +888,22 @@ al_quadrato:
  }
 }
 
-long somma_potenze(int x, int y)
+void somma_potenze(long *somma_pot, int x, int y)
 {
 char segno;
 long prod, somma;
 asm
  {
+ LDHX somma_pot
+ LDA 0,X
+ STA somma
+ LDA 1,X
+ STA somma:1
+ LDA 2,X
+ STA somma:2
+ LDA 3,X
+ STA somma:3
+
  CLR segno
  LDA x
  BPL segno_di_y
@@ -887,14 +947,17 @@ al_prodotto:
  TXA
  ADC prod:1
  STA prod:1
+ CLR prod
+ ROL prod
  LDA x
- LDA y
+ LDX y
  MUL
  ADD prod:1
  STA prod:1
  TXA
- ADC #0
+ ADC prod
  STA prod
+ 
  LDA segno
  BNE per_sottrazione
  LDA somma:3
@@ -923,9 +986,18 @@ per_sottrazione:
  LDA somma
  SBC prod
  STA somma
+
 fine: 
+ LDHX somma_pot
+ LDA somma
+ STA 0,X
+ LDA somma:1
+ STA 1,X
+ LDA somma:2
+ STA 2,X
+ LDA somma:3
+ STA 3,X
  }
-return somma; 
 }
 
 void calcolo_offset_misure(unsigned long *offset, int misura)
@@ -1013,6 +1085,9 @@ per_delta:
  LDA k
  SBC j
  STA delta
+ ROL delta:2 
+ ROL delta:1 
+ ROL delta 
  ROL delta:2 
  ROL delta:1 
  ROL delta 
@@ -1108,10 +1183,10 @@ asm
  }
 }
 
-int valore_efficace(unsigned long quad, int costante)
+void valore_efficace(int *efficace, unsigned long quad, int costante)
 {
 long prod;
-unsigned int radice, fattore;
+int radice, fattore;
 char j;
 radice=0;
 asm
@@ -1236,47 +1311,59 @@ alla_rotazione:
  ROR fattore:1
  DBNZ j,al_quadrato_trag
 fine: 
+ LDHX efficace
+ LDA radice
+ STA 0,X
+ LDA radice:1
+ STA 1,X
  }
-return radice; 
 }
 
-long media_quadrati_nel_periodo(unsigned long dividendo, int divisore)
+long media_quadrati_nel_periodo(unsigned long dividendo, char divisore)
 {
-char j, k;
 asm
  {
- CLR k
- LDA #25
- STA j
-ripeti_diff:
+ CLRH
+ LDX divisore
  LDA dividendo
- SUB divisore:1
- TAX
- LDA k
- SBC divisore
- BCS per_scorrimenti
- STA k
- STX dividendo
-per_scorrimenti:
- ROL dividendo:3 
- ROL dividendo:2 
- ROL dividendo:1 
- ROL dividendo:0
- ROL k 
- DBNZ j,ripeti_diff
- COM dividendo:3 
- COM dividendo:2 
- COM dividendo:1 
- CLR dividendo
+ DIV
+ STA dividendo
+ LDA dividendo:1
+ DIV
+ STA dividendo:1
+ LDA dividendo:2
+ DIV
+ STA dividendo:2
+ LDA dividendo:3
+ DIV
+ STA dividendo:3
+//diviso 4
+ LSR dividendo
+ ROR dividendo:1
+ ROR dividendo:2
+ ROR dividendo:3
+ LSR dividendo
+ ROR dividendo:1
+ ROR dividendo:2
+ ROR dividendo:3
+ LSR dividendo
+ ROR dividendo:1
+ ROR dividendo:2
+ ROR dividendo:3
+ LSR dividendo
+ ROR dividendo:1
+ ROR dividendo:2
+ ROR dividendo:3
  }
 return dividendo; 
 }
 
-int media_potenza_nel_periodo(long dividendo, int divisore)//W
+const int tremila205=3205;
+int media_potenza_nel_periodo(long dividendo, char divisore)//W
 {
-//potenza = A*.004*5/.512* 4096/5 * V*33/680/6 /2 *4096/5 *3 = V*A*318 
-//potenza (W) = potenza/318 = potenza*206>>16
-char j, segno;
+//A*.00432*5/.512* 4096/5  *  V*3*33/680/6 /2 *4096/5 / (correzione=1.05) =  W * 327 *16
+//potenza (W) = potenza*3205>>24
+char segno, prod[5];
 int risultato;
 asm
  {
@@ -1289,66 +1376,88 @@ asm
  COM dividendo:1 
  COM dividendo
 al_prodotto: 
- LDA dividendo:3
- LDX #206
+ LDA dividendo:3//3x0
+ LDX tremila205
  MUL
- STX dividendo:3
- LDA dividendo:2
- LDX #206
+ STA prod:4
+ STX prod:3
+ LDA dividendo:2 //2x1
+ LDX tremila205:1
  MUL
- ADD dividendo:3
- STA dividendo:3
+ ADD prod:4
+ STA prod:4
  TXA
- ADC #0
- STA dividendo:2
- LDA dividendo:1
- LDX #206
+ ADC prod:3
+ STA prod:3
+ CLR prod:2
+ ROL prod:2
+ LDA dividendo:2 //2x0
+ LDX tremila205
  MUL
- ADD dividendo:2
- STA dividendo:2
+ ADD prod:3
+ STA prod:3
  TXA
- ADC #0
- STA dividendo:1
- LDA dividendo
- LDX #206
+ ADC prod:2
+ STA prod:2
+ LDA dividendo:1 //1x1
+ LDX tremila205:1
  MUL
- ADD dividendo:1
- STA dividendo:1
+ ADD prod:3
+ STA prod:3
  TXA
- ADC #0
- STA dividendo
+ ADC prod:2
+ STA prod:2
+ CLR prod:1
+ ROL prod:1
+ LDA dividendo:1 //1x0
+ LDX tremila205
+ MUL
+ ADD prod:2
+ STA prod:2
+ TXA
+ ADC prod:1
+ STA prod:1
+ LDA dividendo   //0x1
+ LDX tremila205:1
+ MUL
+ ADD prod:2
+ STA prod:2
+ TXA
+ ADC prod:1
+ STA prod:1
+ CLR prod
+ ROL prod
+ LDA dividendo   //0x0
+ LDX tremila205
+ MUL
+ ADD prod:1
+ STA prod:1
+ TXA
+ ADC prod
+ STA prod
 
- LDA dividendo:2
- STA dividendo:3
- LDA dividendo:1
- STA dividendo:2
- LDA dividendo
- STA dividendo:1
- CLR dividendo
+ CLRH
+ LDX divisore
+ LDA prod
+ DIV
+ STA prod
+ LDA prod:1
+ DIV
+ STA prod:1
+ LDA prod:2
+ DIV
+ STA prod:2
 
- LDA #17
- STA j
-ripeti_diff:
- LDA dividendo:1
- SUB divisore:1
- TAX
- LDA dividendo
- SBC divisore
- BCS per_scorrimenti
- STA dividendo
- STX dividendo:1
-per_scorrimenti:
- ROL dividendo:3 
- ROL dividendo:2 
- ROL dividendo:1 
- ROL dividendo:0
- DBNZ j,ripeti_diff
  LDA segno
- BNE fine 
- COM dividendo:3 
- COM dividendo:2
+ BEQ fine
+ CLRA
+ SUB prod:2
+ STA prod:2
+ CLRA
+ SBC prod:1
+ STA prod:1
 fine: 
- LDHX dividendo:2
+ LDHX prod:1
  STHX risultato 
  }
 return risultato; 
@@ -1356,7 +1465,7 @@ return risultato;
 
 __interrupt void AD_conversion_completeISR(void)
 {
-int k, V23, V31;
+int k;
 asm
  {
  SEI
@@ -1364,25 +1473,29 @@ asm
  LDX contatore_AD
  LDA @comando_AD,X
  AND #$07
+ LSLA
  TAX
  LDA ADCRL
- STA @DAC.I1letta:1,X ;//letture analogiche
+ ADD @DAC0:1,X ;//letture analogiche
+ STA @DAC0:1,X
  LDA ADCRH
- STA @DAC.I1letta,X
- CPX #4
- BEQ calcolo_potenze
- CPX #9
- BEQ calcolo_potenze
- CPX #15
- BEQ calcolo_potenze
- CPX #20
+ ADC @DAC0,X
+ STA @DAC0,X
+ 
+ LDA contatore_AD
+ CMP #22
  BNE comando_di_conversione
-calcolo_potenze:
- LDA tot_misure:1
- ADD #1
- STA tot_misure:1
+
+ LDHX #16
+cancellazione: 
+ LDA @DAC0:-1,X
+ STA @DAC:-1,X
+ CLRA
+ STA @DAC0:-1,X
+ DBNZX cancellazione
+
  LDA tot_misure
- ADC #0
+ INCA
  STA tot_misure
 //calcolo dell'offset
  }
@@ -1393,6 +1506,13 @@ calcolo_offset_misure((unsigned long*)&offset_V13letta, DAC.V13letta);
 calcolo_offset_misure((unsigned long*)&offset_Idletta, DAC.Idletta);
 asm
  { 
+ LDA DAC.Idletta:1
+ SUB offset_Idletta:1
+ STA Id:1
+ LDA DAC.Idletta
+ SBC offset_Idletta
+ STA Id
+
  LDA DAC.I1letta:1
  SUB offset_I1letta:1
  STA I1:1
@@ -1400,6 +1520,20 @@ asm
  SBC offset_I1letta
  STA I1
 
+ LDHX I1
+ BMI elimina_disturbo_neg
+ CPHX disturbo_I_pos
+ BCC vedi_I3
+ LDHX #0
+ STHX I1
+ BRA vedi_I3
+elimina_disturbo_neg:
+ CPHX disturbo_I_neg
+ BCS vedi_I3
+ LDHX #0
+ STHX I1
+
+vedi_I3: 
  LDA DAC.I3letta:1
  SUB offset_I3letta:1
  STA I3:1
@@ -1407,6 +1541,20 @@ asm
  SBC offset_I3letta
  STA I3
 
+ LDHX I3
+ BMI Elimina_disturbo_neg
+ CPHX disturbo_I_pos
+ BCC vedi_V12
+ LDHX #0
+ STHX I3
+ BRA vedi_V12
+Elimina_disturbo_neg:
+ CPHX disturbo_I_neg
+ BCS vedi_V12
+ LDHX #0
+ STHX I3
+
+vedi_V12:
  LDA DAC.V12letta:1
  SUB offset_V12letta:1
  STA V12:1
@@ -1421,19 +1569,15 @@ asm
  SBC offset_V13letta
  STA V13
 
- LDA DAC.Idletta:1
- SUB offset_Idletta:1
- STA Id:1
- LDA DAC.Idletta
- SBC offset_Idletta
- STA Id
-
 //tensioni di fase 
 ;V1 = V12+V13  
-;V31 = -V13; 
-;V23 =V21-V31 = -V12+V13
-;V2 = V21+V23 = -V12+V23 = -2*V12+V13;  
-;V3 = V31+V32 = -V13-V23 = -2*V13+V12;
+;V2 = V21+V23
+;V3 = V31+V32
+
+;V32 =V31-V21 = V12-V13
+;V23 =V21-V31 = V13-V12
+;V2 =-V12-V32 = -2*V12+V13;
+;V3 =-V13+V32 = -2*V13+V12
 ;I2 = -I1-I3;
  
  LDA I1:1
@@ -1456,20 +1600,6 @@ asm
  ADC V13
  STA V1
  
- CLRA
- SUB V13:1
- STA V31:1
- CLRA
- SBC V13
- STA V31
- 
- LDA V13:1
- SUB V12:1
- STA V23:1
- LDA V13
- SBC V12
- STA V23
- 
  LDHX V12
  STHX k
  LSL k:1
@@ -1480,7 +1610,7 @@ asm
  LDA V13
  SBC k
  STA V2
- 
+
  LDHX V13
  STHX k
  LSL k:1
@@ -1491,40 +1621,8 @@ asm
  LDA V12
  SBC k
  STA V3
- 
- LDA Id
- BPL al_quadrato_Id
- CLRA
- SUB Id:1
- STA Id:1
- CLRA
- SBC Id
- STA Id
-al_quadrato_Id: 
- LDA Id:1
- TAX
- MUL
- STA quad_Id:3
- STX quad_Id:2
- LDA Id:1
- LDX Id
- MUL
- LSLA
- ROLX
- ADD quad_Id:2
- STA quad_Id:2
- TXA
- ADC #0
- STA quad_Id:1
- LDA Id
- TAX
- MUL
- ADD quad_Id:1
- STA quad_Id:1
- TXA
- ADC #0
- STA quad_Id
  }
+somma_quadrati((unsigned long*)&somma_quad_Id,Id);
 somma_quadrati((unsigned long*)&somma_quad_I1,I1);
 somma_quadrati((unsigned long*)&somma_quad_I2,I2);
 somma_quadrati((unsigned long*)&somma_quad_I3,I3);
@@ -1532,23 +1630,23 @@ somma_quadrati((unsigned long*)&somma_quad_V1,V1);
 somma_quadrati((unsigned long*)&somma_quad_V2,V2);
 somma_quadrati((unsigned long*)&somma_quad_V3,V3);
 
-somma_potenzaI1xV1=somma_potenze(I1,V1);
-somma_potenzaI2xV2=somma_potenze(I2,V2);
-somma_potenzaI3xV3=somma_potenze(I3,V3);
-somma_reattivaI1xV23=somma_potenze(I1,V23);
-somma_reattivaI2xV31=somma_potenze(I2,V31);
-somma_reattivaI3xV12=somma_potenze(I3,V12);
+somma_potenze((long*)&somma_potenzaI1xV1,I1,V1);
+somma_potenze((long*)&somma_potenzaI2xV2,I2,V2);
+somma_potenze((long*)&somma_potenzaI3xV3,I3,V3);
+somma_potenze((long*)&somma_reattivaI1xV23,I1,V13-V12);
+somma_potenze((long*)&somma_reattivaI2xV31,I2,-V13);
+somma_potenze((long*)&somma_reattivaI3xV12,I3,V12);
 asm
  { 
 comando_di_conversione:
- CLRH
  LDX contatore_AD
  INCX
- CPX #33
+ CPX #23
  BCS per_comando_conversione
  CLRX
 per_comando_conversione:
  STX contatore_AD
+ CLRH
  LDA @comando_AD,X
  STA ADCSC1
  }
@@ -1558,117 +1656,117 @@ void lettura_pulsanti(void)
 {
 asm
  {
- BRSET 0,_PTAD,azzera_start
- LDA #500
- STA timer_rilascio 
- LDA start
- CMP #10
- BNE start_1
- LDA #1
- STA salita_start
-start_1:
- LDA start
- CMP #11
- BCC vedi_meno
- INCA
- STA start
- BRA vedi_meno
-azzera_start:
- CLRA
- STA start
-
-vedi_meno:
- BRSET 1,_PTAD,azzera_meno
- LDA #500
- STA timer_rilascio 
- LDA meno
- CMP #10
- BNE meno_1
- LDA #1
- STA salita_meno
-meno_1: 
- LDA meno
- CMP #11
- BCC vedi_func
- INCA
- STA meno
- BRA vedi_func
-azzera_meno:
- CLRA
- STA meno
-
-vedi_func:
- BRSET 2,_PTAD,azzera_func
- LDA #500
- STA timer_rilascio 
+ BRSET 0,_PTAD,azzera_func
+ LDHX #500
+ STHX timer_rilascio 
  LDA func
- CMP #10
+ CMP #20
  BNE func_1
  LDA #1
  STA salita_func
 func_1: 
  LDA func
- CMP #11
- BCC vedi_stop
+ CMP filtro_pulsanti
+ BCC vedi_meno
  INCA
  STA func
- BRA vedi_stop
+ BRA vedi_meno
 azzera_func:
  CLRA
  STA func
 
-vedi_stop:
- BRSET 3,_PTAD,azzera_stop
- LDA #500
- STA timer_rilascio 
- LDA stop
- CMP #10
- BNE stop_1
+vedi_meno:
+ BRSET 1,_PTAD,azzera_meno
+ LDHX #500
+ STHX timer_rilascio 
+ LDA meno
+ CMP #20
+ BNE meno_1
  LDA #1
- STA salita_stop
-stop_1: 
- LDA stop
- CMP #11
- BCC vedi_piu
+ STA salita_meno
+meno_1: 
+ LDA meno
+ CMP filtro_pulsanti
+ BCC vedi_piu 
  INCA
- STA stop
- BRA vedi_piu
-azzera_stop:
+ STA meno
+ BRA vedi_piu 
+azzera_meno:
  CLRA
- STA stop
+ STA meno
 
 vedi_piu:
- BRSET 4,_PTAD,azzera_piu
- LDA #500
- STA timer_rilascio 
+ BRSET 2,_PTAD,azzera_piu
+ LDHX #500
+ STHX timer_rilascio 
  LDA piu
- CMP #10
+ CMP #20
  BNE piu_1
  LDA #1
  STA salita_piu
 piu_1: 
  LDA piu
- CMP #11
- BCC vedi_remoto
+ CMP filtro_pulsanti
+ BCC vedi_start 
  INCA
  STA piu
- BRA vedi_remoto
+ BRA vedi_start 
 azzera_piu:
  CLRA
  STA piu
 
+vedi_start:
+ BRSET 3,_PTAD,azzera_start
+ LDHX #500
+ STHX timer_rilascio 
+ LDA start
+ CMP #20
+ BNE start_1
+ LDA #1
+ STA salita_start
+start_1:
+ LDA start
+ CMP filtro_pulsanti
+ BCC vedi_stop
+ INCA
+ STA start
+ BRA vedi_stop
+azzera_start:
+ CLRA
+ STA start
+
+vedi_stop:
+ BRSET 4,_PTAD,azzera_stop
+ LDHX #500
+ STHX timer_rilascio 
+ LDA stop
+ CMP #20
+ BNE stop_1
+ LDA #1
+ STA salita_stop
+stop_1: 
+ LDA stop
+ CMP filtro_pulsanti
+ BCC vedi_remoto
+ INCA
+ STA stop
+ BRA vedi_remoto
+azzera_stop:
+ CLRA
+ STA stop
+
 vedi_remoto:
  BRSET 5,_PTAD,azzera_remoto
- LDA #500
- STA timer_rilascio 
+ LDHX #500
+ STHX timer_rilascio 
  LDA remoto
- CMP #10
+ CMP #20
  BNE remoto_1
  LDA #1
  STA salita_remoto
 remoto_1:
  LDA remoto
- CMP #11
+ CMP filtro_pulsanti
  BCC vedi_timer_rilascio
  INCA
  STA remoto
@@ -1726,26 +1824,10 @@ asm
  LDA timer_reset_display
  BEQ per_comando_display
  DECA
- STA timer_reset_display  
+ STA timer_reset_display 
+ BNE fine 
  CLRA
  STA contatore_display
- STA start
- STA salita_start
- STA stop
- STA salita_stop
- STA toggle_stop
- STA func
- STA salita_func
- STA toggle_func
- STA meno
- STA salita_meno
- STA piu
- STA salita_piu 
- STA remoto
- STA salita_remoto
- STA reset_default
- STA timer_rilascio
- STA timer_rilascio:1
  LDHX #34
 primo_messaggio:
  LDA @presentazione_iniziale:-1,X
@@ -1778,6 +1860,7 @@ inc_contatore_display:
  CLRA
  STA comando_display
  STA contatore_display
+ STA timer_lampeggio
 
 scrivi_display:
 ;    else //normale scrittura
@@ -1857,15 +1940,6 @@ vedi_d2:
 assegna_carattere: 
  BSET 2,_PTGD;//RS
  BSET 3,_PTGD;//E
- LDA toggle_stop
- BEQ presenta_carattere
- LDA timer_lampeggio
- CMP #4
- BCC presenta_carattere
- LDA #' '
- STA Display
- BRA increm_contatore
-presenta_carattere: 
  LDX contatore_display
  DECX
  DECX
@@ -1901,7 +1975,7 @@ Assegna_carattere:
  LDA toggle_stop
  BEQ Presenta_carattere
  LDA timer_lampeggio
- CMP #4
+ CMP #3
  BCC Presenta_carattere
  LDA #' '
  STA Display
@@ -1923,11 +1997,23 @@ vedi_d68:
  BEQ reset_timer_lampeggio
  DECA
  STA timer_lampeggio
- BRA increm_contatore
+ BRA per_timer_rinfresco_display
 reset_timer_lampeggio: 
- LDA #15 
+ LDA #10 
  STA timer_lampeggio
- 
+
+per_timer_rinfresco_display: 
+ LDA timer_rinfresco_display
+ BEQ per_rinfresco
+ DECA
+ STA timer_rinfresco_display
+ BRA increm_contatore
+per_rinfresco:
+ LDA #255//ogni 16 s
+ STA timer_rinfresco_display
+ LDA #1
+ STA comando_display
+
 increm_contatore:
  LDA Display
  STA _PTDD
@@ -1938,22 +2024,114 @@ fine:
  }
 }
 
-char calcolo_del_fattore_di_potenza(long attiva, long reattiva)//cosfi*100
+const int mille=1000;
+char calcolo_del_fattore_di_potenza_monofase(int attiva, int tensione, int corrente)
+{
+long prod, app;
+int fattore;
+char j;
+asm
+ {
+ LDA attiva:1
+ LDX mille:1
+ MUL 
+ STA prod:3
+ STX prod:2
+ LDA attiva:1
+ LDX mille
+ MUL 
+ ADD prod:2
+ STA prod:2
+ TXA
+ ADC #0
+ STA prod:1
+ LDA attiva
+ LDX mille:1
+ MUL 
+ ADD prod:2
+ STA prod:2
+ TXA
+ ADC prod:1
+ STA prod:1
+ CLR prod
+ ROL prod
+ LDA attiva
+ LDX mille
+ MUL 
+ ADD prod:1
+ STA prod:1
+ TXA
+ ADC prod
+ STA prod
+
+ LDA tensione:1
+ LDX corrente:1
+ MUL
+ STA app:2
+ STX app:1
+ LDA tensione:1
+ LDX corrente
+ MUL
+ ADD app:1
+ STA app:1
+ TXA
+ ADC #0
+ STA app
+ LDA tensione
+ LDX corrente:1
+ MUL
+ ADD app:1
+ STA app:1
+ TXA
+ ADC app
+ STA app
+ LDA tensione
+ LDX corrente
+ MUL
+ ADD app
+ STA app
+
+ LDA #9
+ STA j
+ripeti_diff:
+ LDA prod:2
+ SUB app:2
+ STA fattore:1
+ LDA prod:1
+ SBC app:1
+ STA fattore
+ LDA prod
+ SBC app
+ BCS alla_rotazione
+ STA prod
+ LDHX fattore
+ STHX prod:1
+alla_rotazione:
+ ROL prod:3 
+ ROL prod:2 
+ ROL prod:1 
+ ROL prod 
+ DBNZ j,ripeti_diff
+ COM prod:3 //cosfi
+ LDA prod:3
+ STA j
+ }
+return j; 
+}
+
+const int diecimila=10000;
+char calcolo_del_fattore_di_potenza(int attiva, int reattiva)//cosfi*100
 {
 long quad_attiva, quad_reattiva;
 unsigned int fattore, quad;
-char j, radice, prod[5];
+char j, radice, prod[6];
 radice=0;
 asm
  {
  LDA attiva
  BPL al_quadrato
- CLRA
- SUB attiva:1
- STA attiva:1
- CLRA
- SBC attiva
- STA attiva
+ LDHX #0
+ STHX attiva
 al_quadrato: 
  LDA attiva:1
  TAX
@@ -1965,18 +2143,23 @@ al_quadrato:
  MUL
  LSLA
  ROLX
+ CLR j
+ ROL j
  ADD quad_attiva:2
  STA quad_attiva:2
  TXA
  ADC #0
  STA quad_attiva:1
+ LDA j
+ ADC #0
+ STA quad_attiva
  LDA attiva
  TAX
  MUL
  ADD quad_attiva:1
  STA quad_attiva:1
  TXA
- ADC #0
+ ADC quad_attiva
  STA quad_attiva
 
  LDA reattiva
@@ -1998,20 +2181,39 @@ Al_quadrato:
  MUL
  LSLA
  ROLX
+ CLR j
+ ROL j
  ADD quad_reattiva:2
  STA quad_reattiva:2
  TXA
  ADC #0
  STA quad_reattiva:1
+ LDA j
+ ADC #0
+ STA quad_reattiva
  LDA reattiva
  TAX
  MUL
  ADD quad_reattiva:1
  STA quad_reattiva:1
  TXA
- ADC #0
+ ADC quad_reattiva
  STA quad_reattiva
 
+ LDHX #3
+ LDA quad_reattiva
+ DIV
+ STA quad_reattiva
+ LDA quad_reattiva:1
+ DIV
+ STA quad_reattiva:1
+ LDA quad_reattiva:2
+ DIV
+ STA quad_reattiva:2
+ LDA quad_reattiva:3
+ DIV
+ STA quad_reattiva:3
+ 
  LDA quad_attiva:3
  ADD quad_reattiva:3
  STA quad_reattiva:3
@@ -2025,52 +2227,95 @@ Al_quadrato:
  ADC quad_reattiva:0
  STA quad_reattiva:0
  
- LDA quad_attiva:3
- LDX #39
+ LDA quad_attiva:3//3x1
+ LDX diecimila:1
  MUL
+ STA prod:5
+ STX prod:4
+ LDA quad_attiva:3//3x0
+ LDX diecimila
+ MUL
+ ADD prod:4
  STA prod:4
- STX prod:3
- LDA quad_attiva:2
- LDX #39
+ TXA 
+ ADC #0
+ STA prod:3
+ LDA quad_attiva:2//2x1
+ LDX diecimila:1
+ MUL
+ ADD prod:4
+ STA prod:4
+ TXA 
+ ADC prod:3
+ STA prod:3
+ CLR prod:2
+ ROL prod:2
+ LDA quad_attiva:2//2x0
+ LDX diecimila
  MUL
  ADD prod:3
  STA prod:3
  TXA 
- ADC #0
+ ADC prod:2
  STA prod:2
- LDA quad_attiva:1
- LDX #39
+ LDA quad_attiva:1//1x1
+ LDX diecimila:1
+ MUL
+ ADD prod:3
+ STA prod:3
+ TXA 
+ ADC prod:2
+ STA prod:2
+ CLR prod:1
+ ROL prod:1
+ LDA quad_attiva:1//1x0
+ LDX diecimila
  MUL
  ADD prod:2
  STA prod:2
  TXA 
- ADC #0
+ ADC prod:1
  STA prod:1
- LDA quad_attiva
- LDX #39
+ LDA quad_attiva//0x1
+ LDX diecimila:1
+ MUL
+ ADD prod:2
+ STA prod:2
+ TXA 
+ ADC prod:1
+ STA prod:1
+ CLR prod
+ ROL prod
+ LDA quad_attiva//0x0
+ LDX diecimila
  MUL
  ADD prod:1
  STA prod:1
  TXA 
- ADC #0
+ ADC prod
  STA prod
 
  LDA #17
  STA j
 ripeti_diff:
- LDA prod:2
- SUB quad_reattiva:2
+ LDA prod:3
+ SUB quad_reattiva:3
  STA fattore:1
+ LDA prod:2
+ SBC quad_reattiva:2
+ STA fattore
  LDA prod:1
  SBC quad_reattiva:1
- STA fattore
+ TAX
  LDA prod
  SBC quad_reattiva
  BCS alla_rotazione
  STA prod
+ STX prod:1
  LDHX fattore
- STHX prod:1
+ STHX prod:2
 alla_rotazione:
+ ROL prod:5 
  ROL prod:4 
  ROL prod:3 
  ROL prod:2 
@@ -2078,10 +2323,10 @@ alla_rotazione:
  ROL prod 
  DBNZ j,ripeti_diff
  COM prod:4 //cosfi^2
- COM prod:3 
+ COM prod:5 
 
 //radice 
- LDA #12
+ LDA #8
  STA j
  LDA #$80 
  STA fattore
@@ -2095,7 +2340,7 @@ al_quadrato_trag:
  STA quad:1
  STX quad
  LDHX quad
- CPHX prod
+ CPHX prod:4
  BEQ fine
  BCS Alla_rotazione
  LDA radice
@@ -2121,28 +2366,26 @@ asm
  LDA relais_alimentazione
  BEQ spegni_relais
  LDHX PWM_relais
- STHX _TPM1C2V
+ STHX _TPM1C2V//relè di marcia acceso
+ LDHX #$7fff
+ STHX _TPM1C5V //LED di marcia acceso
  BRA vedi_relais_avviam 
 spegni_relais: 
- LDHX #24
- STHX _TPM1C2V  
+ LDHX #-1
+ STHX _TPM1C5V//LED di marcia spento
+ STHX _TPM1C2V//relè di marcia spento
 vedi_relais_avviam: 
  LDA relais_avviamento
  BEQ spegni_relais_avviam
  LDHX PWM_relais
- STHX _TPM1C3V
- LDHX #$7fff
- STHX _TPM1C4V
- STHX _TPM1C5V
+ STHX _TPM1C3V//relè di avviamento acceso
  BRA fine
 spegni_relais_avviam:
- LDHX #24
- STHX _TPM1C3V  
  LDHX #-1
- STHX _TPM1C5V
+ STHX _TPM1C3V  
+fine:
  LDHX #$7fff
- STHX _TPM1C4V
-fine:   
+ STHX _TPM1C4V//Led presenza tensione
  }
 }
 
@@ -2195,7 +2438,7 @@ per_rotazione:
  DBNZ j,ripetizione 
  COM numeratore:3
  COM numeratore:2
- LDHX numeratore
+ LDHX numeratore:2
  STHX PWM_relais
  }
 }
@@ -2203,73 +2446,40 @@ per_rotazione:
 __interrupt void timer2_overflowISR(void) //timer 1 ms
 {
 long delta;
-int temperatura, pressione;
+int temperatura, pressione, attiva, reattiva;
 char j;
 asm
  {
  SEI  /*disabilita interrupt*/
  LDA _TPM2SC
  BCLR 7,_TPM2SC
- LDA timer_20ms:1
- BEQ per_reset_timer_20ms
- DECA
- STA timer_20ms:1
+ LDA timer_20ms
+ CMP #19
+ BCC per_reset_timer_20ms
+ INCA
+ STA timer_20ms
  BRA per_timer_1ms
 per_reset_timer_20ms:
- LDA #20
- STA timer_20ms:1
- }
-//funzioni ripetute ogni 20ms
-quad_I1=media_quadrati_nel_periodo(somma_quad_I1,tot_misure);
-quad_I2=media_quadrati_nel_periodo(somma_quad_I2,tot_misure);
-quad_I3=media_quadrati_nel_periodo(somma_quad_I3,tot_misure);
-quad_V1=media_quadrati_nel_periodo(somma_quad_V1,tot_misure);
-quad_V2=media_quadrati_nel_periodo(somma_quad_V2,tot_misure);
-quad_V3=media_quadrati_nel_periodo(somma_quad_V3,tot_misure);
-potenzaI1xV1=media_potenza_nel_periodo(somma_potenzaI1xV1,tot_misure);//W
-potenzaI2xV2=media_potenza_nel_periodo(somma_potenzaI2xV2,tot_misure);//W
-potenzaI3xV3=media_potenza_nel_periodo(somma_potenzaI3xV3,tot_misure);//W
-reattivaI1xV23=media_potenza_nel_periodo(somma_reattivaI1xV23,tot_misure);//VAR
-reattivaI2xV31=media_potenza_nel_periodo(somma_reattivaI2xV31,tot_misure);//VAR
-reattivaI3xV12=media_potenza_nel_periodo(somma_reattivaI3xV12,tot_misure);//VAR
-somma_quad_I1=0;
-somma_quad_I2=0;
-somma_quad_I3=0;
-somma_quad_V1=0;
-somma_quad_V2=0;
-somma_quad_V3=0;
-somma_potenzaI1xV1=0;
-somma_potenzaI2xV2=0;
-somma_potenzaI3xV3=0;
-somma_reattivaI1xV23=0;
-somma_reattivaI2xV31=0;
-somma_reattivaI3xV12=0;
-tot_misure=0;
-USB_time_sw();
-asm
- {
- LDA timer_1s:1
- BEQ per_reset_timer_1s
- DECA
- STA timer_1s:1
+ CLRA
+ STA timer_20ms
+
+ LDA timer_1s
+ CMP #49
+ BCC per_reset_timer_1s
+ INCA
+ STA timer_1s
  BRA per_timer_1ms
 per_reset_timer_1s: 
- LDA #50
- STA timer_1s:1
+ CLRA
+ STA timer_1s
 
 //funzioni ripetute ogni secondo
  JSR protezione_termica
 
- LDA timer_rinfresco_display:1
- BEQ per_rinfresco
+ LDA timer_reset
+ BEQ per_timer_riavviamento
  DECA
- STA timer_rinfresco_display:1
- BRA per_timer_riavviamento
-per_rinfresco:
- LDA #30//ogni 30 s
- STA timer_rinfresco_display:1
- LDA #1
- STA comando_display
+ STA timer_reset
 
 per_timer_riavviamento: 
  LDHX timer_riavviamento
@@ -2282,28 +2492,28 @@ per_timer_riavviamento:
  STA timer_riavviamento
  
 per_timer_attesa_secco: 
- LDA timer_attesa_secco:1
+ LDA timer_attesa_secco
  BEQ per_timer_mandata_chiusa
  DECA
- STA timer_attesa_secco:1
+ STA timer_attesa_secco
  
 per_timer_mandata_chiusa: 
- LDA timer_mandata_chiusa:1
+ LDA timer_mandata_chiusa
  BEQ per_timer_attesa_tensione
  DECA
- STA timer_mandata_chiusa:1
+ STA timer_mandata_chiusa
  
 per_timer_attesa_tensione: 
- LDA timer_attesa_tensione:1
+ LDA timer_attesa_tensione
  BEQ per_timer_attesa_squilibrio
  DECA
- STA timer_attesa_tensione:1
+ STA timer_attesa_tensione
  
 per_timer_attesa_squilibrio: 
- LDA timer_attesa_squilibrio:1
+ LDA timer_attesa_squilibrio
  BEQ per_conta_secondi
  DECA
- STA timer_attesa_squilibrio:1
+ STA timer_attesa_squilibrio
  
 per_conta_secondi: 
  LDA conta_secondi_attivita:3
@@ -2318,222 +2528,300 @@ per_conta_secondi:
  LDA conta_secondi_attivita
  ADC #0
  STA conta_secondi_attivita
- LDHX timer_10min
- BEQ per_reset_timer_10min
- LDA timer_10min:1
- SUB #1
- STA timer_10min:1
- LDA timer_10min
- SBC #0
- STA timer_10min
+
+ LDA timer_1min
+ CMP #59
+ BCC per_reset_timer_1min
+ INCA
+ STA timer_1min
  BRA per_timer_1ms
-per_reset_timer_10min: 
- LDHX #600
- STHX timer_10min
-//funzioni ripetute ogni 10 minuti
+per_reset_timer_1min: 
+ CLRA
+ STA timer_1min
  LDA #1
  STA salva_conta_secondi
 
 per_timer_1ms: 
- LDA timer_20ms
- CMP #4
- BNE vedi_media_quad_V
+ LDHX #0
+ STHX temperatura
+ STHX pressione;
  }
-calcolo_medie_quadrati((unsigned long*)&media_quad_I1,quad_I1); //tau = 160 ms
-I1_rms=valore_efficace(media_quad_I1,6400); //(A*.004*5/.512* 4096/5)^2 = A^2*1024  = (A*10)^2*10.24 = (A*10)^2*6400>>16
-calcolo_medie_quadrati((unsigned long*)&media_quad_I2,quad_I2);
-I2_rms=valore_efficace(media_quad_I2,6400); 
-calcolo_medie_quadrati((unsigned long*)&media_quad_I3,quad_I3);
-I3_rms=valore_efficace(media_quad_I3,6400); 
-asm
+switch(timer_20ms)
  {
-vedi_media_quad_V:
- LDA timer_20ms
- CMP #8
- BNE vedi_media_potenze
- }
-calcolo_medie_quadrati((unsigned long*)&media_quad_V1,quad_V1);
-V1_rms=valore_efficace(media_quad_V1,663);//(V *3*33/680/6 /2 *4096/5)^2 = V^2*98.78 = V^2*663>>16
-calcolo_medie_quadrati((unsigned long*)&media_quad_V2,quad_V2);
-V2_rms=valore_efficace(media_quad_V2,663); 
-calcolo_medie_quadrati((unsigned long*)&media_quad_V3,quad_V3);
-V3_rms=valore_efficace(media_quad_V3,663); 
-asm
- {
-vedi_media_potenze:
- LDA timer_20ms
- CMP #12
- BNE vedi_calcolo_temperatura
- }
-calcolo_valor_medio_potenze((long*)&media_potenzaI1xV1,potenzaI1xV1);
-calcolo_valor_medio_potenze((long*)&media_potenzaI2xV2,potenzaI2xV2);
-calcolo_valor_medio_potenze((long*)&media_potenzaI3xV3,potenzaI3xV3);
-calcolo_valor_medio_potenze((long*)&media_reattivaI1xV23,reattivaI1xV23);
-calcolo_valor_medio_potenze((long*)&media_reattivaI2xV31,reattivaI2xV31);
-calcolo_valor_medio_potenze((long*)&media_reattivaI3xV12,reattivaI3xV12);
-asm
- {
-vedi_calcolo_temperatura:
- LDA timer_20ms
- CMP #14
- BNE vedi_calcolo_cosfi
+ case 0:
+  {
+  Tot_misure=tot_misure;
+  tot_misure=0;
+  quad_Id=media_quadrati_nel_periodo(somma_quad_Id,Tot_misure);
+  quad_I1=media_quadrati_nel_periodo(somma_quad_I1,Tot_misure);
+  quad_I2=media_quadrati_nel_periodo(somma_quad_I2,Tot_misure);
+  quad_I3=media_quadrati_nel_periodo(somma_quad_I3,Tot_misure);
+  quad_V1=media_quadrati_nel_periodo(somma_quad_V1,Tot_misure);
+  quad_V2=media_quadrati_nel_periodo(somma_quad_V2,Tot_misure);
+  quad_V3=media_quadrati_nel_periodo(somma_quad_V3,Tot_misure);
+  somma_quad_Id=0;
+  somma_quad_I1=0;
+  somma_quad_I2=0;
+  somma_quad_I3=0;
+  somma_quad_V1=0;
+  somma_quad_V2=0;
+  somma_quad_V3=0;
+
+  Somma_potenzaI1xV1=somma_potenzaI1xV1;
+  Somma_potenzaI2xV2=somma_potenzaI2xV2;
+  Somma_potenzaI3xV3=somma_potenzaI3xV3;
+  Somma_reattivaI1xV23=somma_reattivaI1xV23;
+  Somma_reattivaI2xV31=somma_reattivaI2xV31;
+  Somma_reattivaI3xV12=somma_reattivaI3xV12;
+  somma_potenzaI1xV1=0;
+  somma_potenzaI2xV2=0;
+  somma_potenzaI3xV3=0;
+  somma_reattivaI1xV23=0;
+  somma_reattivaI2xV31=0;
+  somma_reattivaI3xV12=0;
+  
+  //USB_time_sw();
+  } break;
+ case 1:
+  {
+  potenzaI1xV1=media_potenza_nel_periodo(Somma_potenzaI1xV1,Tot_misure);//W
+  potenzaI2xV2=media_potenza_nel_periodo(Somma_potenzaI2xV2,Tot_misure);//W
+  potenzaI3xV3=media_potenza_nel_periodo(Somma_potenzaI3xV3,Tot_misure);//W
+  reattivaI1xV23=media_potenza_nel_periodo(Somma_reattivaI1xV23,Tot_misure);//VAR
+  reattivaI2xV31=media_potenza_nel_periodo(Somma_reattivaI2xV31,Tot_misure);//VAR
+  reattivaI3xV12=media_potenza_nel_periodo(Somma_reattivaI3xV12,Tot_misure);//VAR
+  } break;
+ case 2:
+  {
+  calcolo_medie_quadrati((unsigned long*)&media_quad_Id,quad_Id);
+  valore_efficace((int*)&Id_rms,media_quad_Id,fattore_Id);
+  calcolo_medie_quadrati((unsigned long*)&media_quad_I1,quad_I1);
+  valore_efficace((int*)&I1_rms,media_quad_I1,5487); //(A*.00432*5/.512* 4096/5)^2 = A^2*1194  = (A*10)^2*11.94 = (A*10)^2*5487>>16
+  } break;
+ case 3:
+  {
+  calcolo_medie_quadrati((unsigned long*)&media_quad_I2,quad_I2);
+  valore_efficace((int*)&I2_rms,media_quad_I2,5487); 
+  } break;
+ case 4:
+  {
+  calcolo_medie_quadrati((unsigned long*)&media_quad_I3,quad_I3);
+  valore_efficace((int*)&I3_rms,media_quad_I3,5487); 
+  } break;
+ case 5:
+  {
+  calcolo_medie_quadrati((unsigned long*)&media_quad_V1,quad_V1);
+  valore_efficace((int*)&V1_rms,media_quad_V1,697);//(V 3*33/680/6 /2 *4096/5)^2 = V^2*98.78 = V^2*664>>16 *(correzione=1.05)
+  } break;
+ case 6:
+  {
+  calcolo_medie_quadrati((unsigned long*)&media_quad_V2,quad_V2);
+  valore_efficace((int*)&V2_rms,media_quad_V2,697); 
+  } break;
+ case 7:
+  {
+  calcolo_medie_quadrati((unsigned long*)&media_quad_V3,quad_V3);
+  valore_efficace((int*)&V3_rms,media_quad_V3,697); 
+  } break;
+ case 8:
+  {
+  calcolo_valor_medio_potenze((long*)&media_potenzaI1xV1,potenzaI1xV1);
+  } break;
+ case 9:
+  {
+  calcolo_valor_medio_potenze((long*)&media_potenzaI2xV2,potenzaI2xV2);
+  } break;
+ case 10:
+  {
+  calcolo_valor_medio_potenze((long*)&media_potenzaI3xV3,potenzaI3xV3);
+  } break;
+ case 11:
+  {
+  calcolo_valor_medio_potenze((long*)&media_reattivaI1xV23,reattivaI1xV23);
+  } break;
+ case 12:
+  {
+  calcolo_valor_medio_potenze((long*)&media_reattivaI2xV31,reattivaI2xV31);
+  } break;
+ case 13:
+  {
+  calcolo_valor_medio_potenze((long*)&media_reattivaI3xV12,reattivaI3xV12);
+  } break;
+ case 14:
+  {
+  asm
+   {
 //calcolo della tenperatura motore    
 ;temperatura=(set.temperatura_ambiente+DAC.temperatura_letta)*5000/4096/set.scala_temperatura_motore-set.taratura_temperatura_ambiente,//da modificare per la taratura
 ;temperatura=(set.temperatura_ambiente+DAC.temperatura_letta)*625/512/set.scala_temperatura_motore-set.taratura_temperatura_ambiente,//da modificare per la taratura
- LDA DAC.temperatura_letta:1
- ADD set.temperatura_ambiente:1
- STA temperatura:1
- LDA DAC.temperatura_letta
- ADC set.temperatura_ambiente
- STA temperatura
+   LDA DAC.temperatura_letta:1
+   ADD set.temperatura_ambiente:1
+   STA temperatura:1
+   LDA DAC.temperatura_letta
+   ADC set.temperatura_ambiente
+   STA temperatura
 
- LDA temperatura:1
- LDX #113
- MUL
- STX delta:2
- LDA temperatura
- LDX #113
- MUL
- ADD delta:2
- STA delta:2
- TXA
- ADC #0
- STA delta:1
- LDA temperatura:1
- LDX #2
- MUL
- ADD delta:2
- STA delta:2
- TXA
- ADC delta:1
- STA delta:1
- LDA temperatura
- LDX #2
- MUL
- ADD delta:1
- STA delta:1
- TXA
- ADC delta
- STA delta
+   LDA temperatura:1
+   LDX #113
+   MUL
+   STX delta:2
+   LDA temperatura
+   LDX #113
+   MUL
+   ADD delta:2
+   STA delta:2
+   TXA
+   ADC #0
+   STA delta:1
+   LDA temperatura:1
+   LDX #2
+   MUL
+   ADD delta:2
+   STA delta:2
+   TXA
+   ADC delta:1
+   STA delta:1
+   CLR delta
+   ROL delta
+   LDA temperatura
+   LDX #2
+   MUL
+   ADD delta:1
+   STA delta:1
+   TXA
+   ADC delta
+   STA delta
+   LSR delta
+   ROR delta:1
 
- LDHX set.scala_temperatura_motore
- DIV
- LDA delta:1
- DIV
- STA delta:1
- LDA delta:2
- DIV
- SUB set.taratura_temperatura_ambiente:1
- STA temperatura:1
- LDA delta:1
- SBC set.taratura_temperatura_ambiente
- STA temperatura
-
+   LDHX set.scala_temperatura_motore
+   LDA delta
+   DIV
+   STA delta
+   LDA delta:1
+   DIV
+   SUB set.taratura_temperatura_ambiente:1
+   STA temperatura:1
+   LDA delta
+   SBC set.taratura_temperatura_ambiente
+   STA temperatura
+   BCC uscita_temperatura
+   CLR temperatura
+   CLR temperatura:1
+  uscita_temperatura: 
+   }
+  calcolo_valor_medio_potenze((long*)&media_temperatura,temperatura);
+  } break;
+ case 15:
+  {
+  asm
+   {
 //calcolo della pressione
 ;pressione=(DAC.sensore_pressione-491)*set.portata_sensore_pressione/fattore_portata;
- LDA DAC.sensore_pressione:1
- SUB #235
- STA pressione:1
- LDA DAC.sensore_pressione
- SBC #1
- STA pressione
- BCC per_prodotto_portata
- CLR pressione
- CLR pressione:1
-per_prodotto_portata:
- LDA set.portata_sensore_pressione:1
- LDX pressione:1
- MUL
- STA delta:3
- STX delta:2
- LDA set.portata_sensore_pressione:1
- LDX pressione
- MUL
- ADD delta:2
- STA delta:2
- TXA
- ADC #0
- STA delta:1
- LDA set.portata_sensore_pressione
- LDX pressione:1
- MUL
- ADD delta:2
- STA delta:2
- TXA
- ADC delta:1
- STA delta:1
- LDA set.portata_sensore_pressione
- LDX pressione
- MUL
- ADD delta:1
- STA delta:1
- CLR delta
+   LDA DAC.sensore_pressione:1
+   SUB #235
+   STA pressione:1
+   LDA DAC.sensore_pressione
+   SBC #1
+   STA pressione
+   BCC per_prodotto_portata
+   CLR pressione
+   CLR pressione:1
+  per_prodotto_portata:
+   LDA set.portata_sensore_pressione:1
+   LDX pressione:1
+   MUL
+   STA delta:3
+   STX delta:2
+   LDA set.portata_sensore_pressione:1
+   LDX pressione
+   MUL
+   ADD delta:2
+   STA delta:2
+   TXA
+   ADC #0
+   STA delta:1
+   LDA set.portata_sensore_pressione
+   LDX pressione:1
+   MUL
+   ADD delta:2
+   STA delta:2
+   TXA
+   ADC delta:1
+   STA delta:1
+   LDA set.portata_sensore_pressione
+   LDX pressione
+   MUL
+   ADD delta:1
+   STA delta:1
+   CLR delta
 
- LDA #17
- STA j
-ripeti_diff:
- LDA delta:1
- SBC fattore_portata:1
- TAX
- LDA delta
- SBC fattore_portata
- BCS alla_rotazione
- STA delta
- STX delta:1
-alla_rotazione:
- ROL delta:3 
- ROL delta:2 
- ROL delta:1 
- ROL delta 
- DBNZ j,ripeti_diff
- COM delta:2
- COM delta:3 
- LDHX delta:2
- STHX pressione
+   LDA #17
+   STA j
+  ripeti_diff:
+   LDA delta:1
+   SBC fattore_portata:1
+   TAX
+   LDA delta
+   SBC fattore_portata
+   BCS alla_rotazione
+   STA delta
+   STX delta:1
+  alla_rotazione:
+   ROL delta:3 
+   ROL delta:2 
+   ROL delta:1 
+   ROL delta 
+   DBNZ j,ripeti_diff
+   COM delta:2
+   COM delta:3 
+   LDHX delta:2
+   STHX pressione
+   }
+  calcolo_valor_medio_potenze((long*)&media_pressione,pressione);
+  } break;
+ case 16:
+  {
+  asm
+   {
+   LDHX media_potenzaI1xV1
+   STHX attiva
+   LDHX media_reattivaI1xV23
+   STHX reattiva
+   }
+  if(set.monofase_trifase) cosfi[0]=calcolo_del_fattore_di_potenza(attiva,reattiva);//cosfi*100
+  } break;
+ case 17:
+  {
+  asm
+   {
+   LDHX media_potenzaI2xV2
+   STHX attiva
+   LDHX media_reattivaI2xV31
+   STHX reattiva
+   }
+  if(set.monofase_trifase) cosfi[1]=calcolo_del_fattore_di_potenza(attiva,reattiva);//cosfi*100
+  } break;
+ case 18:
+  {
+  asm
+   {
+   LDHX media_potenzaI3xV3
+   STHX attiva
+   LDHX media_reattivaI3xV12
+   STHX reattiva
+   }
+  if(set.monofase_trifase) cosfi[2]=calcolo_del_fattore_di_potenza(attiva,reattiva);//cosfi*100
+  } break;
+ case 19:
+  {
+  if(set.monofase_trifase==0) cosfi[3]=calcolo_del_fattore_di_potenza_monofase(potenza_media,tensione_media,corrente_media);//cosfi*100
+  else cosfi[3]=calcolo_del_fattore_di_potenza(potenza_media,reattiva_media);//cosfi*100
+  } break;
  }
-calcolo_valor_medio_potenze((long*)&media_temperatura,temperatura);
-calcolo_valor_medio_potenze((long*)&media_pressione,pressione);
-asm
- {
-vedi_calcolo_cosfi:
- LDA timer_20ms
- CMP #16
- BNE vedi_media_quad_Id
- }
-cosfi[0]=calcolo_del_fattore_di_potenza(media_potenzaI1xV1,media_reattivaI1xV23);//cosfi*100
-cosfi[1]=calcolo_del_fattore_di_potenza(media_potenzaI2xV2,media_reattivaI2xV31);//cosfi*100
-cosfi[2]=calcolo_del_fattore_di_potenza(media_potenzaI3xV3,media_reattivaI3xV12);//cosfi*100
-registrazione.cosfi=calcolo_del_fattore_di_potenza(media_potenzaI1xV1+media_potenzaI2xV2+media_potenzaI3xV3,
-                                                   media_reattivaI1xV23+media_reattivaI2xV31+media_reattivaI3xV12);//cosfi*100
 asm 
  {
-vedi_media_quad_Id: 
 //funzioni ripetute ogni ms
- LDA quad_Id:1
- SUB media_quad_Id:1
- STA delta:2
- LDA quad_Id
- SBC media_quad_Id
- STA delta:1
- CLRA
- SBC #0
- STA delta
- ROL delta:2
- ROL delta:1
- ROL delta:0
- ROL delta:2
- ROL delta:1
- ROL delta:0
- LDA media_quad_Id:2
- ADD delta:2
- STA media_quad_Id:2
- LDA media_quad_Id:1
- ADC delta:1
- STA media_quad_Id:1
- LDA media_quad_Id
- ADC delta
- STA media_quad_Id
-
  JSR lettura_pulsanti
  JSR comando_del_display
  JSR disinserzione_condensatore_avviamento
@@ -2603,16 +2891,63 @@ per_timer_commuta_presentazione:
  STA timer_commuta_presentazione
  BRA per_LED
 reset_timer_commuta_presentazione:
- LDHX #5000
+ LDA alternanza_presentazione
+ CMP #$20
+ BNE set_alternanza
+ LDA #$81
+ STA alternanza_presentazione
+ LDHX #2500
  STHX timer_commuta_presentazione 
-
+ BRA per_LED
+set_alternanza:
+ CMP #$80
+ BNE presenta_allarme
+ LDA #$41
+ STA alternanza_presentazione
+ LDHX #2500
+ STHX timer_commuta_presentazione 
+ BRA per_LED
+presenta_allarme:
+ LDA registrazione.segnalazione_
+ CMP #10
+ BCS per_prima_presentazione
+ LDA #$21
+ STA alternanza_presentazione
+ LDHX #1000
+ STHX timer_commuta_presentazione 
+ BRA per_LED
+per_prima_presentazione: 
+ LDA #$81
+ STA alternanza_presentazione
+ LDHX #2500
+ STHX timer_commuta_presentazione 
+  
 per_LED:
- LDHX #24
- STHX TPM2C1V;//2us
- LDA intervento_allarme
- BEQ spegni_LED_rosso
+ LDA timer_lampeggio_LED_emergenza
+ BEQ reset_timer_lampeggio
+ DECA
+ STA timer_lampeggio_LED_emergenza
+ BRA vedi_LED_rosso
+reset_timer_lampeggio:
+ LDA #250
+ STA timer_lampeggio_LED_emergenza
+
+vedi_LED_rosso:  
+ LDA registrazione.segnalazione_
+ CMP #10
+ BCS spegni_LED_rosso
+ CMP #20
+ BCS per_lampeggio
  LDHX #$7fff
  STHX TPM2C0V
+ BRA fine
+per_lampeggio:
+ LDA timer_lampeggio_LED_emergenza
+ CMP #125
+ BCC spegni_LED_rosso
+ LDHX #$7fff
+ STHX TPM2C0V
+ BRA fine
 spegni_LED_rosso:
  LDHX #24
  STHX TPM2C0V
@@ -2635,19 +2970,18 @@ asm
 ; {
 ; if(scrivi_eeprom==1)
 ;  {
-;  PTED &=0xfb; //EEPROM abilitata
-;  conta_dati_scrittura_eeprom=0;
+;  PTED &=0x7f; //EEPROM abilitata
 ;  dato_scritto=0x06;//abilita scrittura
 ;  scrivi_eeprom++;
 ;  }
 ; else if(scrivi_eeprom==2) //spazio di disabilatazione e riabilitazione
 ;  {
-;  PTED |=0x04; //EEPROM disabilitata
+;  PTED |=0x80; //EEPROM disabilitata
 ;  scrivi_eeprom++;
 ;  }
 ; else if(scrivi_eeprom==3) //spazio di disabilatazione e riabilitazione
 ;  {
-;  PTED &=0xfb; //EEPROM abilitata
+;  PTED &=0x7f; //EEPROM abilitata
 ;  dato_scritto=0x02;//codice di scrittura
 ;  scrivi_eeprom++;
 ;  }
@@ -2660,47 +2994,41 @@ asm
 ; else if(scrivi_eeprom==5) //scrivi parte bassa indirizzo
 ;  {
 ;  dato_scritto=indirizzo_scrivi_eeprom;
+;  conta_dati_scrittura_eeprom=0;
 ;  scrivi_eeprom++;
 ;  }
-; else if(conta_dati_scrittura_eeprom<16)
+; else if(conta_dati_scrittura_eeprom<lunghezza_salvataggio)
 ;  {
-;  if(scrivi_eeprom==6) //scrivi parte alta dato
-;   {
-;   dato_scritto=buffer_eeprom[indirizzo_scrivi_eeprom+conta_dati_scrittura_eeprom]>>8;
-;   scrivi_eeprom++;
-;   }
-;  else if(scrivi_eeprom==7) //scrivi parte bassa dato
-;   {
-;   dato_scritto=buffer_eeprom[indirizzo_scrivi_eeprom+conta_dati_scrittura_eeprom];
-;   conta_dati_scrittura_eeprom++;
-;   scrivi_eeprom=6;
-;   }
+;  dato_scritto=buffer_eeprom[indirizzo_buffer_eeprom+conta_dati_scrittura_eeprom];
+;  conta_dati_scrittura_eeprom++;
 ;  }
 ; else if(scrivi_eeprom<20)
 ;  {
-;  PTED |=0x04; //EEPROM disabilitata
+;  PTED |=0x80; //EEPROM disabilitata
 ;  scrivi_eeprom++;
 ;  }
 ; else if(scrivi_eeprom==20)
 ;  {
-;  PTED &=0xfb; //EEPROM abilitata
+;  PTED &=0x7f; //EEPROM abilitata
 ;  dato_scritto=0x04; //codice di blocco della scrittura
 ;  scrivi_eeprom++;
 ;  }
 ; else//if(scrivi_eeprom==21)
 ;  {
-;  PTED |=0x04; //EEPROM disabilitata
+;  PTED |=0x80; //EEPROM disabilitata
 ;  scrivi_eeprom=0;
 ;  }
 ; }
  LDA scrivi_eeprom
  BEQ lettura_EE
+ LDA #1
+ STA eeprom_impegnata
+ LDA scrivi_eeprom
  CMP #1
  BNE spazio_abilitazione
 ; if(scrivi_eeprom==1)
 ;  {
-;  PTED &=0xfb; //EEPROM abilitata
-;  conta_dati_scrittura_eeprom=0;
+;  PTED &=0x7f; //EEPROM abilitata
 ;  dato_scritto=0x06;//abilita scrittura
 ;  scrivi_eeprom++;
 ;  }
@@ -2719,7 +3047,7 @@ spazio_abilitazione:
  BNE spazio_abilitazione1
 ; else if(scrivi_eeprom==2) //spazio di disabilatazione e riabilitazione
 ;  {
-;  PTED |=0x04; //EEPROM disabilitata
+;  PTED |=0x80; //EEPROM disabilitata
 ;  scrivi_eeprom++;
 ;  }
  BSET 7,_PTED
@@ -2733,7 +3061,7 @@ spazio_abilitazione1:
  BNE parte_alta_indirizzo
 ; else if(scrivi_eeprom==3) //spazio di disabilatazione e riabilitazione
 ;  {
-;  PTED &=0xfb; //EEPROM abilitata
+;  PTED &=0x7f; //EEPROM abilitata
 ;  dato_scritto=0x02;//codice di scrittura
 ;  scrivi_eeprom++;
 ;  }
@@ -2766,10 +3094,13 @@ parte_bassa_indirizzo:
 ; else if(scrivi_eeprom==5) //scrivi parte bassa indirizzo
 ;  {
 ;  dato_scritto=indirizzo_scrivi_eeprom;
+;  conta_dati_scrittura_eeprom=0;
 ;  scrivi_eeprom++;
 ;  }
  LDA indirizzo_scrivi_eeprom:1
  STA dato_scritto//_SPID
+ CLRA
+ STA conta_dati_scrittura_eeprom
  LDA scrivi_eeprom
  INCA
  STA scrivi_eeprom
@@ -2777,47 +3108,22 @@ parte_bassa_indirizzo:
 
 parte_alta_dato: 
  LDA conta_dati_scrittura_eeprom
- CMP #16
+ CMP lunghezza_salvataggio
  BCC chiusura_scrittura
-;  if(scrivi_eeprom==6) //scrivi parte alta dato
-;   {
-;   dato_scritto=buffer_eeprom[indirizzo_scrivi_eeprom+conta_dati_scrittura_eeprom]>>8;
-;   scrivi_eeprom++;
-;   }
-;  else if(scrivi_eeprom==7) //scrivi parte bassa dato
-;   {
-;   dato_scritto=buffer_eeprom[indirizzo_scrivi_eeprom+conta_dati_scrittura_eeprom];
-;   conta_dati_scrittura_eeprom++;
-;   scrivi_eeprom=6;
-;   }
- LDA scrivi_eeprom
- CMP #6
- BNE parte_bassa_dato
- LDA conta_dati_scrittura_eeprom
- LSLA
- ADD indirizzo_scrivi_eeprom:1
+; else if(conta_dati_scrittura_eeprom<lunghezza_salvataggio)
+;  {
+;  dato_scritto=buffer_eeprom[indirizzo_buffer_eeprom+conta_dati_scrittura_eeprom];
+;  conta_dati_scrittura_eeprom++;
+;  }
+ LDA indirizzo_buffer_eeprom
+ ADD conta_dati_scrittura_eeprom
  TAX
  CLRH
  LDA @buffer_eeprom,X
  STA dato_scritto//_SPID
- LDA scrivi_eeprom
- INCA
- STA scrivi_eeprom
- BRA fine_SPID
-
-parte_bassa_dato: 
- LDA conta_dati_scrittura_eeprom
- LSLA
- ADD indirizzo_scrivi_eeprom:1
- TAX
- CLRH
- LDA @buffer_eeprom:1,X
- STA dato_scritto//_SPID
  LDA conta_dati_scrittura_eeprom
  INCA
  STA conta_dati_scrittura_eeprom
- LDA #6
- STA scrivi_eeprom
  BRA fine_SPID
 
 chiusura_scrittura:
@@ -2827,7 +3133,7 @@ chiusura_scrittura:
  BCC per_disabilitazione
 ; else if(scrivi_eeprom<20)
 ;  {
-;  PTED |=0x04; //EEPROM disabilitata
+;  PTED |=0x80; //EEPROM disabilitata
 ;  scrivi_eeprom++;
 ;  }
  BSET 7,_PTED //disabilita eeprom
@@ -2838,7 +3144,7 @@ chiusura_scrittura:
 comando_disabilitazione:
 ; else if(scrivi_eeprom==20)
 ;  {
-;  PTED &=0xfb; //EEPROM abilitata
+;  PTED &=0x7f; //EEPROM abilitata
 ;  dato_scritto=0x04; //codice di blocco della scrittura
 ;  scrivi_eeprom++;
 ;  }
@@ -2853,7 +3159,7 @@ comando_disabilitazione:
 per_disabilitazione:
 ; else//if(scrivi_eeprom==21)
 ;  {
-;  PTED |=0x04; //EEPROM disabilitata
+;  PTED |=0x80; //EEPROM disabilitata
 ;  scrivi_eeprom=0;
 ;  }
  BSET 7,_PTED //disabilita eeprom
@@ -2861,64 +3167,57 @@ per_disabilitazione:
  STA scrivi_eeprom
  BRA fine_SPID
 
-;else if((leggi_eeprom)&&(salvataggio_in_corso==0))
+;else if(leggi_eeprom)
 ; {
 ; if(leggi_eeprom==1)
 ;  {
-;  PTED &=0xfb; //EEPROM abilitata
+;  PTED &=0x7f; //EEPROM abilitata
 ;  dato_scritto=0x03;//abilitazione lettura
-;  indirizzo_leggi_eeprom=primo_indirizzo_lettura;
 ;  leggi_eeprom++;
 ;  }
 ; else if(leggi_eeprom==2) //spazio di disabilatazione e riabilitazione
 ;  {
-;  dato_scritto=indirizzo_leggi_eeprom>>8;//parte alta primo indirizzo
+;  dato_scritto=primo_indirizzo_lettura>>8;//parte alta primo indirizzo
 ;  leggi_eeprom++;
 ;  }
 ; else if(leggi_eeprom==3) //spazio di disabilatazione e riabilitazione
 ;  {
-;  dato_scritto=indirizzo_leggi_eeprom;//parte bassa primo indirizzo
+;  dato_scritto=primo_indirizzo_lettura;//parte bassa primo indirizzo
 ;  leggi_eeprom++;
 ;  }
 ; else if(leggi_eeprom==4)
 ;  {
-;  dato_scritto=0;
-;  indirizzo_leggi_eeprom++;
 ;  leggi_eeprom++;
 ;  }
-; else if(indirizzo_leggi_eeprom<ultimo_indirizzo_lettura)
+; else if(contatore_leggi_eeprom<ultimo_dato_in_lettura)
 ;  {
-;  j=indirizzo_leggi_eeprom-primo_indirizzo_lettura-1;
-;  buffer_eeprom[j]=dato_letto;
-;  dato_scritto=0;
-;  indirizzo_leggi_eeprom++;
+;  buffer_eeprom[contatore_leggi_eeprom]=dato_letto;
+;  contatore_leggi_eeprom++;
 ;  }
 ; else
 ;  {
-;  PTED |=0x04;
+;  PTED |=0x80;
 ;  leggi_eeprom=0;
 ;  } 
 ; }
 lettura_EE://per comandi lettura eeprom 
  LDA leggi_eeprom
  BEQ fine
- LDA salvataggio_in_corso
- BNE fine_SPID
+ LDA #1
+ STA eeprom_impegnata
+
  LDA leggi_eeprom
  CMP #1
  BNE parte_alta_indirizzo_lettura
 ; if(leggi_eeprom==1)
 ;  {
-;  PTED &=0xfb; //EEPROM abilitata
+;  PTED &=0x7f; //EEPROM abilitata
 ;  dato_scritto=0x03;//abilitazione lettura
-;  indirizzo_leggi_eeprom=primo_indirizzo_lettura;
 ;  leggi_eeprom++;
 ;  }
  BCLR 7,_PTED
  LDA #$03
  STA dato_scritto//,_SPID
- LDHX primo_indirizzo_lettura
- STHX indirizzo_leggi_eeprom
  LDA leggi_eeprom
  INCA
  STA leggi_eeprom
@@ -2929,10 +3228,10 @@ parte_alta_indirizzo_lettura:
  BNE parte_bassa_indirizzo_lettura
 ; else if(leggi_eeprom==2) //spazio di disabilatazione e riabilitazione
 ;  {
-;  dato_scritto=indirizzo_leggi_eeprom>>8;//parte alta primo indirizzo
+;  dato_scritto=primo_indirizzo_lettura>>8;//parte alta primo indirizzo
 ;  leggi_eeprom++;
 ;  }
- LDA indirizzo_leggi_eeprom
+ LDA primo_indirizzo_lettura
  STA dato_scritto  
  LDA leggi_eeprom
  INCA
@@ -2942,7 +3241,7 @@ parte_alta_indirizzo_lettura:
 parte_bassa_indirizzo_lettura:
  CMP #3
  BNE primo_byte_letto
- LDA indirizzo_leggi_eeprom:1
+ LDA primo_indirizzo_lettura:1
  STA dato_scritto
  LDA leggi_eeprom
  INCA
@@ -2952,279 +3251,45 @@ parte_bassa_indirizzo_lettura:
 primo_byte_letto:
  CMP #4
  BNE lettura_dati
- LDA indirizzo_leggi_eeprom:1
- ADD #1
- STA indirizzo_leggi_eeprom:1
- LDA indirizzo_leggi_eeprom
- ADC #0
- STA indirizzo_leggi_eeprom
  LDA leggi_eeprom
  INCA
  STA leggi_eeprom
  BRA fine_SPID
 
 lettura_dati:
- LDHX indirizzo_leggi_eeprom
- CPHX ultimo_indirizzo_lettura
+ LDHX contatore_leggi_eeprom
+ CPHX ultimo_dato_in_lettura
  BCC fine_lettura
-; else if(indirizzo_leggi_eeprom<ultimo_indirizzo_lettura)
+; else if(contatore_leggi_eeprom<ultimo_dato_in_lettura)
 ;  {
-;  j=indirizzo_leggi_eeprom-primo_indirizzo_lettura;
-;  buffer_eeprom[j-1]=dato_letto;
-;  dato_scritto=0;
-;  indirizzo_leggi_eeprom++;
+;  buffer_eeprom[contatore_leggi_eeprom]=dato_letto;
+;  contatore_leggi_eeprom++;
 ;  }
- LDA indirizzo_leggi_eeprom:1
- SUB primo_indirizzo_lettura:1
- TAX
- CLRH
  LDA dato_letto
- STA @buffer_eeprom:-1,X
- LDA leggi_eeprom
- INCA
- STA leggi_eeprom
+ STA @buffer_eeprom,X
+ LDA contatore_leggi_eeprom:1
+ ADD #1
+ STA contatore_leggi_eeprom:1
+ LDA contatore_leggi_eeprom
+ ADC #0
+ STA contatore_leggi_eeprom
  BRA fine_SPID
 
 fine_lettura: 
  BSET 7,_PTED;//disabilita eepprom
  CLRA
  STA leggi_eeprom
-
+ 
 fine_SPID:
  LDA dato_scritto
  STA SPI1D
-fine: 
- } 
-}
-
-
-void salva_conta_secondi_attivita(void)//ogni 10 minuti
-{
-asm
- {
- LDA salva_conta_secondi
- BEQ fine
- LDA scrivi_eeprom
- BNE fine
- LDA leggi_eeprom
- BNE fine
- CLRA
- STA salva_conta_secondi
- LDHX indirizzo_conta_secondi_attivita
- STHX indirizzo_scrivi_eeprom
- LDHX conta_secondi_attivita
- STHX buffer_eeprom
- LDHX conta_secondi_attivita:2
- STHX buffer_eeprom:2
- LDA #1
- STA scrivi_eeprom
- BSET 7,_PTED;//abilitazione eeprom
- MOV #$ff,SPI1D
-fine: 
- }
-}
-
-void leggi_conta_secondi_attivita(void)//all'accensione
-{
-asm
- {
- LDA leggi_conta_secondi
- BEQ fine
- LDA scrivi_eeprom
- BNE fine
- LDA leggi_eeprom
- BNE fine
- CLRA
- STA leggi_conta_secondi
- LDHX indirizzo_conta_secondi_attivita
- STHX indirizzo_scrivi_eeprom
- LDA #1
- STA leggi_eeprom
- BSET 7,_PTED;//abilitazione eeprom
- MOV #$ff,SPI1D
-fine:
- } 
-}
-
-void salva_impostazioni(void)
-{
-asm
- {
- LDA reset_default
- BNE fine
- LDHX indirizzo_scrivi_eeprom
- CPHX ultimo_indirizzo_scrittura
- BCC salvataggio_terminato
- LDA scrivi_eeprom
- BNE fine
- LDA leggi_eeprom
- BNE fine
- LDA #1
- STA salvataggio_in_corso
-
- LDHX #96
-ripeti_trasferimento: 
- LDA @set.numero_serie:-1,X
- STA @buffer_eeprom:-1,X
- DBNZX ripeti_trasferimento
+ BRA Fine
  
- LDA indirizzo_scrivi_eeprom:1
- ADD #32
- STA indirizzo_scrivi_eeprom:1
- LDA indirizzo_scrivi_eeprom
- ADC #0
- STA indirizzo_scrivi_eeprom
- LDA #1
- STA scrivi_eeprom
- BSET 7,_PTED;//abilitazione eeprom
- MOV #$ff,SPI1D
- BRA fine
-salvataggio_terminato:
- CLRA
- STA salvataggio_in_corso 
-fine: 
- }
-}
-
-void lettura_impostazioni(void)
-{
-char j;
-int var, def, min, max;
-asm
- {
- LDA scrivi_eeprom
- BNE fine
- LDA leggi_eeprom
- BNE fine
- LDA leggi_impostazioni
- CMP #1
- BNE vedi_lettura_ultimata
- LDA #2
- STA leggi_impostazioni
- LDHX indirizzo_numero_serie
- STHX primo_indirizzo_lettura
- LDA primo_indirizzo_lettura:1
- ADD #96
- STA ultimo_indirizzo_lettura:1
- LDA primo_indirizzo_lettura
- ADC #0
- STA ultimo_indirizzo_lettura
- LDA #1
- STA leggi_eeprom
- BSET 7,_PTED;//abilitazione eeprom
- MOV #$ff,SPI1D
- BRA fine
-
-vedi_lettura_ultimata:
- CMP #2
- BNE fine
- CLRA
- STA leggi_impostazioni
- LDA #48
- STA j
-assegna_parametri:
- CLRH
- LDX j
- LSLX
- LDA @dati_di_fabbrica:-1,X
- STA def:1
- LDA @dati_di_fabbrica:-2,X
- STA def
- LDA @limiti_inferiori:-1,X
- STA min:1
- LDA @limiti_inferiori:-2,X
- STA min
- LDA @limiti_superiori:-1,X
- STA max:1
- LDA @limiti_superiori:-2,X
- STA max
- LDA @buffer_eeprom:-1,X
- STA var:1
- LDA @buffer_eeprom:-2,X
- STA var
- LDHX var
- CPHX min
- BCC vedi_max
- LDHX def
- STHX var
- BRA assegna
-vedi_max: 
- LDHX var
- CPHX max
- BEQ assegna
- BCS assegna
- LDHX def
- STHX var
-assegna:
- CLRH
- LDX j
- LSLX
- LDA var
- STA @set.numero_serie:-1,X
- LDA var:1
- STA @set.numero_serie:-2,X
- DBNZ j,assegna_parametri
-
- LDA registrazione.segnalazione
- STA precedente_segnalazione
- JSR calcolo_delle_costanti
 fine:
- } 
-}
-
-void lettura_allarme(void)  //con allarme_in_lettura <335
-{
-//la richiesta viene effettuata tramite USB dando un valore a allarme_in_lettura < 335
-//dopo il tempo necessario alla lettura i dati vengono posti in buffer_USB e spediti
-asm
- {
- LDA scrivi_eeprom
- BNE fine
- LDA leggi_eeprom
- BNE fine
- LDA attesa_invio
- BNE vedi_fine_lettura_eeprom
- LDHX allarme_in_lettura
- CPHX #335
- BCC fine
- CPHX precedente_lettura_allarme
- BEQ fine
- STHX precedente_lettura_allarme
-
- LDA allarme_in_lettura:1
- LDX #24
- MUL
- STA primo_indirizzo_lettura:1
- STX primo_indirizzo_lettura
- LDA allarme_in_lettura
- LDX #24
- MUL
- ADD primo_indirizzo_lettura
- STA primo_indirizzo_lettura
- LDA primo_indirizzo_lettura:1
- ADD #24
- STA ultimo_indirizzo_lettura:1
- LDA primo_indirizzo_lettura
- ADC #0
- STA ultimo_indirizzo_lettura
- LDA #1
- STA attesa_invio
- STA leggi_eeprom
- BSET 7,_PTED;//abilitazione eeprom
- MOV #$ff,SPI1D
- BRA fine
- 
-vedi_fine_lettura_eeprom:
- LDA attesa_invio
- BEQ fine
- LDHX #24
-ripeti_assegnazione:
- LDA @buffer_eeprom:-1,X
- STA @buffer_USB:-1,X
- DBNZX ripeti_assegnazione
- LDA #1
- STA pronto_alla_risposta
-fine:
+ CLRA
+ STA eeprom_impegnata 
+ STA salvataggio_allarme
+Fine: 
  } 
 }
 
@@ -3281,88 +3346,13 @@ asm
  STHX allarme_in_lettura
  LDHX #64
 assegna_buffer:
- LDA @set.numero_serie:-1,X
+ LDA @set:-1,X
  STA @buffer_USB:-1,X
  DBNZX assegna_buffer
 fine: 
  }
 }
  
-void scrittura_allarme_in_eeprom(void)
-{
-asm
- {
- LDA scrivi_eeprom
- BNE fine
- LDA leggi_eeprom
- BNE fine
- LDA registrazione.segnalazione
- CMP precedente_segnalazione
- BEQ fine
- STA precedente_segnalazione
-
- LDHX set.numero_segnalazione
-;  if(set.numero_segnalazione<334) set.numero_segnalazione++; else set.numero_segnalazione=0;
- CPHX #334
- BCC azzera_contatore
- LDA set.numero_segnalazione:1
- ADD #1
- STA set.numero_segnalazione:1
- LDA set.numero_segnalazione
- ADC #0
- STA set.numero_segnalazione
- BRA assegna_a_buffer_eeprom
-azzera_contatore: 
- LDHX #0
- STHX set.numero_segnalazione
-
-assegna_a_buffer_eeprom:
- LDA registrazione.segnalazione;//tipo intervento:
- STA buffer_eeprom
- LDHX registrazione.ora_minuto_secondo;
- STHX buffer_eeprom:1
- LDHX registrazione.ora_minuto_secondo:2;
- STHX buffer_eeprom:3
- LDHX registrazione.tensione;
- STHX buffer_eeprom:5
- LDHX registrazione.tensione:2
- STHX buffer_eeprom:7
- LDHX registrazione.tensione:4
- STHX buffer_eeprom:9
- LDHX registrazione.corrente
- STHX buffer_eeprom:11
- LDHX registrazione.corrente:2
- STHX buffer_eeprom:13
- LDHX registrazione.corrente:4
- STHX buffer_eeprom:15
- LDHX registrazione.potenza
- STHX buffer_eeprom:17
- LDHX registrazione.pressione
- STHX buffer_eeprom:19
- LDA registrazione.cosfi
- STA buffer_eeprom:21
- LDHX registrazione.temperatura
- STHX buffer_eeprom:22
-
- LDA set.numero_segnalazione:1
- LDX #24
- MUL
- STA indirizzo_scrivi_eeprom:1
- STX indirizzo_scrivi_eeprom
- LDA set.numero_segnalazione
- LDX #24
- MUL
- ADD indirizzo_scrivi_eeprom
- STA indirizzo_scrivi_eeprom
- LDA #1
- STA scrivi_eeprom
- STA salvataggio_in_corso
- BSET 7,_PTED;//abilitazione eeprom
- MOV #$ff,SPI1D
-fine:
- } 
-}
-
 void presenta_menu(unsigned char *menu, char idioma, char lunghezza , char riga_inizio)
 {
 //cursor da 0 in su
@@ -3474,21 +3464,28 @@ void modifica_unsigned(unsigned int *var, unsigned int min, unsigned int max)
 unsigned int variab;
 asm
  {
-;if(salita_piu | salita_meno)
+;if(salita_piu)
 ; {
 ; timer_inc_dec=0x1000;
-; timer_piu_meno=200;
+; timer_piu_meno=500;
+; if(*var>=max) *var=max; else *var++;
 ; salita_piu=0;
+; }
+;else if(salita_meno)
+; {
+; timer_inc_dec=0x1000;
+; timer_piu_meno=500;
+; if(*var<=min) *var=min; else *var--;
 ; salita_meno=0;
 ; }
-;if(timer_piu_meno==0)
+;else if(timer_piu_meno==0)
 ; {
-; if(piu)
+; if(piu==filtro_pulsanti)
 ;  {
 ;  if(*var>=max) *var=max; else *var++;
 ;  timer_piu_meno=timer_inc_dec>>4;
 ;  }
-; else if(meno)
+; else if(meno==filtro_pulsanti)
 ;  {
 ;  if(*var<=min) *var=min; else *var--;
 ;  timer_piu_meno=timer_inc_dec>>4;
@@ -3501,21 +3498,60 @@ asm
  STA variab:1
  
  LDA salita_piu
- ORA salita_meno
+ BEQ vedi_salita_meno
+ LDHX #$1000
+ STHX timer_inc_dec
+ LDHX #500
+ STHX timer_piu_meno
+ CLRA
+ STA salita_piu
+; if(*var>=max) *var=max; else *var++;
+ LDHX max
+ CPHX variab
+ BEQ fine
+ BCC aggiungi
+ STHX variab
+ BRA fine
+aggiungi:
+ LDA variab:1
+ ADD #1
+ STA variab:1
+ LDA variab
+ ADC #0
+ STA variab 
+ BRA fine
+
+vedi_salita_meno:
+ LDA salita_meno
  BEQ vedi_timer
  LDHX #$1000
  STHX timer_inc_dec
- LDHX #200
+ LDHX #500
  STHX timer_piu_meno
  CLRA
  STA salita_meno
- STA salita_piu
+; if(*var<=min) *var=min; else *var--;
+ LDHX min
+ CPHX variab
+ BEQ fine
+ BCS sottrai
+ STHX variab
+ BRA fine
+sottrai:
+ LDA variab:1
+ SUB #1
+ STA variab:1
+ LDA variab
+ SBC #0
+ STA variab 
+ BRA fine
 
 vedi_timer:
  LDHX timer_piu_meno
  BNE fine
  LDA piu
- BEQ vedi_meno
+ CMP filtro_pulsanti
+ BNE vedi_meno
 ; if(*var>=max) *var=max; else *var++;
  LDHX max
  CPHX variab
@@ -3541,7 +3577,8 @@ Aggiungi:
 
 vedi_meno:
  LDA meno
- BEQ fine
+ CMP filtro_pulsanti
+ BNE fine
 ; if(*var<=min) *var=min; else *var--;
  LDHX min
  CPHX variab
@@ -3673,32 +3710,21 @@ fine:
  }
 }
 
-void funzione_reset_default(void)
+void salva_reset_default(void)
 {
-char j;
 asm
  {
+ LDA eeprom_impegnata
+ BNE fine
  LDA reset_default
  BEQ fine
- CMP #1
- BNE per_default_parametri
 
  LDHX indirizzo_scrivi_eeprom
  CPHX ultimo_indirizzo_scrittura
- BCC salvataggio_terminato
- LDA scrivi_eeprom
- BNE fine
- LDA leggi_eeprom
- BNE fine
- LDA #1
- STA salvataggio_in_corso
+ BCC per_default_parametri
 
- LDHX #32
-ripeti_trasferimento: 
- LDA #$ff
- STA @buffer_eeprom:-1,X
- DBNZX ripeti_trasferimento
- 
+ LDA #32
+ STA lunghezza_salvataggio
  LDA indirizzo_scrivi_eeprom:1
  ADD #32
  STA indirizzo_scrivi_eeprom:1
@@ -3706,44 +3732,402 @@ ripeti_trasferimento:
  ADC #0
  STA indirizzo_scrivi_eeprom
  LDA #1
+ STA eeprom_impegnata 
+ STA scrivi_eeprom
+ BSET 7,_PTED;//abilitazione eeprom
+ MOV #$ff,SPI1D
+ BRA fine
+
+per_default_parametri:
+ LDHX #0 
+ STHX set.motore_on
+ STX toggle_func
+ STX salita_start
+ STX toggle_stop
+ STX cursore_menu
+ 
+ LDHX #96
+assegna_parametri:
+ LDA @dati_di_fabbrica:-1,X
+ STA @set:-1,X
+ STA @buffer_eeprom:-1,X
+ DBNZX assegna_parametri
+ CLRA
+ STA indirizzo_buffer_eeprom
+ STA reset_default 
+ STA abilita_reset
+ STA conta_secondi_attivita
+ STA conta_secondi_attivita:1
+ STA conta_secondi_attivita:2
+ STA conta_secondi_attivita:3
+
+ JSR calcolo_delle_costanti
+ 
+ LDHX primo_indirizzo_funzioni
+ STHX indirizzo_scrivi_eeprom
+ LDHX ultimo_indirizzo_funzioni
+ STHX ultimo_indirizzo_scrittura
+ LDA #32
+ STA lunghezza_salvataggio
+ LDA #1
+ STA salvataggio_funzioni
+ STA eeprom_impegnata 
+ STA scrivi_eeprom
+ BSET 7,_PTED;//abilitazione eeprom
+ MOV #$ff,SPI1D
+fine:
+ }
+}
+
+void salva_impostazioni(void)
+{
+asm
+ {
+ LDA eeprom_impegnata
+ BNE fine
+ LDA reset_default
+ BNE fine
+ LDA salvataggio_funzioni
+ BEQ fine
+ CMP #1
+ BNE continua_salvataggio
+ LDA #2
+ STA salvataggio_funzioni
+ CLRA
+ STA indirizzo_buffer_eeprom
+ LDA #32
+ STA lunghezza_salvataggio
+ LDHX primo_indirizzo_funzioni
+ STHX indirizzo_scrivi_eeprom
+ LDHX ultimo_indirizzo_funzioni
+ STHX ultimo_indirizzo_scrittura
+ LDHX #96
+ripeti_trasferimento: 
+ LDA @set:-1,X
+ STA @buffer_eeprom:-1,X
+ DBNZX ripeti_trasferimento
+ LDA #1
+ STA eeprom_impegnata 
+ STA scrivi_eeprom
+ BSET 7,_PTED;//abilitazione eeprom
+ MOV #$ff,SPI1D
+ BRA fine
+
+continua_salvataggio: 
+ LDA #32
+ STA lunghezza_salvataggio
+ LDA indirizzo_buffer_eeprom
+ ADD #32
+ STA indirizzo_buffer_eeprom
+ LDA indirizzo_scrivi_eeprom:1
+ ADD #32
+ STA indirizzo_scrivi_eeprom:1
+ LDA indirizzo_scrivi_eeprom
+ ADC #0
+ STA indirizzo_scrivi_eeprom
+
+ LDHX indirizzo_scrivi_eeprom
+ CPHX ultimo_indirizzo_scrittura
+ BCC salvataggio_terminato
+ LDA #1
+ STA eeprom_impegnata 
  STA scrivi_eeprom
  BSET 7,_PTED;//abilitazione eeprom
  MOV #$ff,SPI1D
  BRA fine
 salvataggio_terminato:
  CLRA
- STA salvataggio_in_corso 
+ STA salvataggio_funzioni 
+fine: 
+ }
+}
+
+void salva_allarme_in_eepprom(void)
+{
+asm
+ {
+ LDA eeprom_impegnata
+ BNE fine
+ LDA reset_default
+ BNE fine
+ LDA salvataggio_funzioni
+ BNE fine
+ LDA registrazione.segnalazione_
+ CMP precedente_segnalazione
+ BEQ fine
+ STA precedente_segnalazione
+ LDA #1
+ STA salvataggio_allarme
+
+ LDHX set.numero_segnalazione
+;  if(set.numero_segnalazione<totale_indicazioni_fault) set.numero_segnalazione++; else set.numero_segnalazione=0;
+ CPHX totale_indicazioni_fault
+ BCC azzera_contatore
+ LDA set.numero_segnalazione:1
+ ADD #1
+ STA set.numero_segnalazione:1
+ LDA set.numero_segnalazione
+ ADC #0
+ STA set.numero_segnalazione
+ BRA assegna_a_buffer_eeprom
+azzera_contatore: 
+ LDHX #0
+ STHX set.numero_segnalazione
+
+assegna_a_buffer_eeprom:
+ LDA registrazione.segnalazione_;//tipo intervento:
+ STA buffer_eeprom
+ LDHX conta_secondi_attivita
+ STHX registrazione.ora_minuto_secondo;
+ STHX buffer_eeprom:1
+ LDHX conta_secondi_attivita:2
+ STHX registrazione.ora_minuto_secondo:2;
+ STHX buffer_eeprom:3
+ LDHX tensione_media
+ STHX registrazione.tensione_;
+ STHX buffer_eeprom:5
+ LDHX corrente_media
+ STHX registrazione.corrente_
+ STHX buffer_eeprom:7
+ LDHX potenza_media
+ STHX registrazione.potenza_
+ STHX buffer_eeprom:9
+ LDHX media_pressione
+ STHX registrazione.pressione_
+ STHX buffer_eeprom:11
+ LDA cosfi:3
+ STA registrazione.cosfi_
+ STA buffer_eeprom:13
+ LDHX media_temperatura
+ STHX registrazione.temperatura_
+ STHX buffer_eeprom:14
+
+ CLRA
+ STA indirizzo_buffer_eeprom
+ LDA set.numero_segnalazione:1
+ LDX #16
+ STX lunghezza_salvataggio
+ MUL
+ STA indirizzo_scrivi_eeprom:1
+ STX indirizzo_scrivi_eeprom
+ LDA set.numero_segnalazione
+ LDX #16
+ MUL
+ ADD indirizzo_scrivi_eeprom
+ STA indirizzo_scrivi_eeprom
+ LDA indirizzo_scrivi_eeprom:1
+ ADD #16
+ STA ultimo_indirizzo_scrittura:1
+ LDA indirizzo_scrivi_eeprom
+ ADC #0
+ STA ultimo_indirizzo_scrittura
+ LDA #1
+ STA eeprom_impegnata 
+ STA scrivi_eeprom
+ STA salva_conta_secondi
+ BSET 7,_PTED;//abilitazione eeprom
+ MOV #$ff,SPI1D
+fine:
+ } 
+}
+
+void salva_conta_secondi_attivita(void)//ogni 1 minuti
+{
+asm
+ {
+ LDA eeprom_impegnata
+ BNE fine
+ LDA reset_default
+ BNE fine
+ LDA salvataggio_funzioni
+ BNE fine
+ LDA salvataggio_allarme
+ BNE fine
+ LDA salva_conta_secondi
+ BEQ fine
+ CLRA
+ STA salva_conta_secondi
+ LDHX indirizzo_conta_ore
+ STHX indirizzo_scrivi_eeprom
+ LDHX set.motore_on
+ STHX buffer_eeprom
+ LDHX set.numero_segnalazione
+ STHX buffer_eeprom:2
+ LDHX conta_secondi_attivita
+ STHX set.conta_ore
+ STHX buffer_eeprom:4
+ LDHX conta_secondi_attivita:2
+ STHX set.conta_ore:2
+ STHX buffer_eeprom:6
+ CLRA
+ STA indirizzo_buffer_eeprom
+ LDA #10
+ STA lunghezza_salvataggio
+ LDA #1
+ STA eeprom_impegnata 
+ STA scrivi_eeprom
+ BSET 7,_PTED;//abilitazione eeprom
+ MOV #$ff,SPI1D
+fine: 
+ }
+}
+
+void lettura_impostazioni(void)
+{
+char j;
+int var, def, min, max;
+asm
+ {
+ LDA eeprom_impegnata
+ BNE fine
+ LDA leggi_impostazioni
+ BEQ fine
+ LDA reset_default
+ BNE fine
+ LDA salvataggio_funzioni
+ BNE fine
+ LDA salvataggio_allarme
+ BNE fine
+ LDA salva_conta_secondi
+ BNE fine
  LDA #2
- STA reset_default
+ CMP leggi_impostazioni
+ BEQ vedi_lettura_ultimata
+ STA leggi_impostazioni
+ LDHX primo_indirizzo_funzioni
+ STHX primo_indirizzo_lettura
+ LDHX #0
+ STHX contatore_leggi_eeprom
+ LDHX #96
+ STHX ultimo_dato_in_lettura
+ LDA #1
+ STA eeprom_impegnata 
+ STA leggi_eeprom
+ BSET 7,_PTED;//disabilitazione eeprom
+ MOV #$ff,SPI1D
  BRA fine
 
-per_default_parametri: 
+vedi_lettura_ultimata:
+ LDA leggi_impostazioni
  CMP #2
  BNE fine
- LDA #48
- STA j
+ CLRA
+ STA leggi_impostazioni
+ CLR j
 assegna_parametri:
  CLRH
  LDX j
  LSLX
- LDA @dati_di_fabbrica:-1,X
- STA @set.numero_serie:-1,X
- LDA @dati_di_fabbrica:-2,X
- STA @set.numero_serie:-2,X
- DBNZ j,assegna_parametri
- CLRA
- STA conta_secondi_attivita
- STA conta_secondi_attivita:1
- STA conta_secondi_attivita:2
- STA conta_secondi_attivita:3
- STA abilita_reset
+ LDA @dati_di_fabbrica:1,X
+ STA def:1
+ LDA @dati_di_fabbrica,X
+ STA def
+ LDA @limiti_inferiori:1,X
+ STA min:1
+ LDA @limiti_inferiori,X
+ STA min
+ LDA @limiti_superiori:1,X
+ STA max:1
+ LDA @limiti_superiori,X
+ STA max
+ LDA @buffer_eeprom:1,X
+ STA var:1
+ LDA @buffer_eeprom,X
+ STA var
+ LDHX var
+ CPHX min
+ BCC vedi_max
+ LDHX def
+ STHX var
+ BRA assegna
+vedi_max: 
+ LDHX var
+ CPHX max
+ BEQ assegna
+ BCS assegna
+ LDHX def
+ STHX var
+assegna:
+ CLRH
+ LDX j
+ LSLX
+ LDA var:1
+ STA @set:1,X
+ LDA var
+ STA @set,X
+ INC j
+ LDA j
+ CMP #48
+ BCS assegna_parametri
+
  JSR calcolo_delle_costanti
- }
-presenta_scritta((char*)&comando_reset,3,0,1,1,0,16);//reset eseguito
+fine:
+ } 
+}
+
+void lettura_allarme_messo_in_buffer_USB(void)  //con allarme_in_lettura <totale_indicazioni_fault
+{
+//la richiesta viene effettuata tramite USB dando un valore a allarme_in_lettura < totale_indicazioni_fault
+//dopo il tempo necessario alla lettura i dati vengono posti in buffer_USB e spediti
 asm
  {
+ LDA eeprom_impegnata
+ BNE fine
+ LDA leggi_impostazioni
+ BNE fine
+ LDA reset_default
+ BNE fine
+ LDA salvataggio_funzioni
+ BNE fine
+ LDA salva_conta_secondi
+ BNE fine
+ LDA salvataggio_allarme
+ BNE fine
+ LDA attesa_invio
+ BNE vedi_fine_lettura_eeprom
+ LDHX allarme_in_lettura
+ CPHX totale_indicazioni_fault
+ BCC fine
+ CPHX precedente_lettura_allarme
+ BEQ fine
+ STHX precedente_lettura_allarme
+
+ LDA allarme_in_lettura:1
+ LDX #16
+ MUL
+ STA primo_indirizzo_lettura:1
+ STX primo_indirizzo_lettura
+ LDA allarme_in_lettura
+ LDX #16
+ MUL
+ ADD primo_indirizzo_lettura
+ STA primo_indirizzo_lettura
+ LDHX #0
+ STHX contatore_leggi_eeprom
+ LDHX #16
+ STHX ultimo_dato_in_lettura
+ LDA #1
+ STA eeprom_impegnata 
+ STA attesa_invio
+ STA leggi_eeprom
+ BSET 7,_PTED;//abilitazione eeprom
+ MOV #$ff,SPI1D
+ BRA fine
+ 
+vedi_fine_lettura_eeprom:
+ LDA attesa_invio
+ BEQ fine
+ CLRA
+ STA attesa_invio
+ LDHX #16
+ripeti_assegnazione:
+ LDA @buffer_eeprom:-1,X
+ STA @buffer_USB:-1,X
+ DBNZX ripeti_assegnazione
+ LDA #1
+ STA pronto_alla_risposta
 fine:
- }
+ } 
 }
 
 const int seimila400=6400, mille678=1678, mille515=1515;
@@ -3943,38 +4327,74 @@ scorrimento:
  STA fattore
  LDHX fattore
  STHX sovraccarico_moderato
+
+//(A*.004*5/.512* 4096/5)^2 = A^2*1024  = (A*10)^2*10.24 = (A*10)^2*6400>>16
+;Id_rms = mA in = mA out * set.scala_corrente_differenziale /( .15/5*4096 *5) 
+;Id_rms^2 = media_quad_Id^2 * set.scala_corrente_differenziale^2 /5.76 /2^16
+;Id_rms = sqr(media_quad_Id^2 * set.scala_corrente_differenziale^2 *4/23 /2^16)
+;Id_rms = sqr(media_quad_Id^2 * fattore_Id)
+;fattore_Id = set.scala_corrente_differenziale^2 *4/23 /2^16
+ LDA set.scala_corrente_differenziale:1
+ TAX
+ MUL
+ STA prod:2
+ STX prod:1
+ LDA set.scala_corrente_differenziale:1
+ LDX set.scala_corrente_differenziale
+ MUL
+ LSLA
+ ROLX
+ ADD prod:1
+ STA prod:1
+ TXA
+ ADC #0
+ STA prod
+ LDA set.scala_corrente_differenziale
+ TAX
+ MUL
+ ADD prod
+ STA prod
+ LSL prod:2
+ ROL prod:1
+ ROL prod
+ LSL prod:2
+ ROL prod:1
+ ROL prod
+ LDHX #23
+ LDA prod
+ DIV
+ LDA prod:1
+ DIV
+ STA fattore_Id
+ LDA prod:2
+ DIV
+ STA fattore_Id:1
  }
 }
 
 void programmazione(void)
 {
-static char aumenta;
-if(salita_start)//uscita da programmazione
- {
- if(toggle_func)
-  {
-  calcolo_delle_costanti();
-  //comando di salvataggio in eeprom
-  indirizzo_scrivi_eeprom=indirizzo_numero_serie;
-  ultimo_indirizzo_scrittura=indirizzo_conta_secondi_attivita;
-  toggle_func=0;
-  }
- }
-
+long secondi;
 if(salita_func)
  {
  salita_func=0;
+ abilita_reset=0;
+ timer_reset=5;
+ toggle_stop=0;
+ cursore_menu=0;
+ allarme_in_lettura=0;
  if(toggle_func)
   {
   calcolo_delle_costanti();
   //comando di salvataggio in eeprom
-  indirizzo_scrivi_eeprom=indirizzo_numero_serie;
-  ultimo_indirizzo_scrittura=indirizzo_conta_secondi_attivita;
+  salvataggio_funzioni=1;
+  presenta_menu((unsigned char*)&comandi_da_effettuare,(char)set.lingua,2,0);
   toggle_func=0;
   }
  else
   { 
   toggle_func=1;
+  presenta_menu((unsigned char*)&menu_principale,(char)set.lingua,68,0);
   }
  }
  
@@ -3983,42 +4403,93 @@ if(toggle_func)//lettura e modifica delle funzioni
  if(salita_stop)
   {
   salita_stop=0;
-  if(toggle_stop) toggle_stop=0; else toggle_stop=1;
+  abilita_reset=0;
+  timer_reset=5;
+  if(cursore_menu==33) //presentazione dell'elenco emergenze
+   {
+   if(allarme_in_lettura>=totale_indicazioni_fault) allarme_in_lettura=0; else allarme_in_lettura++;
+   toggle_stop=1;
+   } 
+  else 
+   {
+   if(toggle_stop) toggle_stop=0; else toggle_stop=1;
+   }
   }
  if(toggle_stop==0)//modifica della funzione
   {
   if(salita_meno)
    {
    salita_meno=0;
-   aumenta=1;
-   if(cursore_menu<23) cursore_menu++;
-   else if((funzioni_avanzate)&&(cursore_menu<31)) cursore_menu++; else cursore_menu=0;
+   if(cursore_menu<22) cursore_menu++;
+   else if((funzioni_avanzate)&&(cursore_menu<33)) cursore_menu++; else cursore_menu=0;
+   if(set.monofase_trifase==0)
+    {
+    if(cursore_menu==4) cursore_menu++; //solo trifase
+    if(cursore_menu==5) cursore_menu++; //solo trifase
+    if(cursore_menu==8) cursore_menu++; //solo trifase
+    if(cursore_menu==10) cursore_menu++; //solo trifase
+    }
+   presenta_menu((unsigned char*)&menu_principale,(char)set.lingua,68,cursore_menu<<1);
    }
   else if(salita_piu)
    {
    salita_piu=0;
-   aumenta=0;
    if(cursore_menu>0) cursore_menu--;
-   else if(funzioni_avanzate) cursore_menu=31; else cursore_menu=23;
+   else if(funzioni_avanzate) cursore_menu=33; else cursore_menu=22;
+   if(set.monofase_trifase==0)
+    {
+    if(cursore_menu==10) cursore_menu--; //solo trifase
+    if(cursore_menu==8) cursore_menu--; //solo trifase
+    if(cursore_menu==5) cursore_menu--; //solo trifase
+    if(cursore_menu==4) cursore_menu--; //solo trifase
+    }
+   presenta_menu((unsigned char*)&menu_principale,(char)set.lingua,68,cursore_menu<<1);
    }
-  presenta_menu((unsigned char*)&menu_principale,(char)set.lingua,64,cursore_menu<<1);
-  if(numero_ingresso==chiave_ingresso) //presenta abilitazione alle funzioni avanzate
+  switch(cursore_menu)
    {
-   funzioni_avanzate=1;
-   if(cursore_menu==20) presenta_scritta((char*)&abilita_avanzate,0,(char)set.lingua,2,1,0,16);
+   case 0: presenta_unsigned(set.tensione_nominale,0,1,10,3); break;
+   case 1: presenta_unsigned(set.corrente_nominale,1,1,10,3); break;
+   case 2: presenta_unsigned(set.limite_sovratensione,0,1,10,3); break;
+   case 3: presenta_unsigned(set.limite_sottotensione,0,1,10,3); break;
+   case 4: presenta_unsigned(set.limite_segnalazione_dissimmetria,0,1,10,3); break;
+   case 5: presenta_unsigned(set.limite_intervento_dissimmetria,0,1,10,3); break;
+   case 6: presenta_unsigned(set.timeout_protezione_tensione,0,1,12,3); break;
+   case 7: presenta_unsigned(set.limite_sovracorrente,0,1,10,3); break;
+   case 8: presenta_unsigned(set.limite_segnalazione_squilibrio,0,1,11,3); break;
+   case 9: presenta_unsigned(set.limite_intervento_squilibrio,0,1,11,3); break;
+   case 10: presenta_unsigned(set.timeout_protezione_squilibrio,0,1,12,2); break;
+   case 11: presenta_unsigned(set.limite_corrente_differenziale,0,1,10,3); break;
+   case 12: presenta_unsigned(set.ritardo_intervento_differenziale,0,1,11,3); break;
+   case 13: presenta_unsigned(set.limite_intervento_pressione,1,1,9,3); break;
+   case 14: presenta_unsigned(set.pressione_accensione,1,1,9,3); break;
+   case 15: presenta_unsigned(set.pressione_spegnimento,1,1,9,3); break;
+   case 16: presenta_unsigned(set.ritardo_funzionamento_dopo_emergenza,0,1,10,3); break;
+   case 17: presenta_unsigned(set.potenza_minima_mandata_chiusa,0,1,10,4); break;
+   case 18: presenta_unsigned(set.ritardo_stop_mandata_chiusa,0,1,11,3); break;
+   case 19: presenta_unsigned(set.potenza_minima_funz_secco,0,1,10,4); break;
+   case 20: presenta_unsigned(set.ritardo_stop_funzionemento_a_secco,0,1,11,3); break;
+   case 21: presenta_unsigned(set.ritardo_riaccensione_a_secco,0,1,10,4); break;
+   case 22: presenta_unsigned(numero_ingresso,0,1,10,3); break;
+   case 23: presenta_unsigned(set.numero_serie,0,1,7,5); break;
+   case 24:
+    {
+    if(set.monofase_trifase) presenta_scritta((char*)&presenta_monofase_trifase,1,(char)set.lingua,2,1,0,16);
+    else presenta_scritta((char*)&presenta_monofase_trifase,0,(char)set.lingua,2,1,0,16);
+    } break;
+   case 25: presenta_unsigned(set.costante_tau_salita_temperatura,0,1,10,3); break;
+   case 26: presenta_unsigned(set.portata_sensore_pressione,1,1,10,3); break;
+   case 27: presenta_unsigned(set.scala_temperatura_motore,0,1,8,3); break;
+   case 28: presenta_unsigned(set.taratura_temperatura_ambiente,0,1,10,3); break;
+   case 29: presenta_unsigned(set.limite_intervento_temper_motore,0,1,10,3); break;
+   case 30: presenta_unsigned(set.scala_corrente_differenziale,0,1,7,3); break;
+   case 31:
+    {
+    if(set.modo_start_stop) presenta_scritta((char*)&presenta_tipo_start_stop,1,(char)set.lingua,2,1,0,16);
+    else presenta_scritta((char*)&presenta_tipo_start_stop,0,(char)set.lingua,2,1,0,16);
+    } break;
+   case 32: presenta_scritta((char*)&comando_reset,1,0,1,1,0,16); break;
    }
-  else
-   {
-   funzioni_avanzate=0;
-   if(cursore_menu==20) presenta_scritta((char*)&abilita_avanzate,1,(char)set.lingua,2,1,0,16);
-   }
-  if((abilita_reset)&&(reset_default==0)&&(cursore_menu==28))
-   {
-   reset_default=1;
-   indirizzo_scrivi_eeprom=0;
-   ultimo_indirizzo_scrittura=8160;
-   presenta_scritta((char*)&comando_reset,2,0,1,1,0,16);//reset iniziato
-   }
+  if(numero_ingresso==chiave_ingresso) funzioni_avanzate=1; else funzioni_avanzate=0;
   }
  else //if(toggle_stop) modifica del valore
   {
@@ -4026,221 +4497,348 @@ if(toggle_func)//lettura e modifica delle funzioni
    {
    case 0:
     {
-    if(piu) set.monofase_trifase=1; else if(meno) set.monofase_trifase=0;
-    if(set.monofase_trifase) presenta_scritta((char*)&presenta_monofase_trifase,1,(char)set.lingua,2,1,0,16);
-    else presenta_scritta((char*)&presenta_monofase_trifase,0,(char)set.lingua,2,1,0,16);
+    modifica_unsigned((unsigned int*)&set.tensione_nominale,110,440);
+    presenta_unsigned(set.tensione_nominale,0,1,10,3);
     } break;
    case 1:
     {
-    modifica_unsigned((unsigned int*)&set.tensione_nominale,110,440);
-    presenta_unsigned(set.tensione_nominale,0,1,6,3);
+    modifica_unsigned((unsigned int*)&set.corrente_nominale,10,200);
+    presenta_unsigned(set.corrente_nominale,1,1,10,3);
     } break;
    case 2:
     {
-    modifica_unsigned((unsigned int*)&set.corrente_nominale,10,200);
-    presenta_unsigned(set.corrente_nominale,1,1,6,3);
+    modifica_unsigned((unsigned int*)&set.limite_sovratensione,100,125);
+    presenta_unsigned(set.limite_sovratensione,0,1,10,3);
     } break;
    case 3:
     {
-    modifica_unsigned((unsigned int*)&set.limite_sovratensione,100,125);
-    presenta_unsigned(set.limite_sovratensione,0,1,6,3);
+    modifica_unsigned((unsigned int*)&set.limite_sottotensione,60,95);
+    presenta_unsigned(set.limite_sottotensione,0,1,10,3);
     } break;
    case 4:
     {
-    modifica_unsigned((unsigned int*)&set.limite_sottotensione,60,95);
-    presenta_unsigned(set.limite_sottotensione,0,1,6,3);
+    modifica_unsigned((unsigned int*)&set.limite_segnalazione_dissimmetria,5,20);
+    presenta_unsigned(set.limite_segnalazione_dissimmetria,0,1,10,3);
     } break;
    case 5:
     {
-    if(set.monofase_trifase)
-     {
-     modifica_unsigned((unsigned int*)&set.limite_segnalazione_dissimmetria,5,20);
-     presenta_unsigned(set.limite_segnalazione_dissimmetria,0,1,9,3);
-     }
-    else if(aumenta) cursore_menu=7; else cursore_menu=4;
+    modifica_unsigned((unsigned int*)&set.limite_intervento_dissimmetria,5,25);
+    presenta_unsigned(set.limite_intervento_dissimmetria,0,1,10,3);
     } break;
    case 6:
     {
-    if(set.monofase_trifase)
-     {
-     modifica_unsigned((unsigned int*)&set.limite_intervento_dissimmetria,5,25);
-     presenta_unsigned(set.limite_intervento_dissimmetria,0,1,9,3);
-     }
-    else if(aumenta) cursore_menu=7; else cursore_menu=4;
+    modifica_unsigned((unsigned int*)&set.timeout_protezione_tensione,2,120);
+    presenta_unsigned(set.timeout_protezione_tensione,0,1,12,3);
     } break;
    case 7:
-    {
-    modifica_unsigned((unsigned int*)&set.timeout_protezione_tensione,2,120);
-    presenta_unsigned(set.timeout_protezione_tensione,0,1,10,3);
-    } break;
-   case 8:
     {
     modifica_unsigned((unsigned int*)&set.limite_sovracorrente,105,140);
     presenta_unsigned(set.limite_sovracorrente,0,1,10,3);
     } break;
-   case 9:
+   case 8:
     {
-    if(set.monofase_trifase)
-     {
-     modifica_unsigned((unsigned int*)&set.limite_segnalazione_squilibrio,5,20);
-     presenta_unsigned(set.limite_segnalazione_squilibrio,0,1,10,3);
-     }
-    else if(aumenta) cursore_menu=12; else cursore_menu=8;
+    modifica_unsigned((unsigned int*)&set.limite_segnalazione_squilibrio,5,20);
+    presenta_unsigned(set.limite_segnalazione_squilibrio,0,1,11,3);
+    } break;
+   case 9: 
+    {
+    modifica_unsigned((unsigned int*)&set.limite_intervento_squilibrio,5,25);
+    presenta_unsigned(set.limite_intervento_squilibrio,0,1,11,3);
     } break;
    case 10:
     {
-    modifica_unsigned((unsigned int*)&set.limite_intervento_squilibrio,5,25);
-    presenta_unsigned(set.limite_intervento_squilibrio,0,1,10,3);
+    modifica_unsigned((unsigned int*)&set.timeout_protezione_squilibrio,1,120);
+    presenta_unsigned(set.timeout_protezione_squilibrio,0,1,12,3);
     } break;
    case 11:
-    {
-    if(set.monofase_trifase)
-     {
-     modifica_unsigned((unsigned int*)&set.timeout_protezione_squilibrio,1,120);
-     presenta_unsigned(set.timeout_protezione_squilibrio,0,1,10,3);
-     }
-    else if(aumenta) cursore_menu=12; else cursore_menu=8;
-    } break;
-   case 12:
     {
     modifica_unsigned((unsigned int*)&set.limite_corrente_differenziale,10,500);
     presenta_unsigned(set.limite_corrente_differenziale,0,1,10,3);
     } break;
-   case 13:
+   case 12:
     {
-    modifica_unsigned((unsigned int*)&set.ritardo_intervento_differenziale,5,100);
-    presenta_unsigned(set.ritardo_intervento_differenziale,0,1,10,3);
+    modifica_unsigned((unsigned int*)&set.ritardo_intervento_differenziale,20,200);
+    presenta_unsigned(set.ritardo_intervento_differenziale,0,1,11,3);
     } break;
-   case 14:
+   case 13:
     {
     modifica_unsigned((unsigned int*)&set.limite_intervento_pressione,40,450);
     presenta_unsigned(set.limite_intervento_pressione,1,1,9,3);
     } break;
-   case 15:
+   case 14:
     {
     modifica_unsigned((unsigned int*)&set.pressione_accensione,5,400);
     presenta_unsigned(set.pressione_accensione,1,1,9,3);
     } break;
-   case 16:
+   case 15:
     {
     modifica_unsigned((unsigned int*)&set.pressione_spegnimento,10,440);
     presenta_unsigned(set.pressione_spegnimento,1,1,9,3);
     } break;
-   case 17:
+   case 16:
     {
     modifica_unsigned((unsigned int*)&set.ritardo_funzionamento_dopo_emergenza,2,120);
     presenta_unsigned(set.ritardo_funzionamento_dopo_emergenza,0,1,10,3);
     } break;
-   case 18:
+   case 17:
     {
     modifica_unsigned((unsigned int*)&set.potenza_minima_mandata_chiusa,50,3000);
-    presenta_unsigned(set.potenza_minima_mandata_chiusa,0,1,9,4);
+    presenta_unsigned(set.potenza_minima_mandata_chiusa,0,1,10,4);
+    } break;
+   case 18:
+    {
+    modifica_unsigned((unsigned int*)&set.ritardo_stop_mandata_chiusa,5,120);
+    presenta_unsigned(set.ritardo_stop_mandata_chiusa,0,1,11,3);
     } break;
    case 19:
     {
-    modifica_unsigned((unsigned int*)&set.ritardo_stop_mandata_chiusa,5,120);
-    presenta_unsigned(set.potenza_minima_funz_secco,0,1,9,3);
+    modifica_unsigned((unsigned int*)&set.potenza_minima_funz_secco,40,2500);
+    presenta_unsigned(set.potenza_minima_funz_secco,0,1,10,4);
     } break;
    case 20:
     {
-    modifica_unsigned((unsigned int*)&set.potenza_minima_funz_secco,40,2500);
-    presenta_unsigned(set.potenza_minima_funz_secco,0,1,9,4);
+    modifica_unsigned((unsigned int*)&set.ritardo_stop_funzionemento_a_secco,5,120);
+    presenta_unsigned(set.ritardo_stop_funzionemento_a_secco,0,1,11,3);
     } break;
    case 21:
     {
-    modifica_unsigned((unsigned int*)&set.ritardo_stop_funzionemento_a_secco,5,120);
-    presenta_unsigned(set.potenza_minima_funz_secco,0,1,9,3);
-    } break;
-   case 22:
-    {
     modifica_unsigned((unsigned int*)&set.ritardo_riaccensione_a_secco,60,2000);
-    presenta_unsigned(set.potenza_minima_funz_secco,0,1,9,4);
+    presenta_unsigned(set.ritardo_riaccensione_a_secco,0,1,10,4);
     } break;
-   case 23: //abilitazione delle funzioni_avanzate
+   case 22: //abilitazione delle funzioni_avanzate
     {
     modifica_unsigned((unsigned int*)&numero_ingresso,0,999);
-    presenta_unsigned(numero_ingresso,0,1,6,3);
+    presenta_unsigned(numero_ingresso,0,1,10,3);
+    } break;
+   case 23:
+    {
+    modifica_unsigned((unsigned int*)&set.numero_serie,1,65535);
+    presenta_unsigned(set.numero_serie,0,1,7,5);
     } break;
    case 24:
+    {
+    if(piu) set.monofase_trifase=1; else if(meno) set.monofase_trifase=0;
+    if(set.monofase_trifase) presenta_scritta((char*)&presenta_monofase_trifase,1,(char)set.lingua,2,1,0,16);
+    else presenta_scritta((char*)&presenta_monofase_trifase,0,(char)set.lingua,2,1,0,16);
+    } break;
+   case 25:
     {
     modifica_unsigned((unsigned int*)&set.costante_tau_salita_temperatura,20,600);
     presenta_unsigned(set.costante_tau_salita_temperatura,0,1,10,3);
     } break;
-   case 25:
-    {
-    modifica_unsigned((unsigned int*)&set.portata_sensore_pressione,40,500);
-    presenta_unsigned(set.portata_sensore_pressione,0,1,10,3);
-    } break;
    case 26:
     {
-    modifica_unsigned((unsigned int*)&set.scala_temperatura_motore,2,100);
-    presenta_unsigned(set.scala_temperatura_motore,0,1,10,3);
+    modifica_unsigned((unsigned int*)&set.portata_sensore_pressione,40,500);
+    presenta_unsigned(set.portata_sensore_pressione,1,1,10,3);
     } break;
    case 27:
+    {
+    modifica_unsigned((unsigned int*)&set.scala_temperatura_motore,2,100);
+    presenta_unsigned(set.scala_temperatura_motore,0,1,8,3);
+    } break;
+   case 28:
     {
     modifica_unsigned((unsigned int*)&set.taratura_temperatura_ambiente,5,40);
     if(piu | meno) set.temperatura_ambiente=DAC.temperatura_letta;
     presenta_unsigned(set.taratura_temperatura_ambiente,0,1,10,3);
     } break;
-   case 28:
+   case 29:
     {
     modifica_unsigned((unsigned int*)&set.limite_intervento_temper_motore,70,130);
     presenta_unsigned(set.limite_intervento_temper_motore,0,1,10,3);
     } break;
-   case 29:
-    {
-    modifica_unsigned((unsigned int*)&set.scala_corrente_differenziale,1,250);
-    presenta_unsigned(set.scala_corrente_differenziale,0,1,6,3);
-    } break;
    case 30:
     {
-    modifica_unsigned((unsigned int*)&set.numero_serie,1,65535);
-    presenta_unsigned(set.numero_serie,0,1,6,5);
+    modifica_unsigned((unsigned int*)&set.scala_corrente_differenziale,1,250);
+    presenta_unsigned(set.scala_corrente_differenziale,0,1,7,3);
     } break;
    case 31:
     {
-    if(piu) abilita_reset=1; else if(meno) abilita_reset=0;
-    if(abilita_reset) presenta_scritta((char*)&comando_reset,0,0,1,1,0,16);
-    else presenta_scritta((char*)&comando_reset,1,0,1,1,0,16);
+    if(piu) set.modo_start_stop=1; else if(meno) set.modo_start_stop=0;
+    if(set.modo_start_stop) presenta_scritta((char*)&presenta_tipo_start_stop,1,(char)set.lingua,2,1,0,16);
+    else presenta_scritta((char*)&presenta_tipo_start_stop,0,(char)set.lingua,2,1,0,16);
+    } break;
+   case 32:
+    {
+    if(piu==filtro_pulsanti) abilita_reset=1; else if(meno==filtro_pulsanti) abilita_reset=0;
+    if(abilita_reset)
+     {
+     presenta_scritta((char*)&comando_reset,0,0,1,1,0,16);
+     if((timer_reset==0)&&(reset_default==0))
+      {
+      reset_default=1;
+      toggle_func=0;
+      toggle_stop=0;
+      indirizzo_scrivi_eeprom=0;
+      indirizzo_buffer_eeprom=0;
+      lunghezza_salvataggio=32;
+      ultimo_indirizzo_scrittura=primo_indirizzo_funzioni;
+      asm
+       {
+       LDHX #96
+      ripeti_Trasferimento: 
+       LDA #$ff
+       STA @buffer_eeprom:-1,X
+       DBNZX ripeti_Trasferimento
+       LDA #1
+       STA scrivi_eeprom
+       STA salvataggio_funzioni
+       BSET 7,_PTED;//abilitazione eeprom
+       MOV #$ff,SPI1D
+       }
+      presenta_scritta((char*)&comando_reset,2,0,1,1,0,16);//reset iniziato
+      }
+     } 
+    else
+     {
+     timer_reset=5;//5 s attesa reset
+     presenta_scritta((char*)&comando_reset,1,0,1,1,0,16);
+     }
+    } break;
+   case 33:
+    {
+    if(pronto_alla_risposta)
+     {
+     pronto_alla_risposta=0;
+     if(buffer_USB[0]<29)
+      {  
+      asm
+       {
+       LDHX buffer_USB:1
+       STHX secondi
+       LDHX buffer_USB:3
+       STHX secondi:2
+       }
+      presenta_scritta((unsigned char *)&lettura_allarmi,0,(char)set.lingua,21,0,0,16);
+      Nallarme_ora_minuto_secondo(secondi,buffer_USB[0]);
+      messaggio_allarme(buffer_USB[0]);
+      }
+     }
     } break;
    }
   }
  } 
 }
 
+void messaggio_allarme(char indentificazione)
+{
+switch(indentificazione)
+ {
+ case 0:
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,1,(char)set.lingua,21,1,0,16);
+  } break; 
+ case 1:
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,2,(char)set.lingua,21,1,0,16);
+  } break; 
+ case 10://I2xT
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,3,(char)set.lingua,21,1,0,16);
+  } break;
+ case 11://sovratensione
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,4,(char)set.lingua,21,1,0,16);
+  } break;
+ case 12://sottotensione
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,5,(char)set.lingua,21,1,0,16);
+  } break;
+ case 13://mandata chiusa
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,6,(char)set.lingua,21,1,0,16);
+  } break;
+ case 14://funzionamento a secco
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,7,(char)set.lingua,21,1,0,16);
+  } break;
+ case 15://sovratemperatura motore
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,8,(char)set.lingua,21,1,0,16);
+  } break;
+ case 16://protezione differenziale
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,9,(char)set.lingua,21,1,0,16);
+  } break;
+ case 17://squilibrio correnti
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,10,(char)set.lingua,21,1,0,16);
+  } break;
+ case 18://dissimmetria tensioni
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,11,(char)set.lingua,21,1,0,16);
+  } break;
+ case 20://I2xT
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,12,(char)set.lingua,21,1,0,16);
+  } break;
+ case 21://sovratensione
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,13,(char)set.lingua,21,1,0,16);
+  } break;
+ case 22://sottotensione
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,14,(char)set.lingua,21,1,0,16);
+  } break;
+ case 23://mandata chiusa
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,15,(char)set.lingua,21,1,0,16);
+  } break;
+ case 24://funzionamento a secco
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,16,(char)set.lingua,21,1,0,16);
+  } break;
+ case 25://sovratemperatura motore
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,17,(char)set.lingua,21,1,0,16);
+  } break;
+ case 26://protezione differenziale
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,18,(char)set.lingua,21,1,0,16);
+  } break;
+ case 27://squilibrio correnti
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,19,(char)set.lingua,21,1,0,16);
+  } break;
+ case 28://dissimmetria tensioni
+  {
+  presenta_scritta((unsigned char *)&lettura_allarmi,20,(char)set.lingua,21,1,0,16);
+  } break;
+ }
+} 
+
 void misure_medie(void)
 {
-int delta, primo, secondo, terzo;
+int delta, primo, secondo, terzo, tensione;
 long prod;
 char j;
 asm
  {
- LDA media_potenzaI1xV1:1
- ADD media_potenzaI2xV2:1
- STA potenza_media:1
- LDA media_potenzaI1xV1
- ADC media_potenzaI2xV2
- STA potenza_media
- LDA potenza_media:1
- ADD media_potenzaI3xV3:1
- STA potenza_media:1
- LDA potenza_media
- ADC media_potenzaI3xV3
- STA potenza_media
+ LDA set.monofase_trifase
+ BNE versione_trifase
+ LDA V1_rms:1
+ LSLA
+ STA tensione:1
+ LDA V1_rms
+ ROLA
+ STA tensione
+ LDHX I1_rms
+ STHX corrente_media
 
- LDA media_reattivaI1xV23:1
- ADD media_reattivaI2xV31:1
- STA reattiva_media:1
- LDA media_reattivaI1xV23
- ADC media_reattivaI2xV31
- STA reattiva_media
- LDA reattiva_media:1
- ADD media_reattivaI3xV12:1
- STA reattiva_media:1
- LDA reattiva_media
- ADC media_reattivaI3xV12
- STA reattiva_media
-  
+ CLR prod:2
+ CLR prod:3
+ LDA media_potenzaI1xV1:1
+ ADD media_potenzaI3xV3:1
+ STA prod:1
+ LDA media_potenzaI1xV1
+ ADC media_potenzaI3xV3
+ STA prod
+ BPL assegna_potenze_medie
+ CLR prod
+ CLR prod:1
+ BRA assegna_potenze_medie
+
+versione_trifase: 
  LDA V1_rms:1
  ADD V2_rms:1
  STA tensione_media:1
@@ -4260,7 +4858,7 @@ asm
  LDA tensione_media:1
  DIV
  STA tensione_media:1
-  
+
  LDA I1_rms:1
  ADD I2_rms:1
  STA corrente_media:1
@@ -4281,6 +4879,46 @@ asm
  DIV
  STA corrente_media:1
 
+ LDA media_potenzaI1xV1:1
+ ADD media_potenzaI2xV2:1
+ STA prod:1
+ LDA media_potenzaI1xV1
+ ADC media_potenzaI2xV2
+ STA prod
+ LDA prod:1
+ ADD media_potenzaI3xV3:1
+ STA prod:1
+ LDA prod
+ ADC media_potenzaI3xV3
+ STA prod
+ BPL per_reattiva
+ CLR prod
+ CLR prod:1
+ 
+per_reattiva: 
+ LDA media_reattivaI1xV23:1
+ ADD media_reattivaI2xV31:1
+ STA prod:3
+ LDA media_reattivaI1xV23
+ ADC media_reattivaI2xV31
+ STA prod:2
+ LDA prod:3
+ ADD media_reattivaI3xV12:1
+ STA prod:3
+ LDA prod:2
+ ADC media_reattivaI3xV12
+ STA prod:2
+ 
+assegna_potenze_medie:
+ LDHX prod
+ SEI
+ STHX potenza_media
+ LDHX prod:2
+ STHX reattiva_media
+ LDHX tensione
+ STHX tensione_media
+ CLI
+  
 //-----dissimetria---------
  LDHX V1_rms
  CPHX V2_rms
@@ -4431,278 +5069,350 @@ Allo_scorrimento:
  }
 }
 
+void Nallarme_ora_minuto_secondo(long secondi, char numero)
+{
+int ore;
+char min, sec;
+asm
+ {
+ LDHX #60
+ LDA secondi
+ DIV
+ STA secondi
+ LDA secondi:1
+ DIV
+ STA secondi:1
+ LDA secondi:2
+ DIV
+ STA secondi:2
+ LDA secondi:3
+ DIV
+ STA secondi:3
+ PSHH
+ PULA
+ STA sec
+ LDHX #60
+ LDA secondi
+ DIV
+ STA secondi
+ LDA secondi:1
+ DIV
+ STA secondi:1
+ LDA secondi:2
+ DIV
+ STA secondi:2
+ LDA secondi:3
+ DIV
+ STA secondi:3
+ PSHH
+ PULA
+ STA min
+ LDHX secondi:2
+ STHX ore
+ 
+ LDHX #10
+ LDA sec
+ DIV
+ ORA #$30
+ STA display:14
+ PSHH
+ PULA
+ ORA #$30
+ STA display:15
+ 
+ LDHX #10
+ LDA min
+ DIV
+ ORA #$30
+ STA display:11
+ PSHH
+ PULA
+ ORA #$30
+ STA display:12
+ 
+ LDHX #10
+ LDA ore
+ DIV
+ STA ore
+ LDA ore:1
+ DIV
+ STA ore:1
+ PSHH
+ PULA
+ ORA #$30
+ STA display:9
+ 
+ LDHX #10
+ LDA ore
+ DIV
+ STA ore
+ LDA ore:1
+ DIV
+ STA ore:1
+ PSHH
+ PULA
+ ORA #$30
+ STA display:8
+ 
+ LDHX #10
+ LDA ore
+ DIV
+ STA ore
+ LDA ore:1
+ DIV
+ STA ore:1
+ PSHH
+ PULA
+ ORA #$30
+ STA display:7
+ 
+ LDHX #10
+ LDA ore
+ DIV
+ STA ore
+ LDA ore:1
+ DIV
+ ORA #$30
+ STA display:5
+ PSHH
+ PULA
+ ORA #$30
+ STA display:6
+ 
+ LDHX #10
+ LDA numero
+ DIV
+ ORA #$30
+ STA display:2
+ PSHH
+ PULA
+ ORA #$30
+ STA display:3
+ }
+}
+
 void presenta_stato_motore(void)
 {
 int pressione, temperatura;
 if(toggle_func==0)//presenta le letture
  {
- if(timer_aggiorna_misure==0)
+ if(set.motore_on)
   {
-  timer_aggiorna_misure=250;
-  asm
+  if(timer_aggiorna_misure==0)
    {
-   LDHX media_pressione
-   STHX pressione
-   LDHX media_temperatura
-   STHX temperatura
-   }
-  if(set.monofase_trifase==0) //con alimentazione monofase
-   {
-   if(timer_commuta_presentazione>4990)
+   timer_aggiorna_misure=250;
+   asm
     {
-    timer_commuta_presentazione=4990;
-    presenta_menu((unsigned char *)&dati_presentati_in_ON,0,4,0);
+    LDHX media_pressione
+    STHX pressione
+    LDHX media_temperatura
+    STHX temperatura
     }
-   else if((timer_commuta_presentazione>2490)&&(timer_commuta_presentazione<2501))
+   if(set.monofase_trifase==0) //con alimentazione monofase
     {
-    timer_commuta_presentazione=2490;
-    presenta_menu((unsigned char *)&dati_presentati_in_ON,0,4,0);
-    }
-
-   if(timer_commuta_presentazione<2500)
-    {
-    presenta_unsigned(tensione_media,0,0,0,3);
-    presenta_unsigned(potenza_media,0,0,5,4);
-    presenta_unsigned(pressione,1,0,11,3);
-    presenta_unsigned(corrente_media,1,1,0,3);
-    presenta_unsigned(registrazione.cosfi,2,1,5,2);
-    presenta_unsigned(temperatura,0,1,11,3);
-    }
-   else if(registrazione.segnalazione)
-    {
-    presenta_unsigned(tensione_media,0,0,0,3);
-    presenta_unsigned(potenza_media,0,0,5,4);
-    presenta_unsigned(pressione,1,0,11,3);
-    switch(registrazione.segnalazione)
+    if(alternanza_presentazione==0x21)
      {
-     case 1://motore spento
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,2,(char)set.lingua,21,1,0,16);
-      } break;
-     case 10://I2xT
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,3,(char)set.lingua,21,1,0,16);
-      } break;
-     case 11://sovratensione
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,4,(char)set.lingua,21,1,0,16);
-      } break;
-     case 12://sottotensione
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,5,(char)set.lingua,21,1,0,16);
-      } break;
-     case 13://mandata chiusa
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,6,(char)set.lingua,21,1,0,16);
-      } break;
-     case 14://funzionamento a secco
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,7,(char)set.lingua,21,1,0,16);
-      } break;
-     case 15://sovratemperatura motore
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,8,(char)set.lingua,21,1,0,16);
-      } break;
-     case 20://I2xT
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,12,(char)set.lingua,21,1,0,16);
-      } break;
-     case 21://sovratensione
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,13,(char)set.lingua,21,1,0,16);
-      } break;
-     case 22://sottotensione
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,14,(char)set.lingua,21,1,0,16);
-      } break;
-     case 23://mandata chiusa
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,15,(char)set.lingua,21,1,0,16);
-      } break;
-     case 24://funzionamento a secco
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,16,(char)set.lingua,21,1,0,16);
-      } break;
-     case 25://sovratemperatura motore
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,17,(char)set.lingua,21,1,0,16);
-      } break;
-     case 26://protezione differenziale
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,18,(char)set.lingua,21,1,0,16);
-      } break;
+     alternanza_presentazione=0x20;
+     presenta_scritta((unsigned char *)&lettura_allarmi,0,(char)set.lingua,21,0,0,16);
+     Nallarme_ora_minuto_secondo(conta_secondi_attivita,registrazione.segnalazione_);
+     messaggio_allarme(registrazione.segnalazione_);
      }
+    else if(alternanza_presentazione==0x81)
+     {
+     alternanza_presentazione=0x80;
+     presenta_menu((unsigned char *)&dati_presentati_in_ON,0,0,0);
+     }
+    else if(alternanza_presentazione==0x41)
+     {
+     alternanza_presentazione=0x40;
+     presenta_menu((unsigned char *)&dati_presentati_in_ON,0,0,0);
+     }
+
+    if(alternanza_presentazione==0x80)
+     {
+     presenta_unsigned(tensione_media,0,0,0,3);
+     presenta_unsigned(potenza_media,0,0,5,5);
+     presenta_unsigned(pressione,1,0,11,3);
+     presenta_unsigned(corrente_media,1,1,0,3);
+     if(cosfi[3]>99) cosfi[3]=99;
+     presenta_unsigned(cosfi[3],2,1,5,3);
+     presenta_unsigned(temperatura,0,1,11,3);
+     }
+    else if(alternanza_presentazione==0x40)
+     {
+     presenta_unsigned(tensione_media,0,0,0,3);
+     presenta_unsigned(potenza_media,0,0,5,5);
+     presenta_unsigned(pressione,1,0,11,3);
+     presenta_unsigned(corrente_media,1,1,0,3);
+     if(cosfi[3]>99) cosfi[3]=99;
+     presenta_unsigned(cosfi[3],2,1,5,3);
+     presenta_unsigned(temperatura,0,1,11,3);
+     } 
     } 
-   else 
+   else //alimentazione trifase
     {
-    presenta_unsigned(tensione_media,0,0,0,3);
-    presenta_unsigned(potenza_media,0,0,5,4);
-    presenta_unsigned(pressione,1,0,11,3);
-    presenta_unsigned(corrente_media,1,1,0,3);
-    presenta_unsigned(registrazione.cosfi,2,1,5,2);
-    presenta_unsigned(temperatura,0,1,11,3);
-    } 
+    if(alternanza_presentazione==0x21)
+     {
+     alternanza_presentazione=0x20;
+     presenta_scritta((unsigned char *)&lettura_allarmi,0,(char)set.lingua,21,0,0,16);
+     Nallarme_ora_minuto_secondo(conta_secondi_attivita,registrazione.segnalazione_);
+     messaggio_allarme(registrazione.segnalazione_);
+     }
+    else if(alternanza_presentazione==0x81)
+     {
+     alternanza_presentazione=0x80;
+     presenta_menu((unsigned char *)&dati_presentati_in_ON,0,0,4);
+     }
+    else if(alternanza_presentazione==0x41)
+     {
+     alternanza_presentazione=0x40;
+     presenta_menu((unsigned char *)&dati_presentati_in_ON,0,0,6);
+     }
+
+    if(alternanza_presentazione==0x80)
+     {
+     presenta_unsigned(tensione_media,0,0,0,3);
+     presenta_unsigned(potenza_media,0,0,5,5);
+     presenta_unsigned(pressione,1,0,11,3);
+     presenta_unsigned(I1_rms,1,1,0,3);
+     presenta_unsigned(I2_rms,1,1,5,3);
+     presenta_unsigned(I3_rms,1,1,11,3);
+     }
+    else if(alternanza_presentazione==0x40)
+     {
+     presenta_unsigned(temperatura,0,0,0,3);
+     presenta_unsigned(potenza_media,0,0,5,5);
+     presenta_unsigned(pressione,1,0,11,3);
+     if(cosfi[0]>99) cosfi[0]=99;
+     if(cosfi[1]>99) cosfi[1]=99;
+     if(cosfi[2]>99) cosfi[2]=99;
+     presenta_unsigned(cosfi[0],2,1,0,3);
+     presenta_unsigned(cosfi[1],2,1,5,3);
+     presenta_unsigned(cosfi[2],2,1,10,3);
+     display[21]=display[26]=display[31]='P';
+     display[22]=display[27]=display[32]='F';
+     } 
+    }
    } 
-  else //alimentazione trifase
-   {
-   if(timer_commuta_presentazione>4990)
-    {
-    timer_commuta_presentazione=4990;
-    presenta_menu((unsigned char *)&dati_presentati_in_ON,0,4,4);
-    }
-   else if((timer_commuta_presentazione>2490)&&(timer_commuta_presentazione<2501))
-    {
-    timer_commuta_presentazione=2490;
-    presenta_menu((unsigned char *)&dati_presentati_in_ON,0,4,6);
-    }
-
-   if(timer_commuta_presentazione<2500)
-    {
-    presenta_unsigned(tensione_media,0,0,0,3);
-    presenta_unsigned(potenza_media,0,0,5,4);
-    presenta_unsigned(pressione,1,0,11,3);
-    presenta_unsigned(I1_rms,1,1,0,3);
-    presenta_unsigned(I2_rms,1,1,5,3);
-    presenta_unsigned(I3_rms,1,1,11,3);
-    }
-   else if(registrazione.segnalazione)
-    {
-    presenta_unsigned(temperatura,0,0,0,3);
-    presenta_unsigned(potenza_media,0,0,5,4);
-    presenta_unsigned(pressione,1,0,11,3);
-    switch(registrazione.segnalazione)
-     {
-     case 1://motore spento
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,2,(char)set.lingua,21,1,0,16);
-      } break;
-     case 10://I2xT
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,3,(char)set.lingua,21,1,0,16);
-      } break;
-     case 11://sovratensione
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,4,(char)set.lingua,21,1,0,16);
-      } break;
-     case 12://sottotensione
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,5,(char)set.lingua,21,1,0,16);
-      } break;
-     case 13://mandata chiusa
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,6,(char)set.lingua,21,1,0,16);
-      } break;
-     case 14://funzionamento a secco
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,7,(char)set.lingua,21,1,0,16);
-      } break;
-     case 15://sovratemperatura motore
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,8,(char)set.lingua,21,1,0,16);
-      } break;
-     case 17://squilibrio correnti
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,10,(char)set.lingua,21,1,0,16);
-      } break;
-     case 18://dissimmetria tensioni
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,11,(char)set.lingua,21,1,0,16);
-      } break;
-     case 20://I2xT
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,12,(char)set.lingua,21,1,0,16);
-      } break;
-     case 21://sovratensione
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,13,(char)set.lingua,21,1,0,16);
-      } break;
-     case 22://sottotensione
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,14,(char)set.lingua,21,1,0,16);
-      } break;
-     case 23://mandata chiusa
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,15,(char)set.lingua,21,1,0,16);
-      } break;
-     case 24://funzionamento a secco
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,16,(char)set.lingua,21,1,0,16);
-      } break;
-     case 25://sovratemperatura motore
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,17,(char)set.lingua,21,1,0,16);
-      } break;
-     case 26://protezione differenziale
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,18,(char)set.lingua,21,1,0,16);
-      } break;
-     case 27://squilibrio correnti
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,19,(char)set.lingua,21,1,0,16);
-      } break;
-     case 28://dissimmetria tensioni
-      {
-      presenta_scritta((unsigned char *)&lettura_allarmi,20,(char)set.lingua,21,1,0,16);
-      } break;
-     }
-    } 
-   else 
-    {
-    presenta_unsigned(temperatura,0,0,0,3);
-    presenta_unsigned(potenza_media,0,0,5,4);
-    presenta_unsigned(pressione,1,0,11,3);
-    presenta_unsigned(cosfi[0],2,1,0,2);
-    presenta_unsigned(cosfi[1],2,1,6,2);
-    presenta_unsigned(cosfi[2],2,1,11,2);
-    } 
-   }
-  asm //LED
-   {
-  fine:
-   }
-  } 
+  }
+ else if(eeprom_impegnata) presenta_menu((unsigned char*)&in_salvataggio,0,2,0);
+ else presenta_menu((unsigned char*)&comandi_da_effettuare,(char)set.lingua,2,0);
  }
 }
 
 void marcia_arresto(void)
 {
+int pressione;
+asm
+ {
+ LDHX media_pressione
+ STHX pressione
+ } 
+if((prima_accensione)&&(set.motore_on))
+ {
+ prima_accensione=0;
+ registrazione.segnalazione_=1;
+ relais_alimentazione=1;
+ relais_avviamento=1;
+ timer_eccitazione_relais=tempo_eccitazione_relais;
+ picco_corrente_avviamento=0;
+ corrente_test=200;//20A
+ timer_avviamento_monofase=durata_avviamento;//4 s tempo massimo di avviamento di un motore monofase
+ timer_mandata_chiusa=(unsigned char)set.ritardo_stop_mandata_chiusa;
+ timer_attesa_secco=(unsigned char)set.ritardo_stop_funzionemento_a_secco;
+ } 
+
 if(salita_start)
  {
  salita_start=0;
- if(intervento_allarme==0)
+ toggle_stop=0;
+ if(toggle_func)
+  {
+  calcolo_delle_costanti();
+  //comando di salvataggio in eeprom
+  salvataggio_funzioni=1;
+  toggle_func=0;
+  }
+ timer_commuta_presentazione=0;
+ if(set.motore_on==0)
   {
   set.motore_on=1;
+  registrazione.segnalazione_=1;
   relais_alimentazione=1;
   relais_avviamento=1;
   timer_eccitazione_relais=tempo_eccitazione_relais;
   picco_corrente_avviamento=0;
   corrente_test=200;//20A
   timer_avviamento_monofase=durata_avviamento;//4 s tempo massimo di avviamento di un motore monofase
-  registrazione.segnalazione=1;
+  timer_mandata_chiusa=(unsigned char)set.ritardo_stop_mandata_chiusa;
+  timer_attesa_secco=(unsigned char)set.ritardo_stop_funzionemento_a_secco;
   }
  }
+
 else if(toggle_func==0)
  {
  if(salita_stop)
   {
   salita_stop=0;
-  intervento_allarme=0;
+  toggle_stop=0;
+  registrazione.segnalazione_=0;
   relais_alimentazione=0;
   relais_avviamento=0;
   set.motore_on=0;
-  registrazione.segnalazione=0;
+  timer_riavviamento=0;
+  presenta_menu((unsigned char*)&comandi_da_effettuare,(char)set.lingua,2,0);
   }
  }  
-else if((set.motore_on)&&(intervento_allarme==0)&&(prima_accensione))
+
+else if(set.motore_on)//riavviamento consentito
  {
- prima_accensione=0;
- relais_alimentazione=1;
- relais_avviamento=1;
- timer_eccitazione_relais=tempo_eccitazione_relais;
- picco_corrente_avviamento=0;
- corrente_test=200;//20A
- timer_avviamento_monofase=durata_avviamento;
- }
+ if(registrazione.segnalazione_<10)//condizioni per riavviamento
+  {
+  if(set.modo_start_stop)// comando con la pressione
+   {
+   if(pressione<set.pressione_accensione)
+    {
+    if((timer_riavviamento==0)&&(relais_alimentazione==0))
+     {
+     relais_alimentazione=1;
+     relais_avviamento=1;
+     timer_eccitazione_relais=tempo_eccitazione_relais;
+     picco_corrente_avviamento=0;
+     corrente_test=200;//20A
+     timer_avviamento_monofase=durata_avviamento;//4 s tempo massimo di avviamento di un motore monofase
+     timer_mandata_chiusa=(unsigned char)set.ritardo_stop_mandata_chiusa;
+     timer_attesa_secco=(unsigned char)set.ritardo_stop_funzionemento_a_secco;
+     }
+    } 
+   else if(pressione>set.pressione_spegnimento)
+    {
+    relais_alimentazione=0;
+    relais_avviamento=0;
+    timer_riavviamento=3;//attesa minima per riavviamento
+    }
+   } 
+  else if(remoto==filtro_pulsanti)//comando remoto
+   {
+   if((timer_riavviamento==0)&&(relais_alimentazione==0))
+    {
+    relais_alimentazione=1;
+    relais_avviamento=1;
+    timer_eccitazione_relais=tempo_eccitazione_relais;
+    picco_corrente_avviamento=0;
+    corrente_test=200;//20A
+    timer_avviamento_monofase=durata_avviamento;//4 s tempo massimo di avviamento di un motore monofase
+    timer_mandata_chiusa=(unsigned char)set.ritardo_stop_mandata_chiusa;
+    timer_attesa_secco=(unsigned char)set.ritardo_stop_funzionemento_a_secco;
+    }
+   } 
+  else 
+   {
+   relais_alimentazione=0;
+   relais_avviamento=0;
+   timer_riavviamento=3;//attesa minima per riavviamento
+   }
+  } 
+ } 
 }
 
 void protezione_termica(void)//calcolo della sovra_temperatura motore con integrale I^2*T
@@ -4877,7 +5587,7 @@ void disinserzione_condensatore_avviamento(void)
 {
 asm
  {
- LDA set.monofase_trifase //solo monofase
+ LDA set.monofase_trifase:1 //solo monofase
  BNE fine
  LDHX timer_avviamento_monofase
  BEQ fine
@@ -4915,7 +5625,7 @@ fine:
 
 void condizioni_di_allarme(void)
 {
-int I2xT, sovratensione, sottotensione, temperatura, pressione, fattore_Id;
+int I2xT, sovratensione, sottotensione, temperatura, temperatura_segnalazione, temperatura_riaccensione, pressione;
 long prod;
 asm
  {
@@ -4925,6 +5635,11 @@ asm
  MUL
  STA prod:1
  STX prod
+ LDA set.tensione_nominale
+ LDX set.limite_sovratensione:1
+ MUL
+ ADD prod
+ STA prod
  LDHX #100
  LDA prod
  DIV
@@ -4938,6 +5653,11 @@ asm
  MUL
  STA prod:1
  STX prod
+ LDA set.tensione_nominale
+ LDX set.limite_sottotensione:1
+ MUL
+ ADD prod
+ STA prod
  LDHX #100
  LDA prod
  DIV
@@ -4953,48 +5673,19 @@ asm
  LDHX delta_T
  STHX I2xT
  
-//corrente_differenziale  
-//(A*.004*5/.512* 4096/5)^2 = A^2*1024  = (A*10)^2*10.24 = (A*10)^2*6400>>16
-;Id_rms = mA in = mA out * set.scala_corrente_differenziale /( .15/5*4096 *5) 
-;quad_Id = mAout^2 * set.scala_corrente_differenziale^2 /5.76 /2^16
-;quad_Id = mAout^2 * set.scala_corrente_differenziale^2 *4/23 /2^16
- LDA set.scala_corrente_differenziale:1
- TAX
- MUL
- STA prod:2
- STX prod:1
- LDA set.scala_corrente_differenziale:1
- LDX set.scala_corrente_differenziale
- MUL
- LSLA
- ROLX
- ADD prod:1
- STA prod:1
- TXA
- ADC #0
- STA prod
- LDA set.scala_corrente_differenziale
- TAX
- MUL
- ADD prod
- STA prod
- LSL prod:2
- ROL prod:1
- ROL prod
- LSL prod:2
- ROL prod:1
- ROL prod
- LDHX #23
- LDA prod
- DIV
- LDA prod:1
- DIV
- STA fattore_Id
- LDA prod:2
- DIV
- STA fattore_Id:1
+ LDA set.limite_intervento_temper_motore:1
+ SUB #10
+ STA temperatura_riaccensione:1
+ LDA set.limite_intervento_temper_motore
+ SBC #0
+ STA temperatura_riaccensione
+ LDA set.limite_intervento_temper_motore:1
+ SUB #5
+ STA temperatura_segnalazione:1
+ LDA set.limite_intervento_temper_motore
+ SBC #0
+ STA temperatura_segnalazione
  }
-Id_rms=valore_efficace(media_quad_Id,fattore_Id); 
 if(relais_alimentazione) //alimentazione presente
  {
  //segnalazioni ed arresto
@@ -5004,7 +5695,7 @@ if(relais_alimentazione) //alimentazione presente
    {
    relais_alimentazione=0;
    relais_avviamento=0;
-   intervento_allarme=registrazione.segnalazione=26;
+   registrazione.segnalazione_=26;
    timer_riavviamento=set.ritardo_funzionamento_dopo_emergenza;
    }
   } 
@@ -5015,124 +5706,114 @@ if(relais_alimentazione) //alimentazione presente
    {
    relais_alimentazione=0;
    relais_avviamento=0;
-   intervento_allarme=registrazione.segnalazione=25;
+   registrazione.segnalazione_=25;
    timer_riavviamento=set.ritardo_funzionamento_dopo_emergenza;
    } 
   else if(I2xT>sovraccarico)
    {
    relais_alimentazione=0;
    relais_avviamento=0;
-   intervento_allarme=registrazione.segnalazione=20;
+   registrazione.segnalazione_=20;
    timer_riavviamento=set.ritardo_funzionamento_dopo_emergenza;
    } 
-  else if(squilibrio>set.limite_intervento_squilibrio)
+  else if((squilibrio>set.limite_intervento_squilibrio)&&(set.monofase_trifase))
    {
    if(timer_attesa_squilibrio==0)
     {
     relais_alimentazione=0;
     relais_avviamento=0;
-    intervento_allarme=registrazione.segnalazione=27;
+    registrazione.segnalazione_=27;
     timer_riavviamento=set.ritardo_funzionamento_dopo_emergenza;
     }
    } 
   else
    {
-   timer_attesa_squilibrio=set.timeout_protezione_squilibrio;
-   if((V1_rms>sovratensione)||(V2_rms>sovratensione)||(V3_rms>sovratensione))
+   timer_attesa_squilibrio=(unsigned char)set.timeout_protezione_squilibrio;
+   if(tensione_media>sovratensione)
     {
     if(timer_attesa_tensione==0)
      {
      relais_alimentazione=0;
      relais_avviamento=0;
-     intervento_allarme=registrazione.segnalazione=21;
+     registrazione.segnalazione_=21;
      timer_riavviamento=set.ritardo_funzionamento_dopo_emergenza;
      }
     }
-   else if((V1_rms<sottotensione)||(V2_rms<sottotensione)||(V3_rms<sottotensione))
+   else if(tensione_media<sottotensione)
     {
     if(timer_attesa_tensione==0)
      {
      relais_alimentazione=0;
      relais_avviamento=0;
-     intervento_allarme=registrazione.segnalazione=22;
+     registrazione.segnalazione_=22;
      timer_riavviamento=set.ritardo_funzionamento_dopo_emergenza;
      }
     }
-   else if(dissimmetria>set.limite_intervento_dissimmetria)
+   else if((dissimmetria>set.limite_intervento_dissimmetria)&&(set.monofase_trifase))
     {
     if(timer_attesa_tensione==0)
      {
      relais_alimentazione=0;
      relais_avviamento=0;
-     intervento_allarme=registrazione.segnalazione=28;
+     registrazione.segnalazione_=28;
      timer_riavviamento=set.ritardo_funzionamento_dopo_emergenza;
      }
     } 
    else
     {
-    timer_attesa_tensione=set.timeout_protezione_tensione;
+    timer_attesa_tensione=(unsigned char)set.timeout_protezione_tensione;
     if((potenza_media<set.potenza_minima_mandata_chiusa)&&(pressione>set.pressione_accensione+3))//soglia di 3/10 di Bar
      {
      if(timer_mandata_chiusa==0)
       {
       relais_alimentazione=0;
       relais_avviamento=0;
-      intervento_allarme=registrazione.segnalazione=23;
+      registrazione.segnalazione_=23;
       timer_riavviamento=0;
       }
      } 
     else
      {
-     timer_mandata_chiusa=set.ritardo_stop_mandata_chiusa;
+     timer_mandata_chiusa=(unsigned char)set.ritardo_stop_mandata_chiusa;
      if((potenza_media<set.potenza_minima_funz_secco)&&(pressione<set.pressione_accensione))
       {
       if(timer_attesa_secco==0)
        {
        relais_alimentazione=0;
        relais_avviamento=0;
-       intervento_allarme=registrazione.segnalazione=24;
+       registrazione.segnalazione_=24;
        timer_riavviamento=set.ritardo_riaccensione_a_secco;
        }
       } 
-     else timer_attesa_secco=set.ritardo_stop_funzionemento_a_secco;
+     else timer_attesa_secco=(unsigned char)set.ritardo_stop_funzionemento_a_secco;
      }
     } 
    } 
   }
 
  //segnalazioni senza arresto
- if(intervento_allarme==0)
+ if(registrazione.segnalazione_<10)
   {
-  if(temperatura>set.limite_intervento_temper_motore-5) registrazione.segnalazione=15;//segnalazione con 5°C in anticipo
-  else if(I2xT>sovraccarico_moderato) registrazione.segnalazione=10;
-  else if(squilibrio>set.limite_intervento_squilibrio) registrazione.segnalazione=17;
-  else if((V1_rms>sovratensione)||(V2_rms>sovratensione)||(V3_rms>sovratensione)) registrazione.segnalazione=11;
-  else if((V1_rms<sottotensione)||(V2_rms<sottotensione)||(V3_rms<sottotensione)) registrazione.segnalazione=12;
-  else if((potenza_media<set.potenza_minima_mandata_chiusa)&&(pressione>set.pressione_accensione+3)) registrazione.segnalazione=13;//soglia di 3/10 di Bar
-  else if((potenza_media<set.potenza_minima_funz_secco)&&(pressione<set.pressione_accensione)) registrazione.segnalazione=14;
-  else if(dissimmetria>set.limite_intervento_dissimmetria) registrazione.segnalazione=18;
+  if(temperatura>temperatura_segnalazione) registrazione.segnalazione_=15;//segnalazione con 5°C in anticipo
+  else if(I2xT>sovraccarico_moderato) registrazione.segnalazione_=10;
+  else if((squilibrio>set.limite_intervento_squilibrio)&&(set.monofase_trifase)) registrazione.segnalazione_=17;
+  else if(tensione_media>sovratensione) registrazione.segnalazione_=11;
+  else if(tensione_media<sottotensione) registrazione.segnalazione_=12;
+  else if((potenza_media<set.potenza_minima_mandata_chiusa)&&(pressione>set.pressione_accensione+3)) registrazione.segnalazione_=13;//soglia di 3/10 di Bar
+  else if((potenza_media<set.potenza_minima_funz_secco)&&(pressione<set.pressione_accensione)) registrazione.segnalazione_=14;
+  else if((dissimmetria>set.limite_intervento_dissimmetria)&&(set.monofase_trifase)) registrazione.segnalazione_=18;
   } 
  }
 else //relais_alimentazione==0
-if(set.motore_on) //alimentazione assente
+if(set.motore_on)
  {
  if(timer_riavviamento==0)
   {
   if((Id_rms<set.limite_corrente_differenziale)
-   &&(temperatura<set.limite_intervento_temper_motore-10)&&(I2xT<delta_Tn)&&(dissimmetria<5)
+   &&(temperatura<temperatura_riaccensione)&&(I2xT<delta_Tn)&&(dissimmetria<5)
    &&(V1_rms<sovratensione)&&(V2_rms<sovratensione)&&(V3_rms<sovratensione)
    &&(V1_rms>sottotensione)&&(V2_rms>sottotensione)&&(V3_rms>sottotensione)
-   &&(pressione<set.pressione_accensione))
-   {
-   intervento_allarme=0;
-   relais_alimentazione=1;
-   relais_avviamento=1;
-   timer_eccitazione_relais=tempo_eccitazione_relais;
-   picco_corrente_avviamento=0;
-   corrente_test=200;//20A
-   timer_avviamento_monofase=durata_avviamento;//4 s tempo massimo di avviamento di un motore monofase
-   registrazione.segnalazione=1;
-   }
+   &&(pressione<set.pressione_accensione)) registrazione.segnalazione_=1;
   }
  }
 }
@@ -5148,9 +5829,6 @@ MCGC1=0x00;
 MCGC2=0x37;
 MCGC3=0x43;
 
-
-
-
 //----portA--------
 PTADD=0; //pulsanti ed abilitazione
 PTAD=0;
@@ -5161,10 +5839,12 @@ PTBD=0;
 APCTL1=0xff;//solo ingreei analogici
 APCTL2=0;
 ADCSC1=0;
+ADCSC2=0;
 ADCCFG=0x05;
 ADCCVL=0xff;
-ADCCVL=0xff;
+contatore_AD=0;
 //fantuzADCSC1=0x40;
+ADCSC1=0x40;
 
 //-----portC non usato---------
 PTCDD=0;
@@ -5183,8 +5863,9 @@ asm
  LDA SPI1D
  }
 //fantuzSPI1C1=0xd0;//interruzione abilitata
+SPI1C1=0xd0;//interruzione abilitata
 SPI1C2=0x00;
-SPI1BR=0x43;
+SPI1BR=0x77;
  
 //-------uscite LED e PWM--------------------
 PTFDD=0;//uscite LED e relè
@@ -5202,47 +5883,44 @@ TPM2C0SC=0x08;
 TPM2C1SC=0x08;
 TPM2MOD=12000;//PWM a 1KHz
 TPM2C0V=24;//LED rosso
-TPM2C1V=24;//2us
+TPM2C1V=24;//2us solo segnale 
 
 TPM1CNT=0;
 TPM2CNT=0;
 //fantuzTPM1SC=0x68;
+TPM1SC=0x68;
 //fantuzTPM2SC=0x68;
+TPM2SC=0x68;
 
 //-----portG  per display  G2 = RSneg, G3 = E----
 PTGDD=0x0c;
 PTGD=0;
 
 //--------inizializzazione delle variabili-------------
-offset_I1letta=0x08000000; //valor medio ipotetico
-offset_I3letta=0x08000000;
-offset_V12letta=0x08000000;
-offset_V13letta=0x08000000;
-offset_Idletta=0x08000000;
+offset_I1letta=0x20000000; //valor medio ipotetico
+offset_I3letta=0x20000000;
+offset_V12letta=0x20000000;
+offset_V13letta=0x20000000;
+offset_Idletta=0x20000000;
 precedente_lettura_allarme=allarme_in_lettura=3000;
+
 pronto_alla_risposta=0;
-leggi_impostazioni=1;
-salva_conta_secondi=0;
-leggi_conta_secondi=1;
 timer_20ms=0;
 timer_1s=0;
-timer_10min=0;
-timer_rilascio=0;
 timer_inc_dec=0;
 timer_piu_meno=0;
 timer_lampeggio=0;
+timer_lampeggio_LED_emergenza=0;
 timer_commuta_presentazione=0;
-timer_aggiorna_misure=0;
 timer_avviamento_monofase=0;
 timer_attesa_squilibrio=0;
 timer_attesa_tensione=0;
-timer_mandata_chiusa=0;
-timer_attesa_secco=0;
 timer_attesa_differenziale=0;
 timer_riavviamento=0;
 timer_eccitazione_relais=0;
 PWM_relais=0;
 quad_Id=0;
+somma_quad_Id=0;
 somma_quad_I1=0;
 somma_quad_I2=0;
 somma_quad_I3=0;
@@ -5255,6 +5933,12 @@ somma_potenzaI3xV3=0;
 somma_reattivaI1xV23=0;
 somma_reattivaI2xV31=0;
 somma_reattivaI3xV12=0;
+Somma_potenzaI1xV1=0;
+Somma_potenzaI2xV2=0;
+Somma_potenzaI3xV3=0;
+Somma_reattivaI1xV23=0;
+Somma_reattivaI2xV31=0;
+Somma_reattivaI3xV12=0;
 media_temperatura=0;
 media_pressione=0;
 quad_I1=0;
@@ -5283,6 +5967,7 @@ media_reattivaI1xV23=0;
 media_reattivaI2xV31=0;
 media_reattivaI3xV12=0;
 delta_T=0;
+Id_rms=0;
 I1_rms=0;
 I2_rms=0;
 I3_rms=0;
@@ -5290,11 +5975,9 @@ V1_rms=0;
 V2_rms=0;
 V3_rms=0;
 attesa_invio=0;
-intervento_allarme=0;
 relais_alimentazione=0;
 relais_avviamento=0;
 contatore_display=0;
-contatore_AD=0;
 cursore_menu=0;
 funzioni_avanzate=0;
 numero_ingresso=0;
@@ -5309,15 +5992,60 @@ dissimmetria=0;
 squilibrio=0;
 prima_accensione=1;
 comando_display=1;
-timer_reset_display=100;
-timer_rinfresco_display=30;
-precedente_segnalazione=registrazione.segnalazione;
-indirizzo_scrivi_eeprom=ultimo_indirizzo_scrittura=indirizzo_conta_secondi_attivita;
+timer_rinfresco_display=255;
+alternanza_presentazione=0x81;
 
 asm
  { 
+ LDHX #96
+assegna_default:
+ LDA @dati_di_fabbrica:-1,X
+ STA @set:-1,X
+ LDA #255
+ STA @buffer_eeprom:-1,X
+ DBNZX assegna_default 
  CLI//abilita interrupt
  }
+scrivi_eeprom=0;
+leggi_eeprom=0;
+timer_rilascio=0;
+
+reset_default=0;
+salvataggio_funzioni=0;
+salvataggio_allarme=0;
+salva_conta_secondi=0;
+lunghezza_salvataggio=0;
+leggi_impostazioni=1;
+timer_reset_display=100;
+timer_1min=60;
+timer_aggiorna_misure=2000; 
+//fantuz while(timer_reset_display)
+while(timer_reset_display)
+ {
+ __RESET_WATCHDOG(); /* feeds the dog */
+ }
+//fantuz while(leggi_impostazioni)
+while(leggi_impostazioni)
+ {
+ __RESET_WATCHDOG(); /* feeds the dog */
+ lettura_impostazioni();
+ }
+asm  //inizializza il conta_secondi
+ {
+ LDHX set.conta_ore:2
+ STHX conta_secondi_attivita:2
+ LDHX set.conta_ore
+ STHX conta_secondi_attivita
+ LDHX set.motore_on
+ STX registrazione.segnalazione_
+ STX precedente_segnalazione
+ }
+//fantuz while(timer_aggiorna_misure)
+while(timer_aggiorna_misure)
+ {
+ __RESET_WATCHDOG(); /* feeds the dog */
+ }
+timer_rilascio=0;
 start=0;
 salita_start=0;
 stop=0;
@@ -5332,8 +6060,9 @@ piu=0;
 salita_piu=0; 
 remoto=0;
 salita_remoto=0;
-timer_rilascio=0;
-reset_default=0;
+indirizzo_scrivi_eeprom=ultimo_indirizzo_scrittura=ultimo_indirizzo_funzioni;
+timer_mandata_chiusa=(unsigned char)set.ritardo_stop_mandata_chiusa;
+timer_attesa_secco=(unsigned char)set.ritardo_stop_funzionemento_a_secco;
 }
 
 /***********************************************************************/
@@ -5341,31 +6070,28 @@ reset_default=0;
 void main(void)
 {
 condizioni_iniziali();
-SOPT1_COPT=0;
-  
-  _irq_restore(0);
-  
 USB_comm_init();
-
 for(;;)  /* loop forever */
  {
  __RESET_WATCHDOG(); /* feeds the dog */
-/* leggi_conta_secondi_attivita();
- lettura_impostazioni();
-// salva_impostazioni();
+/*fantuz */
+  marcia_arresto();
 
- lettura_allarme(); //con allarme_in_lettura <335
+ salva_reset_default();//precedenza 1
+ salva_impostazioni();//precedenza 2
+ salva_allarme_in_eepprom();//precedenza 3
+ salva_conta_secondi_attivita();//precedenza 4
+
+ lettura_impostazioni();//precedenza 5
+ lettura_allarme_messo_in_buffer_USB();//precedenza 6
+
  trasmissione_misure_istantanee(); //con allarme_in_lettura = 1000
  trasmissione_tarature(); //con allarme_in_lettura == 2000
 
-// scrittura_allarme_in_eeprom();
- salva_conta_secondi_attivita();
  programmazione();
- funzione_reset_default();
  misure_medie();
-// presenta_stato_motore();
- marcia_arresto();
-// condizioni_di_allarme();  */
+ presenta_stato_motore();
+ condizioni_di_allarme();    
  
  USB_comm_process();
  cdc_process();
