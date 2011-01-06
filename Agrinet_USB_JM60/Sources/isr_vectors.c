@@ -15,10 +15,10 @@ asm
  LDA _MCGSC
  }
 }
-   
+
 typedef void(*tIsrFunc)(void);
 const tIsrFunc _vect[] @0xffca={     /* Interrupt table */
-   UnimplementedISR, //AD_conversion_completeISR,        /* ADC conversion 0xffca*/
+   AD_conversion_completeISR,        /* ADC conversion 0xffca*/
    UnimplementedISR,                 /* KBI            0xffcc*/
    UnimplementedISR,                 /* SCI2 Transmit  0xffce*/
    UnimplementedISR,                 /* SCI2 Receive   0xffd0*/
@@ -26,10 +26,10 @@ const tIsrFunc _vect[] @0xffca={     /* Interrupt table */
    UnimplementedISR,                 /* SCI1 Transmit  0xffd4*/
    UnimplementedISR,                 /* SCI1 Receive   0xffd6*/
    UnimplementedISR,                 /* SCI1 error     0xffd8*/
-   UnimplementedISR, //timer2_overflowISR,               /* TPM2 Overflow  0xffda*/
+   timer2_overflowISR,               /* TPM2 Overflow  0xffda*/
    UnimplementedISR,                 /* TPM2 Channel 1 0xffdc*/
    UnimplementedISR,                 /* TPM2 Channel 0 0xffde*/
-   UnimplementedISR, //timer1_overflowISR,               /* TPM1 Overflow  0xffe0*/
+   timer1_overflowISR,               /* TPM1 Overflow  0xffe0*/
    UnimplementedISR,                 /* TPM1 Channel 5 0xffe2*/
    UnimplementedISR,                 /* TPM1 Channel 4 0xffe4*/
    UnimplementedISR,                 /* TPM1 Channel 3 0xffe6*/
@@ -40,7 +40,7 @@ const tIsrFunc _vect[] @0xffca={     /* Interrupt table */
    //USB_status,                       /* USB status     0xfff0*/
    usb_it_handler,
    UnimplementedISR,                 /* SPI2           0xfff2*/
-   UnimplementedISR, //SPI1,                             /* SPI1           0xfff4*/
+   SPI1,                             /* SPI1           0xfff4*/
    UnimplementedISR,                 /* MCG Loss Lock  0xfff6*/
    UnimplementedISR,                 /* LowVoltageDet  0xfff8*/
    UnimplementedISR,                 /* IRQ            0xfffa*/

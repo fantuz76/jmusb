@@ -25,11 +25,13 @@ static word TimerUSB_1;
 
 
 static byte_def _USB_flags1;
-#define USB_flags1    _USB_flags1.BYTE
-#define USBPktReady   _USB_flags1.BIT.B0
-//#define xxx    _USB_flags1.BIT.B1
+#define USB_flags1              _USB_flags1.BYTE
+#define USBPktReady             _USB_flags1.BIT.B0
+#define USBSendInterventi_en    _USB_flags1.BIT.B1
 
 
+
+byte state_SendTuttiInterventi;
 
 void ResetPkt_ndx(void){
   usbrxar_ndx = 0;
@@ -44,7 +46,6 @@ void StartTimer(word *_timerToStart, word _valToStart){
 }
 
 byte isTimerStopped(word _timerToCheck){
-  return(FALSE);
   return (_timerToCheck == 0xFFFF);
 }
 
@@ -182,10 +183,10 @@ void USB_SendHello(void)
   
   
   // Invia matricola 
-  _myarr[1] = 'a';//0x23;
-  _myarr[2] = 'b';//0x45;
-  _myarr[3] = 0x67;    
-  _myarr[4] = 0x55;
+  _myarr[1] = 'a';
+  _myarr[2] = 'b';
+  _myarr[3] = 'c';    
+  _myarr[4] = 'd';
   
   // Ore lavoro 
   _myarr[5] = 0x00;
@@ -210,90 +211,6 @@ void USB_SendHello(void)
  
 
 
-
-byte *ReadIntervento(word _PosMem) {
-byte arrIntervento[INTERVENTO_LENGTH];
-byte i;
-
-  allarme_in_lettura = _PosMem;
-  lettura_allarme();
-  
-  
-  
-  // Conversione WORD -> BYTE e ricreazione array  
-  for (i=0; i < INTERVENTO_LENGTH; i++) {
-    arrIntervento[i] = (byte)buffer_USB[i];
-    
-  }
-  
-  
-  // Tipo intervento casuale
-  /*
-  arrIntervento[0] = 1+(rand() % 28);
-  
-  
-  if (arrIntervento[0] == 0 )  arrIntervento[0] = 1;  
-  if (arrIntervento[0] == 19 )  {
-    arrIntervento[0] = 20;
-  }
-  
-  if ((arrIntervento[0] > 2) && (arrIntervento[0]<10))  {
-
-    arrIntervento[0] = 1+(rand() % 28);
-    if ((arrIntervento[0] > 2) && (arrIntervento[0]<10))  {
-
-      arrIntervento[0] = 1+(rand() % 28);
-      if ((arrIntervento[0] > 2) && (arrIntervento[0]<10))  {
-        arrIntervento[0] = 18;  
-      }    
-    }
-  } 
-
-  arrIntervento[1] = 0;
-  arrIntervento[2] = 0;
-  arrIntervento[3] = _PosMem;
-  arrIntervento[4] = _PosMem;
-  
-  
-  arrIntervento[5] = 0x01;
-  arrIntervento[6] = 0x2C;
-
-  arrIntervento[7] = 0x01;
-  arrIntervento[8] = 0x2D;
-
-  arrIntervento[9] = 0x01;
-  arrIntervento[10] = 0x2E;
-
-  arrIntervento[11] = 0x1B;
-  arrIntervento[12] = 0x58;
-
-  arrIntervento[13] = 0x1B;
-  arrIntervento[14] = 0x59;
-
-  arrIntervento[15] = 0x1B;
-  arrIntervento[16] = 0x5A;
-
-
-  arrIntervento[17] = 0x0F;
-  arrIntervento[18] = 0x44;
-
-
-  arrIntervento[19] = 0x04;
-  arrIntervento[20] = 0xCD;
-  
-  
-  arrIntervento[21] = 0x62;
-  
-  arrIntervento[22] = 0x00;
-  arrIntervento[23] = 0x66;     */
-
-    
-  return(arrIntervento);  
-  
-}
-   
-
-
 /*****************************************************************************
  * Name:
  *    USB_SendTuttiInterventi
@@ -308,29 +225,46 @@ byte i;
  *
  *****************************************************************************/
 void USB_SendTuttiInterventi(void)
-{
+{  
   word cntInt;
   byte _myarr[MAX_LEN_PAYLOAD];
-  byte *ritFun;
 
+ 
+  if (USBSendInterventi_en) {
   
-   
-  cntInt = 0;
-  do {
-    ritFun = ReadIntervento(cntInt++);
-    memcpy(_myarr,ritFun, INTERVENTO_LENGTH);          
-    USB_PktSend(_myarr,INTERVENTO_LENGTH);          
-    
-  } while ((ritFun[0] != 0xFF) && (cntInt < NUM_MAX_INTERV));
-  
-  // Se uscito per raggiunto NUM_MAX_INTERV -> invio messaggio con tutti 0xFF
-  if (cntInt >= NUM_MAX_INTERV) {    
-    for (cntInt=0;cntInt<INTERVENTO_LENGTH;cntInt++) _myarr[cntInt] = 0xFF;    
-    USB_PktSend(_myarr,INTERVENTO_LENGTH);   
+    switch (state_SendTuttiInterventi) {
+      case 0:
+        allarme_in_lettura = 1;
+        state_SendTuttiInterventi = 1;
+        pronto_alla_risposta = 0;
+      break;
+      
+      case 1:
+        if (pronto_alla_risposta) {
+          memcpy(_myarr,buffer_USB, INTERVENTO_LENGTH);      
+          USB_PktSend(_myarr,INTERVENTO_LENGTH);          
+          allarme_in_lettura++;
+          pronto_alla_risposta = 0; 
+          
+          if ((buffer_USB[15] == 0xFF) || (allarme_in_lettura >= totale_indicazioni_fault))
+            state_SendTuttiInterventi = 2;
+          
+        }
+      break;
+      
+      case 2:
+        for (cntInt=0;cntInt<INTERVENTO_LENGTH;cntInt++) _myarr[cntInt] = 0xFF;    
+        USB_PktSend(_myarr,INTERVENTO_LENGTH);   
+        USBSendInterventi_en = FALSE;
+      break;
+      
+    }
+
   }
-}
-    
 
+}  
+  
+  
 /*****************************************************************************
  * Name:
  *    USB_time_sw
@@ -376,9 +310,6 @@ void USB_comm_process(void)
   byte i;
   byte cks;
   
-  
-  //USB_SendTuttiInterventi();
-  //print("CIAO MONDO");
   
   
   // finchè c'è qualcosa nel buffer USB
@@ -431,47 +362,52 @@ void USB_comm_process(void)
     
     
     
+  }
+  
+  
+  if (USBPktReady) {
     
-    if (USBPktReady) {
-      
-      // Analizzare messaggio ricevuto
-      
-      if (usbPayloadLen==0) {      
-        //USB_PktSend(USBtoSend,0); 
-      } else {
-        switch (usbrxar[usbNumByteLen+1]) {
+    // Analizzare messaggio ricevuto
+    
+    if (usbPayloadLen==0) {      
+      //USB_PktSend(USBtoSend,0); 
+    } else {
+      switch (usbrxar[usbNumByteLen+1]) {
 
-          case REQ_HELLO:
-          USB_SendHello();
-          break;
+        case REQ_HELLO:
+        USB_SendHello();
+        break;
 
 
-          case REQ_LIST_INTERV:          
-            USB_SendTuttiInterventi();      
-          break;
+        case REQ_LIST_INTERV:          
+          //USB_SendTuttiInterventi();      
+          USBSendInterventi_en =TRUE;
+          state_SendTuttiInterventi=0;
+        break;
 
-          case REQ_ERR_0:
-            
-            USBtoSend[0] = 0x40;
-            USBtoSend[1] = 0x40;
-     
-            USBtoSend[2] = 0x42;
-            USBtoSend[3] = 0x43;
-            
-            USB_PktSend(USBtoSend,4);          
-          break;
+        case REQ_ERR_0:
+          
+          USBtoSend[0] = 0x40;
+          USBtoSend[1] = 0x40;
+   
+          USBtoSend[2] = 0x42;
+          USBtoSend[3] = 0x43;
+          
+          USB_PktSend(USBtoSend,4);          
+        break;
 
-          default:
-            USBtoSend[0] = 0x55;
-            USB_PktSend(USBtoSend,1);
-          break;          
-        }
-      
+        default:
+          USBtoSend[0] = 0x55;
+          USB_PktSend(USBtoSend,1);
+        break;          
       }
-      
-      ResetPkt_ndx();      
-      
+    
     }
     
+    ResetPkt_ndx();      
+    
   }
+  
+  USB_SendTuttiInterventi();      
+  
 }
