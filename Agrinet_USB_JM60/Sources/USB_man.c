@@ -28,6 +28,7 @@ static byte_def _USB_flags1;
 #define USB_flags1              _USB_flags1.BYTE
 #define USBPktReady             _USB_flags1.BIT.B0
 #define USBSendInterventi_en    _USB_flags1.BIT.B1
+#define USBSendHello_en         _USB_flags1.BIT.B2
 
 
 
@@ -90,9 +91,13 @@ void print(char *s)
 *****************************************************************************/
 void USB_comm_init(void)
 {
-
   usb_cfg_init();
+  
+  Init_USB_man();
+}                                
 
+
+void Init_USB_man(void){
   cdc_init();
    
   usbrxar[sizeof(usbrxar)-1]='\0';
@@ -100,12 +105,9 @@ void USB_comm_init(void)
   ResetPkt_ndx();
 
   srand(122);
- 
- 
-}                                
-
-
-
+  
+  USB_flags1=0x00;    
+}
 
 
 /*****************************************************************************
@@ -179,32 +181,35 @@ void USB_SendHello(void)
 {
   byte _myarr[MAX_LEN_PAYLOAD];
 
-  _myarr[0] = REQ_HELLO;  // Indica risposta ad Hello
-  
-  
-  // Invia matricola 
-  _myarr[1] = 'a';
-  _myarr[2] = 'b';
-  _myarr[3] = 'c';    
-  _myarr[4] = 'd';
-  
-  // Ore lavoro 
-  _myarr[5] = 0x00;
-  _myarr[6] = 0x03;
-  _myarr[7] = 0x55;
-  _myarr[8] = 0x44;
-  
-  
-  // Fw Ver
-  _myarr[9] = 0x01;
-  _myarr[10] = 0x02;
+  if (USBSendHello_en){      
+    _myarr[0] = REQ_HELLO;  // Indica risposta ad Hello
+        
+    // Invia matricola 
+    _myarr[1] = 'a';
+    _myarr[2] = 'b';
+    _myarr[3] = 'c';    
+    _myarr[4] = 'd';
+    
+    // Ore lavoro 
+    _myarr[5] = 0x00;
+    _myarr[6] = 0x03;
+    _myarr[7] = 0x55;
+    _myarr[8] = 0x44;
+    
+    
+    // Fw Ver
+    _myarr[9] = 0x01;
+    _myarr[10] = 0x02;
 
-  
-  // Hw Ver
-  _myarr[11] = 0x03;
-  _myarr[12] = 0x04;
-  
-  USB_PktSend(_myarr,13);   
+    
+    // Hw Ver
+    _myarr[11] = 0x03;
+    _myarr[12] = 0x04;
+    
+    USB_PktSend(_myarr,13);   
+    
+    USBSendHello_en = FALSE;
+  }
 
 }
     
@@ -233,7 +238,7 @@ void USB_SendTuttiInterventi(void)
   if (USBSendInterventi_en) {
   
     switch (state_SendTuttiInterventi) {
-      case 0:
+      case 0:        
         allarme_in_lettura = 1;
         state_SendTuttiInterventi = 1;
         pronto_alla_risposta = 0;
@@ -256,6 +261,7 @@ void USB_SendTuttiInterventi(void)
         for (cntInt=0;cntInt<INTERVENTO_LENGTH;cntInt++) _myarr[cntInt] = 0xFF;    
         USB_PktSend(_myarr,INTERVENTO_LENGTH);   
         USBSendInterventi_en = FALSE;
+        state_SendTuttiInterventi= 0;
       break;
       
     }
@@ -310,12 +316,18 @@ void USB_comm_process(void)
   byte i;
   byte cks;
   
+
+  USB_SendHello();    
+  USB_SendTuttiInterventi();      
   
   
   // finchè c'è qualcosa nel buffer USB
   // Se ci sono più di 32 byte entro + volte qua  
   while((cdc_kbhit)())
   {      
+  
+   
+
     char c;
     c=(char)(cdc_getch)();        
     usbrxar[usbrxar_ndx++]=c;
@@ -325,7 +337,8 @@ void USB_comm_process(void)
     
    
     
-    if (usbrxar_ndx-1==0) {    
+    if (usbrxar_ndx-1==0) {              
+   
       // --> è primo byte rx
       if ((usbrxar[usbrxar_ndx-1] & 0xF0) == FIRST_BYTE_EMPTY) {        
         // C'è la Lunghezza?  
@@ -366,6 +379,8 @@ void USB_comm_process(void)
   
   
   if (USBPktReady) {
+  
+
     
     // Analizzare messaggio ricevuto
     
@@ -375,25 +390,16 @@ void USB_comm_process(void)
       switch (usbrxar[usbNumByteLen+1]) {
 
         case REQ_HELLO:
-        USB_SendHello();
+          USBSendHello_en = TRUE;          
         break;
 
 
-        case REQ_LIST_INTERV:          
-          //USB_SendTuttiInterventi();      
+        case REQ_LIST_INTERV:                    
           USBSendInterventi_en =TRUE;
-          state_SendTuttiInterventi=0;
+          state_SendTuttiInterventi= 0;
         break;
 
-        case REQ_ERR_0:
-          
-          USBtoSend[0] = 0x40;
-          USBtoSend[1] = 0x40;
-   
-          USBtoSend[2] = 0x42;
-          USBtoSend[3] = 0x43;
-          
-          USB_PktSend(USBtoSend,4);          
+        case REQ_ERR_0:          
         break;
 
         default:
@@ -404,10 +410,11 @@ void USB_comm_process(void)
     
     }
     
-    ResetPkt_ndx();      
+    ResetPkt_ndx();             // Resetta anche USBPktReady
     
   }
-  
-  USB_SendTuttiInterventi();      
+
+
+
   
 }
