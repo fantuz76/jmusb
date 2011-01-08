@@ -3,8 +3,7 @@
 #include "Agrinet_pump.h"
 
 #include <stdtypes.h>
-#include <stdlib.h>
-#include <string.h>
+
 
 
 
@@ -19,7 +18,7 @@ static byte usbPayloadLen;
 static char usbrxar[MAX_LEN_CMD];
 
 static byte usbrxar_ndx;
-static word TimerUSB_1;
+//static word TimerUSB_1;
 
 
 
@@ -32,8 +31,22 @@ static byte_def _USB_flags1;
 
 
 
-byte state_SendTuttiInterventi;
+byte state_USBSend;
 
+
+
+
+/*****************************************************************************
+ * Funzioni
+ *****************************************************************************/
+
+
+/*****************************************************************************
+* Name:
+*    ResetPkt_ndx
+*
+* Description: Reset pkt in ricezione da USB
+*****************************************************************************/
 void ResetPkt_ndx(void){
   usbrxar_ndx = 0;
   usbPayloadLen = 0;
@@ -42,70 +55,25 @@ void ResetPkt_ndx(void){
 }
 
 
-void StartTimer(word *_timerToStart, word _valToStart){
-  *_timerToStart = _valToStart;
-}
-
-byte isTimerStopped(word _timerToCheck){
-  return (_timerToCheck == 0xFFFF);
-}
-
-
-/*****************************************************************************
- * Name:
- *    print
- * In:
- *    s: string
- * Out:
- *    n/a
- *
- * Description:
- *    Print the specified string.
- * Assumptions:
- *
- *****************************************************************************/
-void print(char *s)
-{
-  while(*s)
-  {
-    while(*s != (char)cdc_putch(*s))
-      ;
-    s++;
-  }
-}
 
 
 /*****************************************************************************
 * Name:
 *    comm_init
-* In:
-*    N/A
-*
-* Out:
-*    N/A
-*
 * Description:
 *
-* Assumptions:
-*    --
 *****************************************************************************/
 void USB_comm_init(void)
 {
-  usb_cfg_init();
-  
-  Init_USB_man();
+  usb_cfg_init();         // Init Registri USB micro
+  Init_USB_man();         // Init Variabili USB per comunicazione
 }                                
 
 
 void Init_USB_man(void){
-  cdc_init();
-   
-  usbrxar[sizeof(usbrxar)-1]='\0';
-   
+  cdc_init();   
+  usbrxar[sizeof(usbrxar)-1]='\0';   
   ResetPkt_ndx();
-
-  srand(122);
-  
   USB_flags1=0x00;    
 }
 
@@ -113,18 +81,16 @@ void Init_USB_man(void){
 /*****************************************************************************
  * Name:
  *    USB_PktSend
- * In:
- *    _toSend: 
- * Out:
- *    n/a
- *
  * Description:
- *    Send Pkt
- *    FIRST_BYTE + (LENGTH) + PAYLOAD + CHKSUM
- * Assumptions:
+ *    _toSend è l'array del payload da inviare
+ *    _len    è la lunghezza dell'array
+ *    _firstPayload   Se <> 0, è il byte da aggiungere all'inizio del payload 
+ *                    che risulterà così incrementato di 1. Serve per ripetere il comando.
  *
+ *    Send Pkt (vedere documento)
+ *    FIRST_BYTE + (LENGTH) + PAYLOAD + CHKSUM
  *****************************************************************************/
-void USB_PktSend(byte *_toSend, byte _len)
+void USB_PktSend(byte *_toSend, byte _len, byte _firstPayload)
 {
   byte cnt=0, byteToSend, cks=0;
   
@@ -139,13 +105,21 @@ void USB_PktSend(byte *_toSend, byte _len)
 
   // Byte Length
   if (_len>0){    
-    byteToSend = _len;
+    byteToSend = (byte)(_firstPayload==0 ? _len : _len+1);
     while(byteToSend != (char)cdc_putch(byteToSend))
       ;
     cks += byteToSend;
   }
+
+  // _firstPayload (primo byte del payload, serve se devo ripetere comando ad es REQ_HELLO)
+  if (_firstPayload != 0) {
+    byteToSend = _firstPayload;
+    while(byteToSend != (char)cdc_putch(byteToSend))
+      ;
+    cks += byteToSend;  
+  }
   
-  
+
   // PayLoad
   while (cnt<_len){  
     while(*_toSend != (char)cdc_putch(*_toSend))
@@ -154,8 +128,7 @@ void USB_PktSend(byte *_toSend, byte _len)
     _toSend++;
     cnt++;
   }
-  
-  
+
   // CheckSum
   while(cks != (char)cdc_putch(cks))
     ;
@@ -167,50 +140,26 @@ void USB_PktSend(byte *_toSend, byte _len)
 /*****************************************************************************
  * Name:
  *    USB_SendHello
- * In:
- *    _toSend: 
- * Out:
- *    n/a
- *
  * Description:
  *      Send Hello
- * Assumptions:
- *
  *****************************************************************************/
 void USB_SendHello(void)
-{
-  byte _myarr[MAX_LEN_PAYLOAD];
-
-  if (USBSendHello_en){      
-    _myarr[0] = REQ_HELLO;  // Indica risposta ad Hello
-        
-    // Invia matricola 
-    _myarr[1] = 'a';
-    _myarr[2] = 'b';
-    _myarr[3] = 'c';    
-    _myarr[4] = 'd';
+{ 
+  switch (state_USBSend) {
+    case 0:        
+      allarme_in_lettura = 2000;
+      state_USBSend = 1;
+    break;
     
-    // Ore lavoro 
-    _myarr[5] = 0x00;
-    _myarr[6] = 0x03;
-    _myarr[7] = 0x55;
-    _myarr[8] = 0x44;
+    case 1:
+      if (allarme_in_lettura == 2001) {        
+        USB_PktSend(buffer_USB,96, REQ_HELLO);          
+        USBSendHello_en = FALSE; 
+      }
+    break;
     
     
-    // Fw Ver
-    _myarr[9] = 0x01;
-    _myarr[10] = 0x02;
-
-    
-    // Hw Ver
-    _myarr[11] = 0x03;
-    _myarr[12] = 0x04;
-    
-    USB_PktSend(_myarr,13);   
-    
-    USBSendHello_en = FALSE;
-  }
-
+  }       
 }
     
  
@@ -219,123 +168,69 @@ void USB_SendHello(void)
 /*****************************************************************************
  * Name:
  *    USB_SendTuttiInterventi
- * In:
- *    _toSend: 
- * Out:
- *    n/a
- *
  * Description:
- *      Send Hello
- * Assumptions:
- *
+ *      Send Interventi.
  *****************************************************************************/
 void USB_SendTuttiInterventi(void)
 {  
   word cntInt;
-  byte _myarr[MAX_LEN_PAYLOAD];
-
- 
-  if (USBSendInterventi_en) {
-  
-    switch (state_SendTuttiInterventi) {
-      case 0:        
-        allarme_in_lettura = 1;
-        state_SendTuttiInterventi = 1;
-        pronto_alla_risposta = 0;
-      break;
-      
-      case 1:
-        if (pronto_alla_risposta) {
-          memcpy(_myarr,buffer_USB, INTERVENTO_LENGTH);      
-          USB_PktSend(_myarr,INTERVENTO_LENGTH);          
-          allarme_in_lettura++;
-          pronto_alla_risposta = 0; 
-          
-          if ((buffer_USB[15] == 0xFF) || (allarme_in_lettura >= totale_indicazioni_fault))
-            state_SendTuttiInterventi = 2;
-          
-        }
-      break;
-      
-      case 2:
-        for (cntInt=0;cntInt<INTERVENTO_LENGTH;cntInt++) _myarr[cntInt] = 0xFF;    
-        USB_PktSend(_myarr,INTERVENTO_LENGTH);   
-        USBSendInterventi_en = FALSE;
-        state_SendTuttiInterventi= 0;
-      break;
-      
-    }
-
+  byte _myarr[MAX_LEN_CMD];
+  switch (state_USBSend) {
+    case 0:        
+      allarme_in_lettura = 1;
+      state_USBSend = 1;
+      pronto_alla_risposta = 0;
+    break;
+    
+    case 1:
+      if (pronto_alla_risposta) {        
+        USB_PktSend(buffer_USB,INTERVENTO_LENGTH,0);          
+        allarme_in_lettura++;
+        pronto_alla_risposta = 0; 
+        
+        if ((buffer_USB[0] == 0xFF) || (allarme_in_lettura >= totale_indicazioni_fault))
+          state_USBSend = 2;        
+      }
+    break;
+    
+    case 2:
+      for (cntInt=0;cntInt<INTERVENTO_LENGTH;cntInt++) _myarr[cntInt] = 0xFF;    
+      USB_PktSend(_myarr,INTERVENTO_LENGTH,0);   
+      USBSendInterventi_en = FALSE;
+      state_USBSend= 0;
+    break;
+    
   }
 
+ 
 }  
+  
   
   
 /*****************************************************************************
  * Name:
- *    USB_time_sw
- * In:
- *   
- * Out:
- *    n/a
- *
- * Description:  Richiamata da interrupt Main ogni 20ms
- *  
- * Assumptions:
- *
- *****************************************************************************/  
-void USB_time_sw(void){
-  
-  if (TimerUSB_1 != 0xFFFF) 
-  TimerUSB_1--;
-  
-}
-
-
-    
-                      
-/*****************************************************************************
-* Name:
-*    comm_proces
-* In:
-*    N/A
-*
-* Out:
-*    N/A
-*
-* Description: Gestione comunicazione USB
-*                
-*
-* Assumptions:
-*    --
-*****************************************************************************/
-void USB_comm_process(void)
-{
-
-  byte USBtoSend[MAX_LEN_PAYLOAD];
+ *    USB_ReadRequest
+ * Description:
+ *      Gestisce e impacchetta richieste provenienti da PC
+ *      Se ricevuto un pkt corretto Setta USBPktReady = TRUE
+ *****************************************************************************/
+void USB_ReadRequest(void)
+{  
   byte i;
-  byte cks;
-  
+  byte cks;    
 
-  USB_SendHello();    
-  USB_SendTuttiInterventi();      
-  
-  
   // finchè c'è qualcosa nel buffer USB
   // Se ci sono più di 32 byte entro + volte qua  
   while((cdc_kbhit)())
   {      
   
-   
-
     char c;
     c=(char)(cdc_getch)();        
     usbrxar[usbrxar_ndx++]=c;
     
     if (usbrxar_ndx >= MAX_LEN_CMD)   // Overflow 
       ResetPkt_ndx();
-    
-   
+      
     
     if (usbrxar_ndx-1==0) {              
    
@@ -373,48 +268,113 @@ void USB_comm_process(void)
       
     }
     
-    
-    
   }
-  
-  
-  if (USBPktReady) {
-  
+ 
+ 
+}  
 
+
+
+/*****************************************************************************
+ * Name:
+ *    USB_HandleRequest
+ * Description:
+ *      Se è stato ricevuto un pkt corretto da USB_ReadRequest
+ *      Qua dentro viene preparata l'azione corrispondente
+ *****************************************************************************/
+ void USB_HandleRequest(void){
+  if (USBPktReady) {  
+    // Analizzare messaggio ricevuto    
     
-    // Analizzare messaggio ricevuto
-    
-    if (usbPayloadLen==0) {      
-      //USB_PktSend(USBtoSend,0); 
+    if (usbPayloadLen==0) {
+      USB_PktSend(0,0,0);     // Messaggio vuoto       
     } else {
       switch (usbrxar[usbNumByteLen+1]) {
 
         case REQ_HELLO:
-          USBSendHello_en = TRUE;          
+          USBSendHello_en = TRUE;                    
+          state_USBSend = 0;
         break;
 
 
         case REQ_LIST_INTERV:                    
           USBSendInterventi_en =TRUE;
-          state_SendTuttiInterventi= 0;
+          state_USBSend = 0;
         break;
 
-        case REQ_ERR_0:          
+        case REQ_ERR_0:
+          USB_PktSend(0,0,0);     // Messaggio vuoto
         break;
 
         default:
-          USBtoSend[0] = 0x55;
-          USB_PktSend(USBtoSend,1);
+          USB_PktSend(0,0,0);     // Messaggio vuoto
         break;          
       }
     
     }
     
-    ResetPkt_ndx();             // Resetta anche USBPktReady
-    
+    ResetPkt_ndx();             // Resetta anche USBPktReady    
   }
-
-
-
-  
 }
+
+
+/*****************************************************************************
+* Name:
+*    comm_proces
+*
+* Description: Gestione comunicazione USB
+*                
+*****************************************************************************/
+void USB_comm_process(void)
+{
+  // Se è attiva una richiesta di invio la esegue
+  if (USBSendHello_en){      
+    USB_SendHello();    
+  } else if (USBSendInterventi_en) {
+    USB_SendTuttiInterventi();      
+  }
+  
+  USB_ReadRequest();
+ 
+  USB_HandleRequest();
+}
+
+
+
+
+/*****************************************************************************
+ * Name:
+ *    USB_time_sw
+ *
+ * Description:  Richiamata da interrupt Main ogni 20ms 
+ *****************************************************************************/  
+/*void USB_time_sw(void){  
+  if (TimerUSB_1 != 0xFFFF) 
+  TimerUSB_1--;  
+}
+
+void StartTimer(word *_timerToStart, word _valToStart){
+  *_timerToStart = _valToStart;
+}
+
+byte isTimerStopped(word _timerToCheck){
+  return (_timerToCheck == 0xFFFF);
+}
+*/
+
+/*****************************************************************************
+ * Name:
+ *    print
+ *
+ * Description:
+ *    Print the specified string.
+ *****************************************************************************/
+/*void print(char *s)
+{
+  while(*s)
+  {
+    while(*s != (char)cdc_putch(*s))
+      ;
+    s++;
+  }
+} */
