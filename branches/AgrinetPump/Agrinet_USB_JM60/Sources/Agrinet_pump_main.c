@@ -593,7 +593,7 @@ tensione_15V; //V*4.7/(33+4.7) *4096/5 = V*102
 char
 display[34],
 cifre[16], 
-buffer_USB[32],//contiene i 24 bytes degli errori
+buffer_USB[96],//contiene i 24 bytes degli errori
 cursore_menu,
 funzioni_avanzate,
 comando_display;
@@ -3345,7 +3345,7 @@ asm
  BNE fine
  LDHX #2001
  STHX allarme_in_lettura
- LDHX #64
+ LDHX #96
 assegna_buffer:
  LDA @set:-1,X
  STA @buffer_USB:-1,X

@@ -3,7 +3,7 @@
 const char security @0xffbf=0xfe; //0xfe=visibile, 0xfc=invisibile
 
 __interrupt  void SPI1(void);
-//__interrupt  void USB_status(void);
+
 __interrupt  void usb_it_handler(void);
 __interrupt  void timer1_overflowISR(void);
 __interrupt  void timer2_overflowISR(void);
@@ -37,8 +37,7 @@ const tIsrFunc _vect[] @0xffca={     /* Interrupt table */
    UnimplementedISR,                 /* TPM1 Channel 1 0xffea*/
    UnimplementedISR,                 /* TPM1 Channel 0 0xffec*/
    UnimplementedISR,                 /* Reserved       0xffee*/
-   //USB_status,                       /* USB status     0xfff0*/
-   usb_it_handler,
+   usb_it_handler,                   /* USB status     0xfff0*/
    UnimplementedISR,                 /* SPI2           0xfff2*/
    SPI1,                             /* SPI1           0xfff4*/
    UnimplementedISR,                 /* MCG Loss Lock  0xfff6*/

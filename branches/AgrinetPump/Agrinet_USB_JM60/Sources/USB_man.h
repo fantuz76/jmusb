@@ -12,12 +12,13 @@
 #define REQ_ERR_0         0x41
 
 
-//#define NUM_MAX_INTERV    505
 #define INTERVENTO_LENGTH 16
 
-// Lunghezza Massima in byte dati su USB (compresi checksum, length etc..)
-#define MAX_LEN_CMD       28
-#define MAX_LEN_PAYLOAD   MAX_LEN_CMD-3
+// Lunghezza Massima Comandi in byte dati su USB (compresi checksum, length etc..)
+// Definisce la dimensione degli Array utilizzati in lettura da PC->scheda e all'interno delle
+// routine coivolte. (Non aumentarlo troppo, se non serve, per evitare occupazione di memoria inutile)
+#define MAX_LEN_CMD       30
+
 
 #define FIRST_BYTE_EMPTY  0x80
 
@@ -38,11 +39,8 @@ typedef union {
   
 
 
-
+void Init_USB_man(void);
 void USB_comm_init(void);
 void USB_comm_process(void);
-void USB_time_sw(void);
-
-void Init_USB_man(void);
 
 #endif
