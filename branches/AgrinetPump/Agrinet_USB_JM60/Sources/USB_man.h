@@ -16,7 +16,7 @@
 #define INTERVENTO_LENGTH 16
 
 // Lunghezza Massima in byte dati su USB (compresi checksum, length etc..)
-#define MAX_LEN_CMD       32
+#define MAX_LEN_CMD       28
 #define MAX_LEN_PAYLOAD   MAX_LEN_CMD-3
 
 #define FIRST_BYTE_EMPTY  0x80
@@ -38,8 +38,11 @@ typedef union {
   
 
 
+
 void USB_comm_init(void);
 void USB_comm_process(void);
 void USB_time_sw(void);
+
+void Init_USB_man(void);
 
 #endif

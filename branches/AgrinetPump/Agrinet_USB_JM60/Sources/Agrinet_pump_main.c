@@ -2579,7 +2579,8 @@ switch(timer_20ms)
   somma_reattivaI1xV23=0;
   somma_reattivaI2xV31=0;
   somma_reattivaI3xV12=0;
-  
+
+ 
   //USB_time_sw();
   } break;
  case 1:
@@ -5995,6 +5996,9 @@ comando_display=1;
 timer_rinfresco_display=255;
 alternanza_presentazione=0x81;
 
+
+USB_comm_init();
+
 asm
  { 
  LDHX #96
@@ -6070,7 +6074,7 @@ timer_attesa_secco=(unsigned char)set.ritardo_stop_funzionemento_a_secco;
 void main(void)
 {
 condizioni_iniziali();
-USB_comm_init();
+
 for(;;)  /* loop forever */
  {
  __RESET_WATCHDOG(); /* feeds the dog */
@@ -6082,18 +6086,22 @@ for(;;)  /* loop forever */
  salva_allarme_in_eepprom();//precedenza 3
  salva_conta_secondi_attivita();//precedenza 4
 
+
  lettura_impostazioni();//precedenza 5
  lettura_allarme_messo_in_buffer_USB();//precedenza 6
 
  trasmissione_misure_istantanee(); //con allarme_in_lettura = 1000
  trasmissione_tarature(); //con allarme_in_lettura == 2000
 
+
  programmazione();
  misure_medie();
  presenta_stato_motore();
- condizioni_di_allarme();    
  
- USB_comm_process();
+ condizioni_di_allarme();    
+
+  USB_comm_process();
  cdc_process();
+  
  }
 }
