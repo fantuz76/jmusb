@@ -1,5 +1,5 @@
 
-PROGRAM "i:\Documenti\Electronic\AgrinetPUMP_USB_JM60\Agrinet_USB_JM60\bin\Project.abs"
+PROGRAM "I:\Documenti\Electronic\AgrinetPUMP_USB_JM60\Agrinet_USB_JM60\bin\Project.abs"
 
 *********************************************************************************************
 TARGET SECTION
@@ -30,8 +30,8 @@ Entry point: 0x19DB (_Startup)
 _startupData is allocated at 0x19E4 and uses 6 Bytes
 extern struct _tagStartup {
   unsigned nofZeroOut     1
-  _Range   pZeroOut       0x100     996
-  _Copy    *toCopyDownBeg 0x74E6
+  _Range   pZeroOut       0x100     1039
+  _Copy    *toCopyDownBeg 0x7716
 } _startupData;
 
 *********************************************************************************************
@@ -41,9 +41,9 @@ Section Name                    Size  Type     From       To       Segment
 .data                              7   R/W      0x100      0x106   RAM
 .init                            132     R     0x1960     0x19E3   ROM
 .startData                        18     R     0x19E4     0x19F5   ROM
-.rodata                         4100     R     0x19F6     0x29F9   ROM
-.text                          19180     R     0x29FA     0x74E5   ROM
-.copy                             12     R     0x74E6     0x74F1   ROM
+.rodata                         4200     R     0x19F6     0x2A5D   ROM
+.text                          19640     R     0x2A5E     0x7715   ROM
+.copy                             12     R     0x7716     0x7721   ROM
 .abs_section_ffbf                  1     R     0xFFBF     0xFFBF   .absSeg0
 .abs_section_ffca                 52     R     0xFFCA     0xFFFD   .absSeg1
 .abs_section_0                     1   N/I        0x0        0x0   .absSeg2
@@ -196,13 +196,13 @@ Section Name                    Size  Type     From       To       Segment
 .abs_section_1812                  2   N/I     0x1812     0x1813   .absSeg149
 .abs_section_1814                  2   N/I     0x1814     0x1815   .absSeg150
 .bss                             250   R/W      0x107      0x200   RAM
-.common                          739   R/W      0x201      0x4E3   RAM
-.stack                           256   R/W      0x4E4      0x5E3   RAM
+.common                          782   R/W      0x201      0x50E   RAM
+.stack                           256   R/W      0x50F      0x60E   RAM
 .vectSeg151_vect                   2     R     0xFFFE     0xFFFF   .vectSeg151
 
 Summary of section sizes per section type:
-READ_ONLY (R):        5BC9 (dec:    23497)
-READ_WRITE (R/W):      4E4 (dec:     1252)
+READ_ONLY (R):        5DF9 (dec:    24057)
+READ_WRITE (R/W):      50F (dec:     1295)
 NO_INIT (N/I):          AD (dec:      173)
 
 *********************************************************************************************
@@ -217,258 +217,274 @@ OBJECT-ALLOCATION SECTION
 ---------------------------------------------------------------------------------------------
 MODULE:                 -- Agrinet_pump_main.c.o --
 - PROCEDURES:
-     somma_quadrati                            29FA      85     133       7   .text       
-     somma_potenze                             2A7F      CA     202       6   .text       
-     calcolo_offset_misure                     2B49      5B      91       5   .text       
-     calcolo_valor_medio_potenze               2BA4      74     116       8   .text       
-     calcolo_medie_quadrati                    2C18      76     118       7   .text       
-     valore_efficace                           2C8E     103     259       7   .text       
-     media_quadrati_nel_periodo                2D91      50      80       7   .text       
-     media_potenza_nel_periodo                 2DE1      C8     200       6   .text       
-     AD_conversion_completeISR                 2EA9     26D     621       2   .text       
-     lettura_pulsanti                          3116     123     291       1   .text       
-     comando_del_display                       3239     109     265       1   .text       
-     calcolo_del_fattore_di_potenza_monofase       3342      B2     178       1   .text       
-     calcolo_del_fattore_di_potenza            33F4     1CD     461       2   .text       
-     timer1_overflowISR                        35C1      36      54       1   .text       
-     calcolo_tensione_relais                   35F7      57      87       1   .text       
-     timer2_overflowISR                        364E     6E1    1761      30   .text       
-     SPI1                                      3D2F     135     309       2   .text       
-     trasmissione_misure_istantanee            3E64      63      99       1   .text       
-     trasmissione_tarature                     3EC7      1A      26       1   .text       
-     presenta_menu                             3EE1      43      67       7   .text       
-     presenta_scritta                          3F24      55      85       6   .text       
-     modifica_unsigned                         3F79      EE     238      26   .text       
-     presenta_unsigned                         4067      AB     171      26   .text       
-     salva_reset_default                       4112      8D     141       1   .text       
-     salva_impostazioni                        419F      79     121       1   .text       
-     salva_allarme_in_eepprom                  4218      CA     202       1   .text       
-     salva_conta_secondi_attivita              42E2      58      88       1   .text       
-     lettura_impostazioni                      433A      CF     207       3   .text       
-     lettura_allarme_messo_in_buffer_USB       4409      81     129       1   .text       
-     calcolo_delle_costanti                    448A     1DA     474       4   .text       
-     programmazione                            4664     92B    2347     132   .text       
-     messaggio_allarme                         4F8F     202     514      22   .text       
-     misure_medie                              5191     212     530       2   .text       
-     Nallarme_ora_minuto_secondo               53A3      EF     239       2   .text       
-     presenta_stato_motore                     5492     25B     603      18   .text       
-     marcia_arresto                            56ED     103     259       3   .text       
-     protezione_termica                        57F0     155     341       1   .text       
-     disinserzione_condensatore_avviamento       5945      47      71       1   .text       
-     condizioni_di_allarme                     598C     2AE     686      17   .text       
-     condizioni_iniziali                       5C3A     384     900       1   .text       
-     main                                      5FBE      3A      58       1   .text       
+     somma_quadrati                            2A5E      85     133       8   .text       
+     somma_potenze                             2AE3      CA     202       6   .text       
+     calcolo_offset_misure                     2BAD      5B      91       5   .text       
+     calcolo_valor_medio_potenze               2C08      74     116       9   .text       
+     calcolo_medie_quadrati                    2C7C      76     118       8   .text       
+     valore_efficace                           2CF2     103     259       8   .text       
+     media_quadrati_nel_periodo                2DF5      50      80       8   .text       
+     media_potenza_nel_periodo                 2E45      D4     212       7   .text       
+     AD_conversion_completeISR                 2F19     2BF     703       3   .text       
+     lettura_pulsanti                          31D8     123     291       1   .text       
+     comando_del_display                       32FB     109     265       1   .text       
+     calcolo_del_fattore_di_potenza_monofase       3404      B2     178       1   .text       
+     calcolo_del_fattore_di_potenza            34B6     1CD     461       2   .text       
+     timer1_overflowISR                        3683      36      54       1   .text       
+     calcolo_tensione_relais                   36B9      57      87       1   .text       
+     timer2_overflowISR                        3710     81A    2074      43   .text       
+     SPI1                                      3F2A     135     309       2   .text       
+     trasmissione_misure_istantanee            405F      70     112       1   .text       
+     trasmissione_tarature                     40CF      1A      26       1   .text       
+     presenta_menu                             40E9      43      67       7   .text       
+     presenta_scritta                          412C      55      85       5   .text       
+     modifica_unsigned                         4181      EE     238      26   .text       
+     presenta_signed                           426F      C6     198       3   .text       
+     presenta_unsigned                         4335      AB     171      13   .text       
+     salva_reset_default                       43E0      8A     138       1   .text       
+     salva_impostazioni                        446A      79     121       1   .text       
+     salva_allarme_in_eepprom                  44E3      CA     202       1   .text       
+     salva_conta_secondi_attivita              45AD      58      88       1   .text       
+     lettura_impostazioni                      4605      CF     207       3   .text       
+     lettura_allarme_messo_in_buffer_USB       46D4      81     129       1   .text       
+     calcolo_delle_costanti                    4755     2B0     688       4   .text       
+     programmazione                            4A05     7A0    1952     110   .text       
+     messaggio_allarme                         51A5     219     537      33   .text       
+     misure_medie                              53BE     182     386       2   .text       
+     Nallarme_ora_minuto_secondo               5540      EF     239       2   .text       
+     presenta_stato_motore                     562F     260     608      21   .text       
+     marcia_arresto                            588F     11D     285       3   .text       
+     protezione_termica                        59AC     151     337       1   .text       
+     disinserzione_condensatore_avviamento       5AFD      47      71       1   .text       
+     condizioni_di_allarme                     5B44     2DD     733      34   .text       
+     condizioni_iniziali                       5E21     3E3     995       3   .text       
+     main                                      6204      3A      58       1   .text       
 - VARIABLES:
      presentazione_iniziale                    19F6      22      34       1   .rodata     
      comandi_da_effettuare                     1A18      44      68       3   .rodata     
      dati_presentati_in_ON                     1A5C      88     136       1   .rodata     
-     lettura_allarmi                           1AE4     2CA     714      22   .rodata     
-     presenta_monofase_trifase                 1DAE      44      68       4   .rodata     
-     presenta_tipo_start_stop                  1DF2      44      68       4   .rodata     
-     comando_reset                             1E36      22      34       4   .rodata     
-     in_salvataggio                            1E58      22      34       1   .rodata     
-     menu_principale                           1E7A     908    2312       2   .rodata     
-     comando_AD                                2782      17      23       2   .rodata     
-     filtro_pulsanti                           2799       1       1       8   .rodata     
-     prepara                                   279A       7       7       1   .rodata     
-     delta_Tn                                  27A1       2       2       6   .rodata     
-     fattore_portata                           27A3       2       2       2   .rodata     
-     inizio_lettura_I_avviamento               27A5       2       2       1   .rodata     
-     totale_indicazioni_fault                  27A7       2       2       3   .rodata     
-     primo_indirizzo_funzioni                  27A9       2       2       3   .rodata     
-     indirizzo_conta_ore                       27AB       2       2       1   .rodata     
-     ultimo_indirizzo_funzioni                 27AD       2       2       2   .rodata     
-     disturbo_I_pos                            27AF       2       2       2   .rodata     
-     disturbo_I_neg                            27B1       2       2       2   .rodata     
-     dati_di_fabbrica                          27B3      60      96       4   .rodata     
-     limiti_inferiori                          2813      60      96       2   .rodata     
-     limiti_superiori                          2873      60      96       2   .rodata     
-     tremila205                                28D3       2       2       7   .rodata     
-     mille                                     28D5       2       2       4   .rodata     
-     diecimila                                 28D7       2       2       8   .rodata     
-     alimentazione12V                          28D9       2       2       1   .rodata     
-     alimentazione8V                           28DB       2       2       1   .rodata     
-     seimila400                                28DD       2       2       2   .rodata     
-     mille678                                  28DF       2       2       6   .rodata     
-     mille515                                  28E1       2       2       6   .rodata     
-     set                                        201      60      96     226   .common     
+     lettura_allarmi                           1AE4     2EC     748      25   .rodata     
+     presenta_monofase_trifase                 1DD0      44      68       2   .rodata     
+     presenta_tipo_start_stop                  1E14      44      68       2   .rodata     
+     comando_reset                             1E58      22      34       3   .rodata     
+     in_salvataggio                            1E7A      22      34       1   .rodata     
+     menu_principale                           1E9C     94C    2380       2   .rodata     
+     comando_AD                                27E8      17      23       2   .rodata     
+     filtro_pulsanti                           27FF       1       1       8   .rodata     
+     prepara                                   2800       7       7       1   .rodata     
+     delta_Tn                                  2807       2       2       5   .rodata     
+     fattore_portata                           2809       2       2       2   .rodata     
+     inizio_lettura_I_avviamento               280B       2       2       1   .rodata     
+     totale_indicazioni_fault                  280D       2       2       3   .rodata     
+     primo_indirizzo_funzioni                  280F       2       2       3   .rodata     
+     indirizzo_conta_ore                       2811       2       2       1   .rodata     
+     ultimo_indirizzo_funzioni                 2813       2       2       2   .rodata     
+     disturbo_I_pos                            2815       2       2       2   .rodata     
+     disturbo_I_neg                            2817       2       2       2   .rodata     
+     dati_di_fabbrica                          2819      60      96       4   .rodata     
+     limiti_inferiori                          2879      60      96       2   .rodata     
+     limiti_superiori                          28D9      60      96       2   .rodata     
+     mille                                     2939       2       2       4   .rodata     
+     diecimila                                 293B       2       2       8   .rodata     
+     alimentazione12V                          293D       2       2       1   .rodata     
+     alimentazione8V                           293F       2       2       1   .rodata     
+     duemila507                                2941       2       2       4   .rodata     
+     mille678                                  2943       2       2       6   .rodata     
+     mille515                                  2945       2       2       6   .rodata     
+     set                                        201      60      96     224   .common     
      DAC0                                       261      10      16       6   .common     
-     DAC                                        271      10      16      17   .common     
-     display                                    281      22      34      18   .common     
-     cifre                                      2A3      10      16       5   .common     
-     buffer_USB                                 2B3      60      96      24   .common     
+     DAC                                        271      10      16      20   .common     
+     display                                    281      22      34      20   .common     
+     cifre                                      2A3      10      16      10   .common     
+     buffer_USB                                 2B3      60      96      25   .common     
      cursore_menu                               313       1       1      29   .common     
-     funzioni_avanzate                          314       1       1       4   .common     
-     comando_display                            315       1       1       4   .common     
-     timer_lampeggio_LED_emergenza              316       1       1       5   .common     
-     timer_1min                                 317       1       1       4   .common     
-     timer_1s                                   318       1       1       4   .common     
-     timer_20ms                                 319       1       1       5   .common     
-     timer_mandata_chiusa                       31A       1       1       6   .common     
-     timer_attesa_secco                         31B       1       1       6   .common     
-     timer_attesa_tensione                      31C       1       1       7   .common     
-     timer_attesa_squilibrio                    31D       1       1       5   .common     
-     timer_reset_display                        31E       1       1       4   .common     
-     timer_lampeggio                            31F       1       1       6   .common     
-     timer_rinfresco_display                    320       1       1       4   .common     
-     timer_reset                                321       1       1       5   .common     
-     tot_misure                                 322       1       1       3   .common     
-     Tot_misure                                 323       1       1      13   .common     
-     contatore_display                          324       1       1      13   .common     
-     contatore_AD                               325       1       1       5   .common     
-     start                                      326       1       1       6   .common     
-     salita_start                               327       1       1       6   .common     
-     stop                                       328       1       1       6   .common     
-     salita_stop                                329       1       1       7   .common     
-     toggle_stop                                32A       1       1      12   .common     
-     func                                       32B       1       1       6   .common     
-     salita_func                                32C       1       1       5   .common     
-     toggle_func                                32D       1       1      11   .common     
-     meno                                       32E       1       1      11   .common     
-     salita_meno                                32F       1       1       7   .common     
-     piu                                        330       1       1      11   .common     
-     salita_piu                                 331       1       1       7   .common     
-     remoto                                     332       1       1       7   .common     
-     salita_remoto                              333       1       1       3   .common     
-     prima_accensione                           334       1       1       3   .common     
-     attesa_invio                               335       1       1       5   .common     
-     alternanza_presentazione                   336       1       1      12   .common     
-     relais_alimentazione                       337       1       1       8   .common     
-     relais_avviamento                          338       1       1       6   .common     
-     precedente_segnalazione                    339       1       1       3   .common     
-     I1                                         33A       2       2       9   .common     
-     I3                                         33C       2       2       8   .common     
-     V12                                        33E       2       2      10   .common     
-     V13                                        340       2       2       9   .common     
-     Id                                         342       2       2       3   .common     
-     V1                                         344       2       2       4   .common     
-     V2                                         346       2       2       4   .common     
-     V3                                         348       2       2       4   .common     
-     I2                                         34A       2       2       9   .common     
-     timer_eccitazione_relais                   34C       2       2       4   .common     
-     timer_riavviamento                         34E       2       2      10   .common     
-     timer_attesa_differenziale                 350       2       2       5   .common     
-     timer_commuta_presentazione                352       2       2       8   .common     
-     timer_aggiorna_misure                      354       2       2       6   .common     
-     timer_avviamento_monofase                  356       2       2       6   .common     
-     timer_inc_dec                              358       2       2       9   .common     
-     timer_piu_meno                             35A       2       2      10   .common     
-     timer_rilascio                             35C       2       2      10   .common     
-     offset_I1letta                             35E       4       4       5   .common     
-     offset_I3letta                             362       4       4       5   .common     
-     offset_V13letta                            366       4       4       5   .common     
-     offset_V12letta                            36A       4       4       5   .common     
-     offset_Idletta                             36E       4       4       5   .common     
-     conta_secondi_attivita                     372       4       4      13   .common     
-     delta_T                                    376       4       4      25   .common     
-     quad_Id                                    37A       4       4       5   .common     
-     somma_quad_Id                              37E       4       4       7   .common     
-     somma_quad_I1                              382       4       4       7   .common     
-     somma_quad_I2                              386       4       4       7   .common     
-     somma_quad_I3                              38A       4       4       7   .common     
-     somma_quad_V1                              38E       4       4       7   .common     
-     somma_quad_V2                              392       4       4       7   .common     
-     somma_quad_V3                              396       4       4       7   .common     
-     somma_potenzaI1xV1                         39A       4       4       7   .common     
-     somma_potenzaI2xV2                         39E       4       4       7   .common     
-     somma_potenzaI3xV3                         3A2       4       4       7   .common     
-     somma_reattivaI1xV23                       3A6       4       4       7   .common     
-     somma_reattivaI2xV31                       3AA       4       4       7   .common     
-     somma_reattivaI3xV12                       3AE       4       4       7   .common     
-     Somma_potenzaI1xV1                         3B2       4       4       6   .common     
-     Somma_potenzaI2xV2                         3B6       4       4       6   .common     
-     Somma_potenzaI3xV3                         3BA       4       4       6   .common     
-     Somma_reattivaI1xV23                       3BE       4       4       6   .common     
-     Somma_reattivaI2xV31                       3C2       4       4       6   .common     
-     Somma_reattivaI3xV12                       3C6       4       4       6   .common     
-     quad_I1                                    3CA       4       4       5   .common     
-     quad_I2                                    3CE       4       4       5   .common     
-     quad_I3                                    3D2       4       4       5   .common     
-     quad_V1                                    3D6       4       4       5   .common     
-     quad_V2                                    3DA       4       4       5   .common     
-     quad_V3                                    3DE       4       4       5   .common     
-     media_temperatura                          3E2       4       4       7   .common     
-     media_pressione                            3E6       4       4       8   .common     
-     media_quad_Id                              3EA       4       4       5   .common     
-     media_quad_I1                              3EE       4       4       8   .common     
-     media_quad_I2                              3F2       4       4       8   .common     
-     media_quad_I3                              3F6       4       4       8   .common     
-     media_quad_V1                              3FA       4       4       5   .common     
-     media_quad_V2                              3FE       4       4       5   .common     
-     media_quad_V3                              402       4       4       5   .common     
-     media_potenzaI1xV1                         406       4       4       8   .common     
-     media_potenzaI2xV2                         40A       4       4       6   .common     
-     media_potenzaI3xV3                         40E       4       4       8   .common     
-     media_reattivaI1xV23                       412       4       4       6   .common     
-     media_reattivaI2xV31                       416       4       4       6   .common     
-     media_reattivaI3xV12                       41A       4       4       6   .common     
-     Id_rms                                     41E       2       2       4   .common     
-     I1_rms                                     420       2       2       8   .common     
-     I2_rms                                     422       2       2       9   .common     
-     I3_rms                                     424       2       2       9   .common     
-     V1_rms                                     426       2       2       9   .common     
-     V2_rms                                     428       2       2       9   .common     
-     V3_rms                                     42A       2       2       9   .common     
-     potenzaI1xV1                               42C       2       2       6   .common     
-     potenzaI2xV2                               42E       2       2       3   .common     
-     potenzaI3xV3                               430       2       2       3   .common     
-     reattivaI1xV23                             432       2       2       3   .common     
-     reattivaI2xV31                             434       2       2       3   .common     
-     reattivaI3xV12                             436       2       2       3   .common     
-     PWM_relais                                 438       2       2       4   .common     
-     potenza_media                              43A       2       2      10   .common     
-     reattiva_media                             43C       2       2       3   .common     
-     tensione_media                             43E       2       2      14   .common     
-     corrente_media                             440       2       2      14   .common     
-     picco_corrente_avviamento                  442       2       2       6   .common     
-     corrente_test                              444       2       2       7   .common     
-     dissimmetria                               446       2       2       6   .common     
-     squilibrio                                 448       2       2       5   .common     
-     registrazione                              44A      10      16      27   .common     
-     indirizzo_scrivi_eeprom                    45A       2       2      13   .common     
-     contatore_leggi_eeprom                     45C       2       2       4   .common     
-     ultimo_dato_in_lettura                     45E       2       2       3   .common     
-     ultimo_indirizzo_scrittura                 460       2       2       8   .common     
-     primo_indirizzo_lettura                    462       2       2       6   .common     
-     buffer_eeprom                              464      60      96      22   .common     
-     scrivi_eeprom                              4C4       1       1      19   .common     
-     leggi_eeprom                               4C5       1       1      10   .common     
-     eeprom_impegnata                           4C6       1       1      18   .common     
-     reset_default                              4C7       1       1      10   .common     
-     salvataggio_funzioni                       4C8       1       1      12   .common     
-     salvataggio_allarme                        4C9       1       1       6   .common     
-     salva_conta_secondi                        4CA       1       1       7   .common     
-     lunghezza_salvataggio                      4CB       1       1       9   .common     
-     leggi_impostazioni                         4CC       1       1       8   .common     
-     indirizzo_buffer_eeprom                    4CD       1       1       7   .common     
-     conta_dati_scrittura_eeprom                4CE       1       1       5   .common     
-     fattore_I2xT                               4CF       2       2       7   .common     
-     fattore_Id                                 4D1       2       2       3   .common     
-     sovraccarico_moderato                      4D3       2       2       2   .common     
-     sovraccarico                               4D5       2       2       2   .common     
-     precedente_lettura_allarme                 4D7       2       2       3   .common     
-     numero_ingresso                            4D9       2       2       5   .common     
-     allarme_in_lettura                         4DB       2       2      17   .common     
-     cosfi                                      4DD       4       4      22   .common     
-     abilita_reset                              4E1       1       1       6   .common     
-     pronto_alla_risposta                       4E2       1       1       7   .common     
+     comando_display                            314       1       1       4   .common     
+     timer_lampeggio_LED_emergenza              315       1       1       5   .common     
+     timer_1min                                 316       1       1       4   .common     
+     timer_1s                                   317       1       1       4   .common     
+     timer_20ms                                 318       1       1       5   .common     
+     timer_mandata_chiusa                       319       1       1       8   .common     
+     timer_attesa_secco                         31A       1       1       8   .common     
+     timer_attesa_tensione                      31B       1       1      10   .common     
+     timer_attesa_squilibrio                    31C       1       1       8   .common     
+     timer_reset_display                        31D       1       1       4   .common     
+     timer_lampeggio                            31E       1       1       6   .common     
+     timer_rinfresco_display                    31F       1       1       4   .common     
+     timer_reset                                320       1       1       6   .common     
+     tot_misure                                 321       1       1       5   .common     
+     Tot_misure                                 322       1       1      16   .common     
+     contatore_display                          323       1       1      13   .common     
+     contatore_AD                               324       1       1       5   .common     
+     start                                      325       1       1       6   .common     
+     salita_start                               326       1       1       6   .common     
+     stop                                       327       1       1       6   .common     
+     salita_stop                                328       1       1       7   .common     
+     toggle_stop                                329       1       1      12   .common     
+     func                                       32A       1       1       6   .common     
+     salita_func                                32B       1       1       5   .common     
+     toggle_func                                32C       1       1      11   .common     
+     meno                                       32D       1       1      11   .common     
+     salita_meno                                32E       1       1       7   .common     
+     piu                                        32F       1       1      12   .common     
+     salita_piu                                 330       1       1       7   .common     
+     remoto                                     331       1       1       7   .common     
+     salita_remoto                              332       1       1       3   .common     
+     sequenza_fasi                              333       1       1       3   .common     
+     segno_V12                                  334       1       1       3   .common     
+     commutazione_V12                           335       1       1       2   .common     
+     segno_V13                                  336       1       1       3   .common     
+     commutazione_V13                           337       1       1       2   .common     
+     prima_accensione                           338       1       1       3   .common     
+     attesa_invio                               339       1       1       5   .common     
+     alternanza_presentazione                   33A       1       1      12   .common     
+     relais_alimentazione                       33B       1       1       9   .common     
+     relais_avviamento                          33C       1       1       7   .common     
+     precedente_segnalazione                    33D       1       1       3   .common     
+     I1                                         33E       2       2      10   .common     
+     I3                                         340       2       2       8   .common     
+     V12                                        342       2       2       8   .common     
+     V13                                        344       2       2       9   .common     
+     Id                                         346       2       2       3   .common     
+     V1                                         348       2       2       4   .common     
+     V2                                         34A       2       2       4   .common     
+     V3                                         34C       2       2       4   .common     
+     I2                                         34E       2       2       5   .common     
+     timer_eccitazione_relais                   350       2       2       6   .common     
+     timer_riavviamento                         352       2       2      10   .common     
+     timer_attesa_differenziale                 354       2       2       8   .common     
+     timer_commuta_presentazione                356       2       2       8   .common     
+     timer_aggiorna_misure                      358       2       2       6   .common     
+     timer_avviamento_monofase                  35A       2       2       8   .common     
+     timer_inc_dec                              35C       2       2       9   .common     
+     timer_piu_meno                             35E       2       2      10   .common     
+     timer_rilascio                             360       2       2      10   .common     
+     offset_I1letta                             362       4       4       5   .common     
+     offset_I3letta                             366       4       4       5   .common     
+     offset_V13letta                            36A       4       4       5   .common     
+     offset_V12letta                            36E       4       4       5   .common     
+     offset_Idletta                             372       4       4       5   .common     
+     conta_secondi_attivita                     376       4       4      13   .common     
+     delta_T                                    37A       4       4      25   .common     
+     quad_Id                                    37E       4       4       5   .common     
+     somma_quad_Id                              382       4       4       7   .common     
+     somma_quad_I1                              386       4       4       7   .common     
+     somma_quad_I2                              38A       4       4       7   .common     
+     somma_quad_I3                              38E       4       4       7   .common     
+     somma_quad_V13                             392       4       4       7   .common     
+     somma_quad_V1                              396       4       4       7   .common     
+     somma_quad_V2                              39A       4       4       7   .common     
+     somma_quad_V3                              39E       4       4       7   .common     
+     somma_potenzaI1xV13                        3A2       4       4       7   .common     
+     somma_potenzaI1xV1                         3A6       4       4       7   .common     
+     somma_potenzaI2xV2                         3AA       4       4       7   .common     
+     somma_potenzaI3xV3                         3AE       4       4       7   .common     
+     somma_reattivaI1xV23                       3B2       4       4       7   .common     
+     somma_reattivaI2xV31                       3B6       4       4       7   .common     
+     somma_reattivaI3xV12                       3BA       4       4       7   .common     
+     Somma_potenzaI1xV13                        3BE       4       4       6   .common     
+     Somma_potenzaI1xV1                         3C2       4       4       6   .common     
+     Somma_potenzaI2xV2                         3C6       4       4       6   .common     
+     Somma_potenzaI3xV3                         3CA       4       4       6   .common     
+     Somma_reattivaI1xV23                       3CE       4       4       6   .common     
+     Somma_reattivaI2xV31                       3D2       4       4       6   .common     
+     Somma_reattivaI3xV12                       3D6       4       4       6   .common     
+     quad_I1                                    3DA       4       4       5   .common     
+     quad_I2                                    3DE       4       4       5   .common     
+     quad_I3                                    3E2       4       4       5   .common     
+     quad_V13                                   3E6       4       4       5   .common     
+     quad_V1                                    3EA       4       4       5   .common     
+     quad_V2                                    3EE       4       4       5   .common     
+     quad_V3                                    3F2       4       4       5   .common     
+     media_temperatura                          3F6       4       4       7   .common     
+     media_pressione                            3FA       4       4       8   .common     
+     media_quad_Id                              3FE       4       4       5   .common     
+     media_quad_I1                              402       4       4       5   .common     
+     media_quad_I2                              406       4       4       5   .common     
+     media_quad_I3                              40A       4       4       5   .common     
+     media_quad_V13                             40E       4       4       5   .common     
+     media_quad_V1                              412       4       4       5   .common     
+     media_quad_V2                              416       4       4       5   .common     
+     media_quad_V3                              41A       4       4       5   .common     
+     media_potenzaI1xV13                        41E       4       4       4   .common     
+     media_potenzaI1xV1                         422       4       4       6   .common     
+     media_potenzaI2xV2                         426       4       4       6   .common     
+     media_potenzaI3xV3                         42A       4       4       6   .common     
+     media_reattivaI1xV23                       42E       4       4       6   .common     
+     media_reattivaI2xV31                       432       4       4       6   .common     
+     media_reattivaI3xV12                       436       4       4       6   .common     
+     Id_rms                                     43A       2       2       4   .common     
+     I1_rms                                     43C       2       2       8   .common     
+     I2_rms                                     43E       2       2       9   .common     
+     I3_rms                                     440       2       2       9   .common     
+     V13_rms                                    442       2       2       3   .common     
+     V1_rms                                     444       2       2       6   .common     
+     V2_rms                                     446       2       2       8   .common     
+     V3_rms                                     448       2       2       8   .common     
+     potenzaI1xV13                              44A       2       2       2   .common     
+     potenzaI1xV1                               44C       2       2       6   .common     
+     potenzaI2xV2                               44E       2       2       3   .common     
+     potenzaI3xV3                               450       2       2       3   .common     
+     reattivaI1xV23                             452       2       2       4   .common     
+     reattivaI2xV31                             454       2       2       4   .common     
+     reattivaI3xV12                             456       2       2       4   .common     
+     PWM_relais                                 458       2       2       4   .common     
+     potenza_media                              45A       2       2      10   .common     
+     reattiva_media                             45C       2       2       3   .common     
+     tensione_media                             45E       2       2       9   .common     
+     corrente_media                             460       2       2      11   .common     
+     picco_corrente_avviamento                  462       2       2       7   .common     
+     corrente_test                              464       2       2       8   .common     
+     sovratensione_consentita                   466       2       2       3   .common     
+     sottotensione_consentita                   468       2       2       3   .common     
+     dissimmetria                               46A       2       2       6   .common     
+     dissimmetria_tollerata                     46C       2       2       4   .common     
+     dissimmetria_emergenza                     46E       2       2       3   .common     
+     squilibrio                                 470       2       2       5   .common     
+     squilibrio_tollerato                       472       2       2       3   .common     
+     squilibrio_emergenza                       474       2       2       3   .common     
+     registrazione                              476      10      16      33   .common     
+     indirizzo_scrivi_eeprom                    486       2       2      13   .common     
+     contatore_leggi_eeprom                     488       2       2       4   .common     
+     ultimo_dato_in_lettura                     48A       2       2       3   .common     
+     ultimo_indirizzo_scrittura                 48C       2       2       8   .common     
+     primo_indirizzo_lettura                    48E       2       2       6   .common     
+     buffer_eeprom                              490      60      96      22   .common     
+     scrivi_eeprom                              4F0       1       1      19   .common     
+     leggi_eeprom                               4F1       1       1      10   .common     
+     eeprom_impegnata                           4F2       1       1      18   .common     
+     reset_default                              4F3       1       1      10   .common     
+     salvataggio_funzioni                       4F4       1       1      12   .common     
+     salvataggio_allarme                        4F5       1       1       6   .common     
+     salva_conta_secondi                        4F6       1       1       7   .common     
+     lunghezza_salvataggio                      4F7       1       1       9   .common     
+     leggi_impostazioni                         4F8       1       1       8   .common     
+     indirizzo_buffer_eeprom                    4F9       1       1       7   .common     
+     conta_dati_scrittura_eeprom                4FA       1       1       5   .common     
+     fattore_I2xT                               4FB       2       2       7   .common     
+     fattore_Id                                 4FD       2       2       3   .common     
+     sovraccarico_moderato                      4FF       2       2       3   .common     
+     sovraccarico                               501       2       2       2   .common     
+     precedente_lettura_allarme                 503       2       2       3   .common     
+     numero_ingresso                            505       2       2       6   .common     
+     allarme_in_lettura                         507       2       2      17   .common     
+     cosfi                                      509       4       4      22   .common     
+     pronto_alla_risposta                       50D       1       1       7   .common     
 MODULE:                 -- RTSHC08.C.o (ansiis.lib) --
 - PROCEDURES:
-     _PUSH_ARGS_L                              5FF8      20      32       1   .text       
-     _ENTER_BINARY_L                           6018      16      22       2   .text       
-     _LSUB_k_is_k_minus_j                      602E      1F      31       1   .text       
-     _LCMP_k_rel_j                             604D      1F      31       1   .text       
-     _IMUL_STAR08                              606C      27      39       3   .text       
-     _ICMP                                     6093      16      22       3   .text       
-     _LSUB                                     60A9       6       6       3   .text       
-     _LCMP                                     60AF       6       6       5   .text       
-     _COPY                                     60B5      30      48       4   .text       
-     _POP32                                    60E5      1A      26       3   .text       
-     _Jump_Table_Addr                          60FF      16      22       1   .text       
-     _Jump_Table_Header_Addr                   6115      2F      47       6   .text       
-     _Jump_Table_Header_Offset                 6144      24      36       3   .text       
-     _PUSH_CC                                  6168       F      15       1   .text       
-     _POP_CC                                   6177       F      15       1   .text       
+     _PUSH_ARGS_L                              623E      20      32       1   .text       
+     _ENTER_BINARY_L                           625E      16      22       2   .text       
+     _LSUB_k_is_k_minus_j                      6274      1F      31       1   .text       
+     _LCMP_k_rel_j                             6293      1F      31       1   .text       
+     _IMUL_STAR08                              62B2      27      39       3   .text       
+     _ICMP                                     62D9      16      22       3   .text       
+     _LSUB                                     62EF       6       6       3   .text       
+     _LCMP                                     62F5       6       6       5   .text       
+     _COPY                                     62FB      30      48       4   .text       
+     _POP32                                    632B      1A      26       3   .text       
+     _Jump_Table_Header_Addr                   6345      2F      47       7   .text       
+     _Jump_Table_Header_Offset                 6374      24      36       3   .text       
+     _PUSH_CC                                  6398       F      15       1   .text       
+     _POP_CC                                   63A7       F      15       1   .text       
 - VARIABLES:
 MODULE:                 -- Start08.c.o --
 - PROCEDURES:
@@ -478,10 +494,10 @@ MODULE:                 -- Start08.c.o --
 - VARIABLES:
      _startupData                              19E4       6       6       4   .startData  
 - LABELS:
-     __SEG_END_SSTACK                           5E4       0       0       1               
+     __SEG_END_SSTACK                           60F       0       0       1               
 MODULE:                 -- isr_vectors.c.o --
 - PROCEDURES:
-     UnimplementedISR                          6186       5       5      21   .text       
+     UnimplementedISR                          63B6       5       5      21   .text       
 - VARIABLES:
      security                                  FFBF       1       1       0   .abs_section_ffbf
      _vect                                     FFCA      34      52       0   .abs_section_ffca
@@ -639,29 +655,29 @@ MODULE:                 -- MC9S08JM60.C.o --
      _DBGF                                     1814       2       2       0   .abs_section_1814
 MODULE:                 -- usb.c.o --
 - PROCEDURES:
-     usb_get_done                              618B      29      41       1   .text       
-     usb_ep_is_busy                            61B4      13      19       2   .text       
-     usb_get_state                             61C7       4       4       1   .text       
-     usb_ep_error                              61CB      11      17       2   .text       
-     ep2bdtndx                                 61DC      37      55       8   .text       
-     usb_get_rx_pptr                           6213      35      53       2   .text       
-     send_zero_packet                          6248      24      36       2   .text       
-     usb_init                                  626C      24      36       1   .text       
-     usb_setup_ep                              6290     1B8     440      11   .text       
-     set_config                                6448      BB     187       2   .text       
-     enter_default_state                       6503      26      38       2   .text       
-     usb_stop_ep_tx                            6529      29      41       3   .text       
-     usb_stop_ep_rx                            6552      29      41       3   .text       
-     ready_ep_tx                               657B      3D      61       2   .text       
-     ready_ep_rx                               65B8      58      88       2   .text       
-     disable_ep                                6610       6       6       1   .text       
-     _usb_send                                 6616     1F9     505       9   .text       
-     usb_send                                  680F      C9     201       5   .text       
-     _usb_receive                              68D8     164     356       5   .text       
-     usb_receive                               6A3C      72     114       2   .text       
-     cb_set_address                            6AAE      1A      26       1   .text       
-     usb_stm_ctrl0                             6AC8     266     614      24   .text       
-     usb_it_handler                            6D2E     1EF     495       6   .text       
+     usb_get_done                              63BB      29      41       1   .text       
+     usb_ep_is_busy                            63E4      13      19       2   .text       
+     usb_get_state                             63F7       4       4       1   .text       
+     usb_ep_error                              63FB      11      17       2   .text       
+     ep2bdtndx                                 640C      37      55       8   .text       
+     usb_get_rx_pptr                           6443      35      53       2   .text       
+     send_zero_packet                          6478      24      36       2   .text       
+     usb_init                                  649C      24      36       1   .text       
+     usb_setup_ep                              64C0     1B8     440      11   .text       
+     set_config                                6678      BB     187       2   .text       
+     enter_default_state                       6733      26      38       2   .text       
+     usb_stop_ep_tx                            6759      29      41       3   .text       
+     usb_stop_ep_rx                            6782      29      41       3   .text       
+     ready_ep_tx                               67AB      3D      61       2   .text       
+     ready_ep_rx                               67E8      58      88       2   .text       
+     disable_ep                                6840       6       6       1   .text       
+     _usb_send                                 6846     1F9     505       9   .text       
+     usb_send                                  6A3F      C9     201       5   .text       
+     _usb_receive                              6B08     164     356       5   .text       
+     usb_receive                               6C6C      72     114       2   .text       
+     cb_set_address                            6CDE      1A      26       1   .text       
+     usb_stm_ctrl0                             6CF8     266     614      24   .text       
+     usb_it_handler                            6F5E     1EF     495       6   .text       
 - VARIABLES:
      usb_current_config                         107       1       1       2   .bss        
      usb_state                                  108       1       1       4   .bss        
@@ -669,17 +685,17 @@ MODULE:                 -- usb.c.o --
      ep_info                                    10A      6C     108     139   .bss        
 MODULE:                 -- usb_cdc.c.o --
 - PROCEDURES:
-     usb_bus_error_event                       6F1D       1       1       1   .text       
-     usb_suspend_event                         6F1E       1       1       1   .text       
-     usb_wakeup_event                          6F1F       1       1       1   .text       
-     usb_reset_event                           6F20       1       1       1   .text       
-     got_line_coding                           6F21       8       8       1   .text       
-     usb_ep0_callback                          6F29      DF     223       1   .text       
-     cdc_getch                                 7008      18      24       1   .text       
-     cdc_kbhit                                 7020       F      15       1   .text       
-     cdc_putch                                 702F      3A      58       3   .text       
-     cdc_init                                  7069      1A      26       1   .text       
-     cdc_process                               7083      D6     214       3   .text       
+     usb_bus_error_event                       714D       1       1       1   .text       
+     usb_suspend_event                         714E       1       1       1   .text       
+     usb_wakeup_event                          714F       1       1       1   .text       
+     usb_reset_event                           7150       1       1       1   .text       
+     got_line_coding                           7151       8       8       1   .text       
+     usb_ep0_callback                          7159      DF     223       1   .text       
+     cdc_getch                                 7238      18      24       1   .text       
+     cdc_kbhit                                 7250       F      15       1   .text       
+     cdc_putch                                 725F      3A      58       3   .text       
+     cdc_init                                  7299      1A      26       1   .text       
+     cdc_process                               72B3      D6     214       3   .text       
 - VARIABLES:
      line_coding                                100       7       7       2   .data       
      rx_buffer                                  176      20      32       2   .bss        
@@ -694,56 +710,56 @@ MODULE:                 -- usb_cdc.c.o --
      uart_state                                 1DD       2       2       2   .bss        
 MODULE:                 -- cdct_usb_config.c.o --
 - PROCEDURES:
-     get_device_descriptor                     7159       4       4       1   .text       
-     is_cfgd_index                             715D       A      10       2   .text       
-     get_cfg_descriptor                        7167       8       8       1   .text       
-     is_str_index                              716F       9       9       1   .text       
-     get_str_descriptor                        7178       8       8       2   .text       
-     is_ifc_ndx                                7180      1A      26       1   .text       
-     is_ep_ndx                                 719A      24      36       1   .text       
-     get_ep_descriptor                         71BE      27      39       1   .text       
-     usb_cfg_init                              71E5       3       3       1   .text       
+     get_device_descriptor                     7389       4       4       1   .text       
+     is_cfgd_index                             738D       A      10       2   .text       
+     get_cfg_descriptor                        7397       8       8       1   .text       
+     is_str_index                              739F       9       9       1   .text       
+     get_str_descriptor                        73A8       8       8       2   .text       
+     is_ifc_ndx                                73B0      1A      26       1   .text       
+     is_ep_ndx                                 73CA      24      36       1   .text       
+     get_ep_descriptor                         73EE      27      39       1   .text       
+     usb_cfg_init                              7415       3       3       1   .text       
 - VARIABLES:
-     string_descriptor0                        28E3       4       4       1   .rodata     
-     str_manufacturer                          28E7      1A      26       1   .rodata     
-     str_config                                2901      2C      44       1   .rodata     
-     str_interface1                            292D       8       8       1   .rodata     
-     str_interface2                            2935      12      18       1   .rodata     
-     str_serial_number                         2947       A      10       1   .rodata     
-     str_product                               2951      46      70       1   .rodata     
-     usb_string_descriptors                    2997       E      14       1   .rodata     
-     usb_device_descriptor                     29A5      12      18       1   .rodata     
-     usb_config_descriptor                     29B7      43      67       4   .rodata     
+     string_descriptor0                        2947       4       4       1   .rodata     
+     str_manufacturer                          294B      1A      26       1   .rodata     
+     str_config                                2965      2C      44       1   .rodata     
+     str_interface1                            2991       8       8       1   .rodata     
+     str_interface2                            2999      12      18       1   .rodata     
+     str_serial_number                         29AB       A      10       1   .rodata     
+     str_product                               29B5      46      70       1   .rodata     
+     usb_string_descriptors                    29FB       E      14       1   .rodata     
+     usb_device_descriptor                     2A09      12      18       1   .rodata     
+     usb_config_descriptor                     2A1B      43      67       4   .rodata     
 MODULE:                 -- USB_man.c.o --
 - PROCEDURES:
-     ResetPkt_ndx                              71E8      12      18       5   .text       
-     USB_comm_init                             71FA       6       6       1   .text       
-     Init_USB_man                              7200       E      14       1   .text       
-     USB_PktSend                               720E      8A     138       3   .text       
-     USB_SendHello                             7298      33      51       1   .text       
-     USB_SendTuttiInterventi                   72CB      8B     139       1   .text       
-     USB_ReadRequest                           7356     10F     271       5   .text       
-     USB_HandleRequest                         7465      54      84       1   .text       
-     USB_comm_process                          74B9      18      24       1   .text       
+     ResetPkt_ndx                              7418      12      18       5   .text       
+     USB_comm_init                             742A       6       6       1   .text       
+     Init_USB_man                              7430       E      14       1   .text       
+     USB_PktSend                               743E      8A     138       3   .text       
+     USB_SendHello                             74C8      33      51       1   .text       
+     USB_SendTuttiInterventi                   74FB      8B     139       1   .text       
+     USB_ReadRequest                           7586     10F     271       5   .text       
+     USB_HandleRequest                         7695      54      84       1   .text       
+     USB_comm_process                          76E9      18      24       1   .text       
 - VARIABLES:
      usbNumByteLen                              1DF       1       1       7   .bss        
      usbPayloadLen                              1E0       1       1       5   .bss        
      usbrxar                                    1E1      1E      30       7   .bss        
      usbrxar_ndx                                1FF       1       1       7   .bss        
      _USB_flags1                                200       1       1      10   .bss        
-     state_USBSend                              4E3       1       1       6   .common     
+     state_USBSend                              50E       1       1       6   .common     
 MODULE:                 -- target.c.o --
 - PROCEDURES:
-     _irq_restore                              74D1       B      11       3   .text       
-     _irq_disable                              74DC       A      10       3   .text       
+     _irq_restore                              7701       B      11       3   .text       
+     _irq_disable                              770C       A      10       3   .text       
 - VARIABLES:
 
 *********************************************************************************************
 MODULE STATISTIC
   Name                                      Data   Code  Const
 ---------------------------------------------------------------------------------------------
-  Agrinet_pump_main.c.o                      738  13822   3821
-  RTSHC08.C.o (ansiis.lib)                     0    398      0
+  Agrinet_pump_main.c.o                      781  14304   3921
+  RTSHC08.C.o (ansiis.lib)                     0    376      0
   Start08.c.o                                  0    132      0
   isr_vectors.c.o                              0      5     53
   MC9S08JM60.C.o                             173      0      0
@@ -765,27 +781,27 @@ SECTION: ".text"
   calcolo_del_fattore_di_potenza_monofase calcolo_del_fattore_di_potenza 
   timer1_overflowISR calcolo_tensione_relais timer2_overflowISR SPI1 
   trasmissione_misure_istantanee trasmissione_tarature presenta_menu 
-  presenta_scritta modifica_unsigned presenta_unsigned salva_reset_default 
-  salva_impostazioni salva_allarme_in_eepprom salva_conta_secondi_attivita 
-  lettura_impostazioni lettura_allarme_messo_in_buffer_USB 
-  calcolo_delle_costanti programmazione messaggio_allarme misure_medie 
-  Nallarme_ora_minuto_secondo presenta_stato_motore marcia_arresto 
-  protezione_termica disinserzione_condensatore_avviamento 
-  condizioni_di_allarme condizioni_iniziali main _PUSH_ARGS_L _ENTER_BINARY_L 
-  _LSUB_k_is_k_minus_j _LCMP_k_rel_j _IMUL_STAR08 _ICMP _LSUB _LCMP _COPY 
-  _POP32 _Jump_Table_Addr _Jump_Table_Header_Addr _Jump_Table_Header_Offset 
-  _PUSH_CC _POP_CC UnimplementedISR usb_get_done usb_ep_is_busy usb_get_state 
-  usb_ep_error ep2bdtndx usb_get_rx_pptr send_zero_packet usb_init usb_setup_ep 
-  set_config enter_default_state usb_stop_ep_tx usb_stop_ep_rx ready_ep_tx 
-  ready_ep_rx disable_ep _usb_send usb_send _usb_receive usb_receive 
-  cb_set_address usb_stm_ctrl0 usb_it_handler usb_bus_error_event 
-  usb_suspend_event usb_wakeup_event usb_reset_event got_line_coding 
-  usb_ep0_callback cdc_getch cdc_kbhit cdc_putch cdc_init cdc_process 
-  get_device_descriptor is_cfgd_index get_cfg_descriptor is_str_index 
-  get_str_descriptor is_ifc_ndx is_ep_ndx get_ep_descriptor usb_cfg_init 
-  ResetPkt_ndx USB_comm_init Init_USB_man USB_PktSend USB_SendHello 
-  USB_SendTuttiInterventi USB_ReadRequest USB_HandleRequest USB_comm_process 
-  _irq_restore _irq_disable 
+  presenta_scritta modifica_unsigned presenta_signed presenta_unsigned 
+  salva_reset_default salva_impostazioni salva_allarme_in_eepprom 
+  salva_conta_secondi_attivita lettura_impostazioni 
+  lettura_allarme_messo_in_buffer_USB calcolo_delle_costanti programmazione 
+  messaggio_allarme misure_medie Nallarme_ora_minuto_secondo 
+  presenta_stato_motore marcia_arresto protezione_termica 
+  disinserzione_condensatore_avviamento condizioni_di_allarme 
+  condizioni_iniziali main _PUSH_ARGS_L _ENTER_BINARY_L _LSUB_k_is_k_minus_j 
+  _LCMP_k_rel_j _IMUL_STAR08 _ICMP _LSUB _LCMP _COPY _POP32 
+  _Jump_Table_Header_Addr _Jump_Table_Header_Offset _PUSH_CC _POP_CC 
+  UnimplementedISR usb_get_done usb_ep_is_busy usb_get_state usb_ep_error 
+  ep2bdtndx usb_get_rx_pptr send_zero_packet usb_init usb_setup_ep set_config 
+  enter_default_state usb_stop_ep_tx usb_stop_ep_rx ready_ep_tx ready_ep_rx 
+  disable_ep _usb_send usb_send _usb_receive usb_receive cb_set_address 
+  usb_stm_ctrl0 usb_it_handler usb_bus_error_event usb_suspend_event 
+  usb_wakeup_event usb_reset_event got_line_coding usb_ep0_callback cdc_getch 
+  cdc_kbhit cdc_putch cdc_init cdc_process get_device_descriptor is_cfgd_index 
+  get_cfg_descriptor is_str_index get_str_descriptor is_ifc_ndx is_ep_ndx 
+  get_ep_descriptor usb_cfg_init ResetPkt_ndx USB_comm_init Init_USB_man 
+  USB_PktSend USB_SendHello USB_SendTuttiInterventi USB_ReadRequest 
+  USB_HandleRequest USB_comm_process _irq_restore _irq_disable 
 SECTION: ".data"
   line_coding 
 SECTION: ".bss"
@@ -801,46 +817,50 @@ SECTION: ".rodata"
   prepara delta_Tn fattore_portata inizio_lettura_I_avviamento 
   totale_indicazioni_fault primo_indirizzo_funzioni indirizzo_conta_ore 
   ultimo_indirizzo_funzioni disturbo_I_pos disturbo_I_neg dati_di_fabbrica 
-  limiti_inferiori limiti_superiori tremila205 mille diecimila alimentazione12V 
-  alimentazione8V seimila400 mille678 mille515 string_descriptor0 
+  limiti_inferiori limiti_superiori mille diecimila alimentazione12V 
+  alimentazione8V duemila507 mille678 mille515 string_descriptor0 
   str_manufacturer str_config str_interface1 str_interface2 str_serial_number 
   str_product usb_string_descriptors usb_device_descriptor 
   usb_config_descriptor 
 SECTION: ".common"
-  set DAC0 DAC display cifre buffer_USB cursore_menu funzioni_avanzate 
-  comando_display timer_lampeggio_LED_emergenza timer_1min timer_1s timer_20ms 
+  set DAC0 DAC display cifre buffer_USB cursore_menu comando_display 
+  timer_lampeggio_LED_emergenza timer_1min timer_1s timer_20ms 
   timer_mandata_chiusa timer_attesa_secco timer_attesa_tensione 
   timer_attesa_squilibrio timer_reset_display timer_lampeggio 
   timer_rinfresco_display timer_reset tot_misure Tot_misure contatore_display 
   contatore_AD start salita_start stop salita_stop toggle_stop func salita_func 
   toggle_func meno salita_meno piu salita_piu remoto salita_remoto 
+  sequenza_fasi segno_V12 commutazione_V12 segno_V13 commutazione_V13 
   prima_accensione attesa_invio alternanza_presentazione relais_alimentazione 
   relais_avviamento precedente_segnalazione I1 I3 V12 V13 Id V1 V2 V3 I2 
   timer_eccitazione_relais timer_riavviamento timer_attesa_differenziale 
   timer_commuta_presentazione timer_aggiorna_misure timer_avviamento_monofase 
   timer_inc_dec timer_piu_meno timer_rilascio offset_I1letta offset_I3letta 
   offset_V13letta offset_V12letta offset_Idletta conta_secondi_attivita delta_T 
-  quad_Id somma_quad_Id somma_quad_I1 somma_quad_I2 somma_quad_I3 somma_quad_V1 
-  somma_quad_V2 somma_quad_V3 somma_potenzaI1xV1 somma_potenzaI2xV2 
-  somma_potenzaI3xV3 somma_reattivaI1xV23 somma_reattivaI2xV31 
-  somma_reattivaI3xV12 Somma_potenzaI1xV1 Somma_potenzaI2xV2 Somma_potenzaI3xV3 
-  Somma_reattivaI1xV23 Somma_reattivaI2xV31 Somma_reattivaI3xV12 quad_I1 
-  quad_I2 quad_I3 quad_V1 quad_V2 quad_V3 media_temperatura media_pressione 
-  media_quad_Id media_quad_I1 media_quad_I2 media_quad_I3 media_quad_V1 
-  media_quad_V2 media_quad_V3 media_potenzaI1xV1 media_potenzaI2xV2 
-  media_potenzaI3xV3 media_reattivaI1xV23 media_reattivaI2xV31 
-  media_reattivaI3xV12 Id_rms I1_rms I2_rms I3_rms V1_rms V2_rms V3_rms 
-  potenzaI1xV1 potenzaI2xV2 potenzaI3xV3 reattivaI1xV23 reattivaI2xV31 
-  reattivaI3xV12 PWM_relais potenza_media reattiva_media tensione_media 
-  corrente_media picco_corrente_avviamento corrente_test dissimmetria 
-  squilibrio registrazione indirizzo_scrivi_eeprom contatore_leggi_eeprom 
-  ultimo_dato_in_lettura ultimo_indirizzo_scrittura primo_indirizzo_lettura 
-  buffer_eeprom scrivi_eeprom leggi_eeprom eeprom_impegnata reset_default 
-  salvataggio_funzioni salvataggio_allarme salva_conta_secondi 
-  lunghezza_salvataggio leggi_impostazioni indirizzo_buffer_eeprom 
-  conta_dati_scrittura_eeprom fattore_I2xT fattore_Id sovraccarico_moderato 
-  sovraccarico precedente_lettura_allarme numero_ingresso allarme_in_lettura 
-  cosfi abilita_reset pronto_alla_risposta state_USBSend 
+  quad_Id somma_quad_Id somma_quad_I1 somma_quad_I2 somma_quad_I3 
+  somma_quad_V13 somma_quad_V1 somma_quad_V2 somma_quad_V3 somma_potenzaI1xV13 
+  somma_potenzaI1xV1 somma_potenzaI2xV2 somma_potenzaI3xV3 somma_reattivaI1xV23 
+  somma_reattivaI2xV31 somma_reattivaI3xV12 Somma_potenzaI1xV13 
+  Somma_potenzaI1xV1 Somma_potenzaI2xV2 Somma_potenzaI3xV3 Somma_reattivaI1xV23 
+  Somma_reattivaI2xV31 Somma_reattivaI3xV12 quad_I1 quad_I2 quad_I3 quad_V13 
+  quad_V1 quad_V2 quad_V3 media_temperatura media_pressione media_quad_Id 
+  media_quad_I1 media_quad_I2 media_quad_I3 media_quad_V13 media_quad_V1 
+  media_quad_V2 media_quad_V3 media_potenzaI1xV13 media_potenzaI1xV1 
+  media_potenzaI2xV2 media_potenzaI3xV3 media_reattivaI1xV23 
+  media_reattivaI2xV31 media_reattivaI3xV12 Id_rms I1_rms I2_rms I3_rms V13_rms 
+  V1_rms V2_rms V3_rms potenzaI1xV13 potenzaI1xV1 potenzaI2xV2 potenzaI3xV3 
+  reattivaI1xV23 reattivaI2xV31 reattivaI3xV12 PWM_relais potenza_media 
+  reattiva_media tensione_media corrente_media picco_corrente_avviamento 
+  corrente_test sovratensione_consentita sottotensione_consentita dissimmetria 
+  dissimmetria_tollerata dissimmetria_emergenza squilibrio squilibrio_tollerato 
+  squilibrio_emergenza registrazione indirizzo_scrivi_eeprom 
+  contatore_leggi_eeprom ultimo_dato_in_lettura ultimo_indirizzo_scrittura 
+  primo_indirizzo_lettura buffer_eeprom scrivi_eeprom leggi_eeprom 
+  eeprom_impegnata reset_default salvataggio_funzioni salvataggio_allarme 
+  salva_conta_secondi lunghezza_salvataggio leggi_impostazioni 
+  indirizzo_buffer_eeprom conta_dati_scrittura_eeprom fattore_I2xT fattore_Id 
+  sovraccarico_moderato sovraccarico precedente_lettura_allarme numero_ingresso 
+  allarme_in_lettura cosfi pronto_alla_risposta state_USBSend 
 SECTION: ".abs_section_ffbf"
   security 
 SECTION: ".abs_section_ffca"
@@ -1277,168 +1297,185 @@ OBJECT LIST SORTED BY ADDRESS
      usbrxar                                    1E1      1E      30       7   .bss        
      usbrxar_ndx                                1FF       1       1       7   .bss        
      _USB_flags1                                200       1       1      10   .bss        
-     set                                        201      60      96     226   .common     
+     set                                        201      60      96     224   .common     
      DAC0                                       261      10      16       6   .common     
-     DAC                                        271      10      16      17   .common     
-     display                                    281      22      34      18   .common     
-     cifre                                      2A3      10      16       5   .common     
-     buffer_USB                                 2B3      60      96      24   .common     
+     DAC                                        271      10      16      20   .common     
+     display                                    281      22      34      20   .common     
+     cifre                                      2A3      10      16      10   .common     
+     buffer_USB                                 2B3      60      96      25   .common     
      cursore_menu                               313       1       1      29   .common     
-     funzioni_avanzate                          314       1       1       4   .common     
-     comando_display                            315       1       1       4   .common     
-     timer_lampeggio_LED_emergenza              316       1       1       5   .common     
-     timer_1min                                 317       1       1       4   .common     
-     timer_1s                                   318       1       1       4   .common     
-     timer_20ms                                 319       1       1       5   .common     
-     timer_mandata_chiusa                       31A       1       1       6   .common     
-     timer_attesa_secco                         31B       1       1       6   .common     
-     timer_attesa_tensione                      31C       1       1       7   .common     
-     timer_attesa_squilibrio                    31D       1       1       5   .common     
-     timer_reset_display                        31E       1       1       4   .common     
-     timer_lampeggio                            31F       1       1       6   .common     
-     timer_rinfresco_display                    320       1       1       4   .common     
-     timer_reset                                321       1       1       5   .common     
-     tot_misure                                 322       1       1       3   .common     
-     Tot_misure                                 323       1       1      13   .common     
-     contatore_display                          324       1       1      13   .common     
-     contatore_AD                               325       1       1       5   .common     
-     start                                      326       1       1       6   .common     
-     salita_start                               327       1       1       6   .common     
-     stop                                       328       1       1       6   .common     
-     salita_stop                                329       1       1       7   .common     
-     toggle_stop                                32A       1       1      12   .common     
-     func                                       32B       1       1       6   .common     
-     salita_func                                32C       1       1       5   .common     
-     toggle_func                                32D       1       1      11   .common     
-     meno                                       32E       1       1      11   .common     
-     salita_meno                                32F       1       1       7   .common     
-     piu                                        330       1       1      11   .common     
-     salita_piu                                 331       1       1       7   .common     
-     remoto                                     332       1       1       7   .common     
-     salita_remoto                              333       1       1       3   .common     
-     prima_accensione                           334       1       1       3   .common     
-     attesa_invio                               335       1       1       5   .common     
-     alternanza_presentazione                   336       1       1      12   .common     
-     relais_alimentazione                       337       1       1       8   .common     
-     relais_avviamento                          338       1       1       6   .common     
-     precedente_segnalazione                    339       1       1       3   .common     
-     I1                                         33A       2       2       9   .common     
-     I3                                         33C       2       2       8   .common     
-     V12                                        33E       2       2      10   .common     
-     V13                                        340       2       2       9   .common     
-     Id                                         342       2       2       3   .common     
-     V1                                         344       2       2       4   .common     
-     V2                                         346       2       2       4   .common     
-     V3                                         348       2       2       4   .common     
-     I2                                         34A       2       2       9   .common     
-     timer_eccitazione_relais                   34C       2       2       4   .common     
-     timer_riavviamento                         34E       2       2      10   .common     
-     timer_attesa_differenziale                 350       2       2       5   .common     
-     timer_commuta_presentazione                352       2       2       8   .common     
-     timer_aggiorna_misure                      354       2       2       6   .common     
-     timer_avviamento_monofase                  356       2       2       6   .common     
-     timer_inc_dec                              358       2       2       9   .common     
-     timer_piu_meno                             35A       2       2      10   .common     
-     timer_rilascio                             35C       2       2      10   .common     
-     offset_I1letta                             35E       4       4       5   .common     
-     offset_I3letta                             362       4       4       5   .common     
-     offset_V13letta                            366       4       4       5   .common     
-     offset_V12letta                            36A       4       4       5   .common     
-     offset_Idletta                             36E       4       4       5   .common     
-     conta_secondi_attivita                     372       4       4      13   .common     
-     delta_T                                    376       4       4      25   .common     
-     quad_Id                                    37A       4       4       5   .common     
-     somma_quad_Id                              37E       4       4       7   .common     
-     somma_quad_I1                              382       4       4       7   .common     
-     somma_quad_I2                              386       4       4       7   .common     
-     somma_quad_I3                              38A       4       4       7   .common     
-     somma_quad_V1                              38E       4       4       7   .common     
-     somma_quad_V2                              392       4       4       7   .common     
-     somma_quad_V3                              396       4       4       7   .common     
-     somma_potenzaI1xV1                         39A       4       4       7   .common     
-     somma_potenzaI2xV2                         39E       4       4       7   .common     
-     somma_potenzaI3xV3                         3A2       4       4       7   .common     
-     somma_reattivaI1xV23                       3A6       4       4       7   .common     
-     somma_reattivaI2xV31                       3AA       4       4       7   .common     
-     somma_reattivaI3xV12                       3AE       4       4       7   .common     
-     Somma_potenzaI1xV1                         3B2       4       4       6   .common     
-     Somma_potenzaI2xV2                         3B6       4       4       6   .common     
-     Somma_potenzaI3xV3                         3BA       4       4       6   .common     
-     Somma_reattivaI1xV23                       3BE       4       4       6   .common     
-     Somma_reattivaI2xV31                       3C2       4       4       6   .common     
-     Somma_reattivaI3xV12                       3C6       4       4       6   .common     
-     quad_I1                                    3CA       4       4       5   .common     
-     quad_I2                                    3CE       4       4       5   .common     
-     quad_I3                                    3D2       4       4       5   .common     
-     quad_V1                                    3D6       4       4       5   .common     
-     quad_V2                                    3DA       4       4       5   .common     
-     quad_V3                                    3DE       4       4       5   .common     
-     media_temperatura                          3E2       4       4       7   .common     
-     media_pressione                            3E6       4       4       8   .common     
-     media_quad_Id                              3EA       4       4       5   .common     
-     media_quad_I1                              3EE       4       4       8   .common     
-     media_quad_I2                              3F2       4       4       8   .common     
-     media_quad_I3                              3F6       4       4       8   .common     
-     media_quad_V1                              3FA       4       4       5   .common     
-     media_quad_V2                              3FE       4       4       5   .common     
-     media_quad_V3                              402       4       4       5   .common     
-     media_potenzaI1xV1                         406       4       4       8   .common     
-     media_potenzaI2xV2                         40A       4       4       6   .common     
-     media_potenzaI3xV3                         40E       4       4       8   .common     
-     media_reattivaI1xV23                       412       4       4       6   .common     
-     media_reattivaI2xV31                       416       4       4       6   .common     
-     media_reattivaI3xV12                       41A       4       4       6   .common     
-     Id_rms                                     41E       2       2       4   .common     
-     I1_rms                                     420       2       2       8   .common     
-     I2_rms                                     422       2       2       9   .common     
-     I3_rms                                     424       2       2       9   .common     
-     V1_rms                                     426       2       2       9   .common     
-     V2_rms                                     428       2       2       9   .common     
-     V3_rms                                     42A       2       2       9   .common     
-     potenzaI1xV1                               42C       2       2       6   .common     
-     potenzaI2xV2                               42E       2       2       3   .common     
-     potenzaI3xV3                               430       2       2       3   .common     
-     reattivaI1xV23                             432       2       2       3   .common     
-     reattivaI2xV31                             434       2       2       3   .common     
-     reattivaI3xV12                             436       2       2       3   .common     
-     PWM_relais                                 438       2       2       4   .common     
-     potenza_media                              43A       2       2      10   .common     
-     reattiva_media                             43C       2       2       3   .common     
-     tensione_media                             43E       2       2      14   .common     
-     corrente_media                             440       2       2      14   .common     
-     picco_corrente_avviamento                  442       2       2       6   .common     
-     corrente_test                              444       2       2       7   .common     
-     dissimmetria                               446       2       2       6   .common     
-     squilibrio                                 448       2       2       5   .common     
-     registrazione                              44A      10      16      27   .common     
-     indirizzo_scrivi_eeprom                    45A       2       2      13   .common     
-     contatore_leggi_eeprom                     45C       2       2       4   .common     
-     ultimo_dato_in_lettura                     45E       2       2       3   .common     
-     ultimo_indirizzo_scrittura                 460       2       2       8   .common     
-     primo_indirizzo_lettura                    462       2       2       6   .common     
-     buffer_eeprom                              464      60      96      22   .common     
-     scrivi_eeprom                              4C4       1       1      19   .common     
-     leggi_eeprom                               4C5       1       1      10   .common     
-     eeprom_impegnata                           4C6       1       1      18   .common     
-     reset_default                              4C7       1       1      10   .common     
-     salvataggio_funzioni                       4C8       1       1      12   .common     
-     salvataggio_allarme                        4C9       1       1       6   .common     
-     salva_conta_secondi                        4CA       1       1       7   .common     
-     lunghezza_salvataggio                      4CB       1       1       9   .common     
-     leggi_impostazioni                         4CC       1       1       8   .common     
-     indirizzo_buffer_eeprom                    4CD       1       1       7   .common     
-     conta_dati_scrittura_eeprom                4CE       1       1       5   .common     
-     fattore_I2xT                               4CF       2       2       7   .common     
-     fattore_Id                                 4D1       2       2       3   .common     
-     sovraccarico_moderato                      4D3       2       2       2   .common     
-     sovraccarico                               4D5       2       2       2   .common     
-     precedente_lettura_allarme                 4D7       2       2       3   .common     
-     numero_ingresso                            4D9       2       2       5   .common     
-     allarme_in_lettura                         4DB       2       2      17   .common     
-     cosfi                                      4DD       4       4      22   .common     
-     abilita_reset                              4E1       1       1       6   .common     
-     pronto_alla_risposta                       4E2       1       1       7   .common     
-     state_USBSend                              4E3       1       1       6   .common     
+     comando_display                            314       1       1       4   .common     
+     timer_lampeggio_LED_emergenza              315       1       1       5   .common     
+     timer_1min                                 316       1       1       4   .common     
+     timer_1s                                   317       1       1       4   .common     
+     timer_20ms                                 318       1       1       5   .common     
+     timer_mandata_chiusa                       319       1       1       8   .common     
+     timer_attesa_secco                         31A       1       1       8   .common     
+     timer_attesa_tensione                      31B       1       1      10   .common     
+     timer_attesa_squilibrio                    31C       1       1       8   .common     
+     timer_reset_display                        31D       1       1       4   .common     
+     timer_lampeggio                            31E       1       1       6   .common     
+     timer_rinfresco_display                    31F       1       1       4   .common     
+     timer_reset                                320       1       1       6   .common     
+     tot_misure                                 321       1       1       5   .common     
+     Tot_misure                                 322       1       1      16   .common     
+     contatore_display                          323       1       1      13   .common     
+     contatore_AD                               324       1       1       5   .common     
+     start                                      325       1       1       6   .common     
+     salita_start                               326       1       1       6   .common     
+     stop                                       327       1       1       6   .common     
+     salita_stop                                328       1       1       7   .common     
+     toggle_stop                                329       1       1      12   .common     
+     func                                       32A       1       1       6   .common     
+     salita_func                                32B       1       1       5   .common     
+     toggle_func                                32C       1       1      11   .common     
+     meno                                       32D       1       1      11   .common     
+     salita_meno                                32E       1       1       7   .common     
+     piu                                        32F       1       1      12   .common     
+     salita_piu                                 330       1       1       7   .common     
+     remoto                                     331       1       1       7   .common     
+     salita_remoto                              332       1       1       3   .common     
+     sequenza_fasi                              333       1       1       3   .common     
+     segno_V12                                  334       1       1       3   .common     
+     commutazione_V12                           335       1       1       2   .common     
+     segno_V13                                  336       1       1       3   .common     
+     commutazione_V13                           337       1       1       2   .common     
+     prima_accensione                           338       1       1       3   .common     
+     attesa_invio                               339       1       1       5   .common     
+     alternanza_presentazione                   33A       1       1      12   .common     
+     relais_alimentazione                       33B       1       1       9   .common     
+     relais_avviamento                          33C       1       1       7   .common     
+     precedente_segnalazione                    33D       1       1       3   .common     
+     I1                                         33E       2       2      10   .common     
+     I3                                         340       2       2       8   .common     
+     V12                                        342       2       2       8   .common     
+     V13                                        344       2       2       9   .common     
+     Id                                         346       2       2       3   .common     
+     V1                                         348       2       2       4   .common     
+     V2                                         34A       2       2       4   .common     
+     V3                                         34C       2       2       4   .common     
+     I2                                         34E       2       2       5   .common     
+     timer_eccitazione_relais                   350       2       2       6   .common     
+     timer_riavviamento                         352       2       2      10   .common     
+     timer_attesa_differenziale                 354       2       2       8   .common     
+     timer_commuta_presentazione                356       2       2       8   .common     
+     timer_aggiorna_misure                      358       2       2       6   .common     
+     timer_avviamento_monofase                  35A       2       2       8   .common     
+     timer_inc_dec                              35C       2       2       9   .common     
+     timer_piu_meno                             35E       2       2      10   .common     
+     timer_rilascio                             360       2       2      10   .common     
+     offset_I1letta                             362       4       4       5   .common     
+     offset_I3letta                             366       4       4       5   .common     
+     offset_V13letta                            36A       4       4       5   .common     
+     offset_V12letta                            36E       4       4       5   .common     
+     offset_Idletta                             372       4       4       5   .common     
+     conta_secondi_attivita                     376       4       4      13   .common     
+     delta_T                                    37A       4       4      25   .common     
+     quad_Id                                    37E       4       4       5   .common     
+     somma_quad_Id                              382       4       4       7   .common     
+     somma_quad_I1                              386       4       4       7   .common     
+     somma_quad_I2                              38A       4       4       7   .common     
+     somma_quad_I3                              38E       4       4       7   .common     
+     somma_quad_V13                             392       4       4       7   .common     
+     somma_quad_V1                              396       4       4       7   .common     
+     somma_quad_V2                              39A       4       4       7   .common     
+     somma_quad_V3                              39E       4       4       7   .common     
+     somma_potenzaI1xV13                        3A2       4       4       7   .common     
+     somma_potenzaI1xV1                         3A6       4       4       7   .common     
+     somma_potenzaI2xV2                         3AA       4       4       7   .common     
+     somma_potenzaI3xV3                         3AE       4       4       7   .common     
+     somma_reattivaI1xV23                       3B2       4       4       7   .common     
+     somma_reattivaI2xV31                       3B6       4       4       7   .common     
+     somma_reattivaI3xV12                       3BA       4       4       7   .common     
+     Somma_potenzaI1xV13                        3BE       4       4       6   .common     
+     Somma_potenzaI1xV1                         3C2       4       4       6   .common     
+     Somma_potenzaI2xV2                         3C6       4       4       6   .common     
+     Somma_potenzaI3xV3                         3CA       4       4       6   .common     
+     Somma_reattivaI1xV23                       3CE       4       4       6   .common     
+     Somma_reattivaI2xV31                       3D2       4       4       6   .common     
+     Somma_reattivaI3xV12                       3D6       4       4       6   .common     
+     quad_I1                                    3DA       4       4       5   .common     
+     quad_I2                                    3DE       4       4       5   .common     
+     quad_I3                                    3E2       4       4       5   .common     
+     quad_V13                                   3E6       4       4       5   .common     
+     quad_V1                                    3EA       4       4       5   .common     
+     quad_V2                                    3EE       4       4       5   .common     
+     quad_V3                                    3F2       4       4       5   .common     
+     media_temperatura                          3F6       4       4       7   .common     
+     media_pressione                            3FA       4       4       8   .common     
+     media_quad_Id                              3FE       4       4       5   .common     
+     media_quad_I1                              402       4       4       5   .common     
+     media_quad_I2                              406       4       4       5   .common     
+     media_quad_I3                              40A       4       4       5   .common     
+     media_quad_V13                             40E       4       4       5   .common     
+     media_quad_V1                              412       4       4       5   .common     
+     media_quad_V2                              416       4       4       5   .common     
+     media_quad_V3                              41A       4       4       5   .common     
+     media_potenzaI1xV13                        41E       4       4       4   .common     
+     media_potenzaI1xV1                         422       4       4       6   .common     
+     media_potenzaI2xV2                         426       4       4       6   .common     
+     media_potenzaI3xV3                         42A       4       4       6   .common     
+     media_reattivaI1xV23                       42E       4       4       6   .common     
+     media_reattivaI2xV31                       432       4       4       6   .common     
+     media_reattivaI3xV12                       436       4       4       6   .common     
+     Id_rms                                     43A       2       2       4   .common     
+     I1_rms                                     43C       2       2       8   .common     
+     I2_rms                                     43E       2       2       9   .common     
+     I3_rms                                     440       2       2       9   .common     
+     V13_rms                                    442       2       2       3   .common     
+     V1_rms                                     444       2       2       6   .common     
+     V2_rms                                     446       2       2       8   .common     
+     V3_rms                                     448       2       2       8   .common     
+     potenzaI1xV13                              44A       2       2       2   .common     
+     potenzaI1xV1                               44C       2       2       6   .common     
+     potenzaI2xV2                               44E       2       2       3   .common     
+     potenzaI3xV3                               450       2       2       3   .common     
+     reattivaI1xV23                             452       2       2       4   .common     
+     reattivaI2xV31                             454       2       2       4   .common     
+     reattivaI3xV12                             456       2       2       4   .common     
+     PWM_relais                                 458       2       2       4   .common     
+     potenza_media                              45A       2       2      10   .common     
+     reattiva_media                             45C       2       2       3   .common     
+     tensione_media                             45E       2       2       9   .common     
+     corrente_media                             460       2       2      11   .common     
+     picco_corrente_avviamento                  462       2       2       7   .common     
+     corrente_test                              464       2       2       8   .common     
+     sovratensione_consentita                   466       2       2       3   .common     
+     sottotensione_consentita                   468       2       2       3   .common     
+     dissimmetria                               46A       2       2       6   .common     
+     dissimmetria_tollerata                     46C       2       2       4   .common     
+     dissimmetria_emergenza                     46E       2       2       3   .common     
+     squilibrio                                 470       2       2       5   .common     
+     squilibrio_tollerato                       472       2       2       3   .common     
+     squilibrio_emergenza                       474       2       2       3   .common     
+     registrazione                              476      10      16      33   .common     
+     indirizzo_scrivi_eeprom                    486       2       2      13   .common     
+     contatore_leggi_eeprom                     488       2       2       4   .common     
+     ultimo_dato_in_lettura                     48A       2       2       3   .common     
+     ultimo_indirizzo_scrittura                 48C       2       2       8   .common     
+     primo_indirizzo_lettura                    48E       2       2       6   .common     
+     buffer_eeprom                              490      60      96      22   .common     
+     scrivi_eeprom                              4F0       1       1      19   .common     
+     leggi_eeprom                               4F1       1       1      10   .common     
+     eeprom_impegnata                           4F2       1       1      18   .common     
+     reset_default                              4F3       1       1      10   .common     
+     salvataggio_funzioni                       4F4       1       1      12   .common     
+     salvataggio_allarme                        4F5       1       1       6   .common     
+     salva_conta_secondi                        4F6       1       1       7   .common     
+     lunghezza_salvataggio                      4F7       1       1       9   .common     
+     leggi_impostazioni                         4F8       1       1       8   .common     
+     indirizzo_buffer_eeprom                    4F9       1       1       7   .common     
+     conta_dati_scrittura_eeprom                4FA       1       1       5   .common     
+     fattore_I2xT                               4FB       2       2       7   .common     
+     fattore_Id                                 4FD       2       2       3   .common     
+     sovraccarico_moderato                      4FF       2       2       3   .common     
+     sovraccarico                               501       2       2       2   .common     
+     precedente_lettura_allarme                 503       2       2       3   .common     
+     numero_ingresso                            505       2       2       6   .common     
+     allarme_in_lettura                         507       2       2      17   .common     
+     cosfi                                      509       4       4      22   .common     
+     pronto_alla_risposta                       50D       1       1       7   .common     
+     state_USBSend                              50E       1       1       6   .common     
      _SRS                                      1800       1       1       2   .abs_section_1800
      _SBDFR                                    1801       1       1       0   .abs_section_1801
      _SOPT1                                    1802       1       1       0   .abs_section_1802
@@ -1485,156 +1522,155 @@ OBJECT LIST SORTED BY ADDRESS
      presentazione_iniziale                    19F6      22      34       1   .rodata     
      comandi_da_effettuare                     1A18      44      68       3   .rodata     
      dati_presentati_in_ON                     1A5C      88     136       1   .rodata     
-     lettura_allarmi                           1AE4     2CA     714      22   .rodata     
-     presenta_monofase_trifase                 1DAE      44      68       4   .rodata     
-     presenta_tipo_start_stop                  1DF2      44      68       4   .rodata     
-     comando_reset                             1E36      22      34       4   .rodata     
-     in_salvataggio                            1E58      22      34       1   .rodata     
-     menu_principale                           1E7A     908    2312       2   .rodata     
-     comando_AD                                2782      17      23       2   .rodata     
-     filtro_pulsanti                           2799       1       1       8   .rodata     
-     prepara                                   279A       7       7       1   .rodata     
-     delta_Tn                                  27A1       2       2       6   .rodata     
-     fattore_portata                           27A3       2       2       2   .rodata     
-     inizio_lettura_I_avviamento               27A5       2       2       1   .rodata     
-     totale_indicazioni_fault                  27A7       2       2       3   .rodata     
-     primo_indirizzo_funzioni                  27A9       2       2       3   .rodata     
-     indirizzo_conta_ore                       27AB       2       2       1   .rodata     
-     ultimo_indirizzo_funzioni                 27AD       2       2       2   .rodata     
-     disturbo_I_pos                            27AF       2       2       2   .rodata     
-     disturbo_I_neg                            27B1       2       2       2   .rodata     
-     dati_di_fabbrica                          27B3      60      96       4   .rodata     
-     limiti_inferiori                          2813      60      96       2   .rodata     
-     limiti_superiori                          2873      60      96       2   .rodata     
-     tremila205                                28D3       2       2       7   .rodata     
-     mille                                     28D5       2       2       4   .rodata     
-     diecimila                                 28D7       2       2       8   .rodata     
-     alimentazione12V                          28D9       2       2       1   .rodata     
-     alimentazione8V                           28DB       2       2       1   .rodata     
-     seimila400                                28DD       2       2       2   .rodata     
-     mille678                                  28DF       2       2       6   .rodata     
-     mille515                                  28E1       2       2       6   .rodata     
-     string_descriptor0                        28E3       4       4       1   .rodata     
-     str_manufacturer                          28E7      1A      26       1   .rodata     
-     str_config                                2901      2C      44       1   .rodata     
-     str_interface1                            292D       8       8       1   .rodata     
-     str_interface2                            2935      12      18       1   .rodata     
-     str_serial_number                         2947       A      10       1   .rodata     
-     str_product                               2951      46      70       1   .rodata     
-     usb_string_descriptors                    2997       E      14       1   .rodata     
-     usb_device_descriptor                     29A5      12      18       1   .rodata     
-     usb_config_descriptor                     29B7      43      67       4   .rodata     
-     somma_quadrati                            29FA      85     133       7   .text       
-     somma_potenze                             2A7F      CA     202       6   .text       
-     calcolo_offset_misure                     2B49      5B      91       5   .text       
-     calcolo_valor_medio_potenze               2BA4      74     116       8   .text       
-     calcolo_medie_quadrati                    2C18      76     118       7   .text       
-     valore_efficace                           2C8E     103     259       7   .text       
-     media_quadrati_nel_periodo                2D91      50      80       7   .text       
-     media_potenza_nel_periodo                 2DE1      C8     200       6   .text       
-     AD_conversion_completeISR                 2EA9     26D     621       2   .text       
-     lettura_pulsanti                          3116     123     291       1   .text       
-     comando_del_display                       3239     109     265       1   .text       
-     calcolo_del_fattore_di_potenza_monofase       3342      B2     178       1   .text       
-     calcolo_del_fattore_di_potenza            33F4     1CD     461       2   .text       
-     timer1_overflowISR                        35C1      36      54       1   .text       
-     calcolo_tensione_relais                   35F7      57      87       1   .text       
-     timer2_overflowISR                        364E     6E1    1761      30   .text       
-     SPI1                                      3D2F     135     309       2   .text       
-     trasmissione_misure_istantanee            3E64      63      99       1   .text       
-     trasmissione_tarature                     3EC7      1A      26       1   .text       
-     presenta_menu                             3EE1      43      67       7   .text       
-     presenta_scritta                          3F24      55      85       6   .text       
-     modifica_unsigned                         3F79      EE     238      26   .text       
-     presenta_unsigned                         4067      AB     171      26   .text       
-     salva_reset_default                       4112      8D     141       1   .text       
-     salva_impostazioni                        419F      79     121       1   .text       
-     salva_allarme_in_eepprom                  4218      CA     202       1   .text       
-     salva_conta_secondi_attivita              42E2      58      88       1   .text       
-     lettura_impostazioni                      433A      CF     207       3   .text       
-     lettura_allarme_messo_in_buffer_USB       4409      81     129       1   .text       
-     calcolo_delle_costanti                    448A     1DA     474       4   .text       
-     programmazione                            4664     92B    2347     132   .text       
-     messaggio_allarme                         4F8F     202     514      22   .text       
-     misure_medie                              5191     212     530       2   .text       
-     Nallarme_ora_minuto_secondo               53A3      EF     239       2   .text       
-     presenta_stato_motore                     5492     25B     603      18   .text       
-     marcia_arresto                            56ED     103     259       3   .text       
-     protezione_termica                        57F0     155     341       1   .text       
-     disinserzione_condensatore_avviamento       5945      47      71       1   .text       
-     condizioni_di_allarme                     598C     2AE     686      17   .text       
-     condizioni_iniziali                       5C3A     384     900       1   .text       
-     main                                      5FBE      3A      58       1   .text       
-     _PUSH_ARGS_L                              5FF8      20      32       1   .text       
-     _ENTER_BINARY_L                           6018      16      22       2   .text       
-     _LSUB_k_is_k_minus_j                      602E      1F      31       1   .text       
-     _LCMP_k_rel_j                             604D      1F      31       1   .text       
-     _IMUL_STAR08                              606C      27      39       3   .text       
-     _ICMP                                     6093      16      22       3   .text       
-     _LSUB                                     60A9       6       6       3   .text       
-     _LCMP                                     60AF       6       6       5   .text       
-     _COPY                                     60B5      30      48       4   .text       
-     _POP32                                    60E5      1A      26       3   .text       
-     _Jump_Table_Addr                          60FF      16      22       1   .text       
-     _Jump_Table_Header_Addr                   6115      2F      47       6   .text       
-     _Jump_Table_Header_Offset                 6144      24      36       3   .text       
-     _PUSH_CC                                  6168       F      15       1   .text       
-     _POP_CC                                   6177       F      15       1   .text       
-     UnimplementedISR                          6186       5       5      21   .text       
-     usb_get_done                              618B      29      41       1   .text       
-     usb_ep_is_busy                            61B4      13      19       2   .text       
-     usb_get_state                             61C7       4       4       1   .text       
-     usb_ep_error                              61CB      11      17       2   .text       
-     ep2bdtndx                                 61DC      37      55       8   .text       
-     usb_get_rx_pptr                           6213      35      53       2   .text       
-     send_zero_packet                          6248      24      36       2   .text       
-     usb_init                                  626C      24      36       1   .text       
-     usb_setup_ep                              6290     1B8     440      11   .text       
-     set_config                                6448      BB     187       2   .text       
-     enter_default_state                       6503      26      38       2   .text       
-     usb_stop_ep_tx                            6529      29      41       3   .text       
-     usb_stop_ep_rx                            6552      29      41       3   .text       
-     ready_ep_tx                               657B      3D      61       2   .text       
-     ready_ep_rx                               65B8      58      88       2   .text       
-     disable_ep                                6610       6       6       1   .text       
-     _usb_send                                 6616     1F9     505       9   .text       
-     usb_send                                  680F      C9     201       5   .text       
-     _usb_receive                              68D8     164     356       5   .text       
-     usb_receive                               6A3C      72     114       2   .text       
-     cb_set_address                            6AAE      1A      26       1   .text       
-     usb_stm_ctrl0                             6AC8     266     614      24   .text       
-     usb_it_handler                            6D2E     1EF     495       6   .text       
-     usb_bus_error_event                       6F1D       1       1       1   .text       
-     usb_suspend_event                         6F1E       1       1       1   .text       
-     usb_wakeup_event                          6F1F       1       1       1   .text       
-     usb_reset_event                           6F20       1       1       1   .text       
-     got_line_coding                           6F21       8       8       1   .text       
-     usb_ep0_callback                          6F29      DF     223       1   .text       
-     cdc_getch                                 7008      18      24       1   .text       
-     cdc_kbhit                                 7020       F      15       1   .text       
-     cdc_putch                                 702F      3A      58       3   .text       
-     cdc_init                                  7069      1A      26       1   .text       
-     cdc_process                               7083      D6     214       3   .text       
-     get_device_descriptor                     7159       4       4       1   .text       
-     is_cfgd_index                             715D       A      10       2   .text       
-     get_cfg_descriptor                        7167       8       8       1   .text       
-     is_str_index                              716F       9       9       1   .text       
-     get_str_descriptor                        7178       8       8       2   .text       
-     is_ifc_ndx                                7180      1A      26       1   .text       
-     is_ep_ndx                                 719A      24      36       1   .text       
-     get_ep_descriptor                         71BE      27      39       1   .text       
-     usb_cfg_init                              71E5       3       3       1   .text       
-     ResetPkt_ndx                              71E8      12      18       5   .text       
-     USB_comm_init                             71FA       6       6       1   .text       
-     Init_USB_man                              7200       E      14       1   .text       
-     USB_PktSend                               720E      8A     138       3   .text       
-     USB_SendHello                             7298      33      51       1   .text       
-     USB_SendTuttiInterventi                   72CB      8B     139       1   .text       
-     USB_ReadRequest                           7356     10F     271       5   .text       
-     USB_HandleRequest                         7465      54      84       1   .text       
-     USB_comm_process                          74B9      18      24       1   .text       
-     _irq_restore                              74D1       B      11       3   .text       
-     _irq_disable                              74DC       A      10       3   .text       
+     lettura_allarmi                           1AE4     2EC     748      25   .rodata     
+     presenta_monofase_trifase                 1DD0      44      68       2   .rodata     
+     presenta_tipo_start_stop                  1E14      44      68       2   .rodata     
+     comando_reset                             1E58      22      34       3   .rodata     
+     in_salvataggio                            1E7A      22      34       1   .rodata     
+     menu_principale                           1E9C     94C    2380       2   .rodata     
+     comando_AD                                27E8      17      23       2   .rodata     
+     filtro_pulsanti                           27FF       1       1       8   .rodata     
+     prepara                                   2800       7       7       1   .rodata     
+     delta_Tn                                  2807       2       2       5   .rodata     
+     fattore_portata                           2809       2       2       2   .rodata     
+     inizio_lettura_I_avviamento               280B       2       2       1   .rodata     
+     totale_indicazioni_fault                  280D       2       2       3   .rodata     
+     primo_indirizzo_funzioni                  280F       2       2       3   .rodata     
+     indirizzo_conta_ore                       2811       2       2       1   .rodata     
+     ultimo_indirizzo_funzioni                 2813       2       2       2   .rodata     
+     disturbo_I_pos                            2815       2       2       2   .rodata     
+     disturbo_I_neg                            2817       2       2       2   .rodata     
+     dati_di_fabbrica                          2819      60      96       4   .rodata     
+     limiti_inferiori                          2879      60      96       2   .rodata     
+     limiti_superiori                          28D9      60      96       2   .rodata     
+     mille                                     2939       2       2       4   .rodata     
+     diecimila                                 293B       2       2       8   .rodata     
+     alimentazione12V                          293D       2       2       1   .rodata     
+     alimentazione8V                           293F       2       2       1   .rodata     
+     duemila507                                2941       2       2       4   .rodata     
+     mille678                                  2943       2       2       6   .rodata     
+     mille515                                  2945       2       2       6   .rodata     
+     string_descriptor0                        2947       4       4       1   .rodata     
+     str_manufacturer                          294B      1A      26       1   .rodata     
+     str_config                                2965      2C      44       1   .rodata     
+     str_interface1                            2991       8       8       1   .rodata     
+     str_interface2                            2999      12      18       1   .rodata     
+     str_serial_number                         29AB       A      10       1   .rodata     
+     str_product                               29B5      46      70       1   .rodata     
+     usb_string_descriptors                    29FB       E      14       1   .rodata     
+     usb_device_descriptor                     2A09      12      18       1   .rodata     
+     usb_config_descriptor                     2A1B      43      67       4   .rodata     
+     somma_quadrati                            2A5E      85     133       8   .text       
+     somma_potenze                             2AE3      CA     202       6   .text       
+     calcolo_offset_misure                     2BAD      5B      91       5   .text       
+     calcolo_valor_medio_potenze               2C08      74     116       9   .text       
+     calcolo_medie_quadrati                    2C7C      76     118       8   .text       
+     valore_efficace                           2CF2     103     259       8   .text       
+     media_quadrati_nel_periodo                2DF5      50      80       8   .text       
+     media_potenza_nel_periodo                 2E45      D4     212       7   .text       
+     AD_conversion_completeISR                 2F19     2BF     703       3   .text       
+     lettura_pulsanti                          31D8     123     291       1   .text       
+     comando_del_display                       32FB     109     265       1   .text       
+     calcolo_del_fattore_di_potenza_monofase       3404      B2     178       1   .text       
+     calcolo_del_fattore_di_potenza            34B6     1CD     461       2   .text       
+     timer1_overflowISR                        3683      36      54       1   .text       
+     calcolo_tensione_relais                   36B9      57      87       1   .text       
+     timer2_overflowISR                        3710     81A    2074      43   .text       
+     SPI1                                      3F2A     135     309       2   .text       
+     trasmissione_misure_istantanee            405F      70     112       1   .text       
+     trasmissione_tarature                     40CF      1A      26       1   .text       
+     presenta_menu                             40E9      43      67       7   .text       
+     presenta_scritta                          412C      55      85       5   .text       
+     modifica_unsigned                         4181      EE     238      26   .text       
+     presenta_signed                           426F      C6     198       3   .text       
+     presenta_unsigned                         4335      AB     171      13   .text       
+     salva_reset_default                       43E0      8A     138       1   .text       
+     salva_impostazioni                        446A      79     121       1   .text       
+     salva_allarme_in_eepprom                  44E3      CA     202       1   .text       
+     salva_conta_secondi_attivita              45AD      58      88       1   .text       
+     lettura_impostazioni                      4605      CF     207       3   .text       
+     lettura_allarme_messo_in_buffer_USB       46D4      81     129       1   .text       
+     calcolo_delle_costanti                    4755     2B0     688       4   .text       
+     programmazione                            4A05     7A0    1952     110   .text       
+     messaggio_allarme                         51A5     219     537      33   .text       
+     misure_medie                              53BE     182     386       2   .text       
+     Nallarme_ora_minuto_secondo               5540      EF     239       2   .text       
+     presenta_stato_motore                     562F     260     608      21   .text       
+     marcia_arresto                            588F     11D     285       3   .text       
+     protezione_termica                        59AC     151     337       1   .text       
+     disinserzione_condensatore_avviamento       5AFD      47      71       1   .text       
+     condizioni_di_allarme                     5B44     2DD     733      34   .text       
+     condizioni_iniziali                       5E21     3E3     995       3   .text       
+     main                                      6204      3A      58       1   .text       
+     _PUSH_ARGS_L                              623E      20      32       1   .text       
+     _ENTER_BINARY_L                           625E      16      22       2   .text       
+     _LSUB_k_is_k_minus_j                      6274      1F      31       1   .text       
+     _LCMP_k_rel_j                             6293      1F      31       1   .text       
+     _IMUL_STAR08                              62B2      27      39       3   .text       
+     _ICMP                                     62D9      16      22       3   .text       
+     _LSUB                                     62EF       6       6       3   .text       
+     _LCMP                                     62F5       6       6       5   .text       
+     _COPY                                     62FB      30      48       4   .text       
+     _POP32                                    632B      1A      26       3   .text       
+     _Jump_Table_Header_Addr                   6345      2F      47       7   .text       
+     _Jump_Table_Header_Offset                 6374      24      36       3   .text       
+     _PUSH_CC                                  6398       F      15       1   .text       
+     _POP_CC                                   63A7       F      15       1   .text       
+     UnimplementedISR                          63B6       5       5      21   .text       
+     usb_get_done                              63BB      29      41       1   .text       
+     usb_ep_is_busy                            63E4      13      19       2   .text       
+     usb_get_state                             63F7       4       4       1   .text       
+     usb_ep_error                              63FB      11      17       2   .text       
+     ep2bdtndx                                 640C      37      55       8   .text       
+     usb_get_rx_pptr                           6443      35      53       2   .text       
+     send_zero_packet                          6478      24      36       2   .text       
+     usb_init                                  649C      24      36       1   .text       
+     usb_setup_ep                              64C0     1B8     440      11   .text       
+     set_config                                6678      BB     187       2   .text       
+     enter_default_state                       6733      26      38       2   .text       
+     usb_stop_ep_tx                            6759      29      41       3   .text       
+     usb_stop_ep_rx                            6782      29      41       3   .text       
+     ready_ep_tx                               67AB      3D      61       2   .text       
+     ready_ep_rx                               67E8      58      88       2   .text       
+     disable_ep                                6840       6       6       1   .text       
+     _usb_send                                 6846     1F9     505       9   .text       
+     usb_send                                  6A3F      C9     201       5   .text       
+     _usb_receive                              6B08     164     356       5   .text       
+     usb_receive                               6C6C      72     114       2   .text       
+     cb_set_address                            6CDE      1A      26       1   .text       
+     usb_stm_ctrl0                             6CF8     266     614      24   .text       
+     usb_it_handler                            6F5E     1EF     495       6   .text       
+     usb_bus_error_event                       714D       1       1       1   .text       
+     usb_suspend_event                         714E       1       1       1   .text       
+     usb_wakeup_event                          714F       1       1       1   .text       
+     usb_reset_event                           7150       1       1       1   .text       
+     got_line_coding                           7151       8       8       1   .text       
+     usb_ep0_callback                          7159      DF     223       1   .text       
+     cdc_getch                                 7238      18      24       1   .text       
+     cdc_kbhit                                 7250       F      15       1   .text       
+     cdc_putch                                 725F      3A      58       3   .text       
+     cdc_init                                  7299      1A      26       1   .text       
+     cdc_process                               72B3      D6     214       3   .text       
+     get_device_descriptor                     7389       4       4       1   .text       
+     is_cfgd_index                             738D       A      10       2   .text       
+     get_cfg_descriptor                        7397       8       8       1   .text       
+     is_str_index                              739F       9       9       1   .text       
+     get_str_descriptor                        73A8       8       8       2   .text       
+     is_ifc_ndx                                73B0      1A      26       1   .text       
+     is_ep_ndx                                 73CA      24      36       1   .text       
+     get_ep_descriptor                         73EE      27      39       1   .text       
+     usb_cfg_init                              7415       3       3       1   .text       
+     ResetPkt_ndx                              7418      12      18       5   .text       
+     USB_comm_init                             742A       6       6       1   .text       
+     Init_USB_man                              7430       E      14       1   .text       
+     USB_PktSend                               743E      8A     138       3   .text       
+     USB_SendHello                             74C8      33      51       1   .text       
+     USB_SendTuttiInterventi                   74FB      8B     139       1   .text       
+     USB_ReadRequest                           7586     10F     271       5   .text       
+     USB_HandleRequest                         7695      54      84       1   .text       
+     USB_comm_process                          76E9      18      24       1   .text       
+     _irq_restore                              7701       B      11       3   .text       
+     _irq_disable                              770C       A      10       3   .text       
      security                                  FFBF       1       1       0   .abs_section_ffbf
      _vect                                     FFCA      34      52       0   .abs_section_ffca
 
@@ -1655,10 +1691,10 @@ RTSHC08.C.o (ansiis.lib):
   _LOR_RC _LXOR _LXOR_RC _LMUL _LMUL_RC _LDIVS _LDIVS_LC _LDIVS_RC _LDIVU 
   _LDIVU_LC _LDIVU_RC _LMODS _LMODS_LC _LMODS_RC _LMODU _LMODU_LC _LMODU_RC 
   _LASR _LLSR _LLSL _LCMP_RC _CMP24 _CMP24_RC _COPY_L _POP64 _STORE32 _STORE64 
-  _SEXT8_32 _SEXT16_32 _CALL_STAR08 _CALL_STAR08_FAR _Jump_Table_Offset 
-  _Search_Table_16_Addr _Search_Table_16_Offset _Search_Table_8_Addr 
-  _Search_Table_8_Offset _CONV_FAR_TO_NEAR _CONV_FAR_TO_LINEAR 
-  _CONV_LINEAR_TO_FAR 
+  _SEXT8_32 _SEXT16_32 _CALL_STAR08 _CALL_STAR08_FAR _Jump_Table_Addr 
+  _Jump_Table_Offset _Search_Table_16_Addr _Search_Table_16_Offset 
+  _Search_Table_8_Addr _Search_Table_8_Offset _CONV_FAR_TO_NEAR 
+  _CONV_FAR_TO_LINEAR _CONV_LINEAR_TO_FAR 
 usb.c.o:
   usb_stop usb_abort_ep 
 usb_cdc.c.o:
@@ -1666,19 +1702,20 @@ usb_cdc.c.o:
 NOT USED VARIABLES
 Agrinet_pump_main.c.o:
   comando_lingua durata_avviamento tempo_eccitazione_relais chiave_ingresso 
+  pressione_emergenza 
 RTSHC08.C.o (ansiis.lib):
   _PowOfTwo_8 _PowOfTwo_16 _PowOfTwo_32 errno 
 
 *********************************************************************************************
 COPYDOWN SECTION
 ---------------------------------------------------------------------------------------------
-------- ROM-ADDRESS: 0x74E6 ---- SIZE       4 ---
+------- ROM-ADDRESS: 0x7716 ---- SIZE       4 ---
 Filling bytes inserted
  00060101
-------- ROM-ADDRESS: 0x74EA ---- RAM-ADDRESS: 0x101 ---- SIZE       6 ---
+------- ROM-ADDRESS: 0x771A ---- RAM-ADDRESS: 0x101 ---- SIZE       6 ---
 Name of initialized Object : line_coding:1
  C201000000 08
-------- ROM-ADDRESS: 0x74F0 ---- SIZE       2 ---
+------- ROM-ADDRESS: 0x7720 ---- SIZE       2 ---
 Filling bytes inserted
  0000
 
@@ -1690,18 +1727,20 @@ _Startup                  USES __SEG_END_SSTACK Init main
 usb_string_descriptors    USES string_descriptor0 str_manufacturer str_product 
                                 str_serial_number str_config str_interface1 str_interface2 
 media_quadrati_nel_periodo USES _COPY 
-media_potenza_nel_periodo USES tremila205 
+media_potenza_nel_periodo USES set 
 AD_conversion_completeISR USES contatore_AD comando_AD _ADCR DAC0 
                                 AD_conversion_completeISR DAC tot_misure offset_I1letta 
                                 calcolo_offset_misure offset_I3letta offset_V12letta offset_V13letta 
-                                offset_Idletta Id I1 disturbo_I_pos disturbo_I_neg I3 V12 V13 
-                                I2 V1 V2 V3 somma_quad_Id somma_quadrati 
-                                somma_quad_I1 somma_quad_I2 somma_quad_I3 somma_quad_V1 
-                                somma_quad_V2 somma_quad_V3 somma_potenzaI1xV1 somma_potenze 
+                                offset_Idletta Id I1 disturbo_I_pos disturbo_I_neg I3 I2 V12 
+                                V13 V1 V2 V3 segno_V12 commutazione_V12 segno_V13 
+                                commutazione_V13 somma_quad_Id somma_quadrati somma_quad_I1 set 
+                                somma_quad_I2 somma_quad_I3 somma_quad_V1 somma_quad_V2 
+                                somma_quad_V3 somma_potenzaI1xV1 somma_potenze 
                                 somma_potenzaI2xV2 somma_potenzaI3xV3 somma_reattivaI1xV23 
-                                somma_reattivaI2xV31 somma_reattivaI3xV12 _ADCSC1 
+                                somma_reattivaI2xV31 somma_reattivaI3xV12 somma_quad_V13 
+                                somma_potenzaI1xV13 _ADCSC1 
 lettura_pulsanti          USES _PTAD timer_rilascio func salita_func 
-                                filtro_pulsanti meno salita_meno piu salita_piu start 
+                                filtro_pulsanti piu salita_piu meno salita_meno start 
                                 salita_start stop salita_stop remoto salita_remoto 
 comando_del_display       USES timer_reset_display contatore_display 
                                 presentazione_iniziale display comando_display prepara _PTDD _PTGD 
@@ -1718,25 +1757,27 @@ timer2_overflowISR        USES _TPM2SC timer_20ms timer_1s protezione_termica
                                 conta_secondi_attivita timer_1min salva_conta_secondi 
                                 timer2_overflowISR _Jump_Table_Header_Addr tot_misure Tot_misure 
                                 quad_Id somma_quad_Id media_quadrati_nel_periodo 
-                                quad_I1 somma_quad_I1 quad_I2 somma_quad_I2 quad_I3 
-                                somma_quad_I3 quad_V1 somma_quad_V1 quad_V2 somma_quad_V2 
-                                quad_V3 somma_quad_V3 somma_potenzaI1xV1 
+                                quad_I1 somma_quad_I1 set quad_I2 somma_quad_I2 
+                                quad_I3 somma_quad_I3 quad_V1 somma_quad_V1 quad_V2 
+                                somma_quad_V2 quad_V3 somma_quad_V3 commutazione_V12 
+                                commutazione_V13 sequenza_fasi somma_potenzaI1xV1 
                                 Somma_potenzaI1xV1 somma_potenzaI2xV2 Somma_potenzaI2xV2 
                                 somma_potenzaI3xV3 Somma_potenzaI3xV3 somma_reattivaI1xV23 
                                 Somma_reattivaI1xV23 somma_reattivaI2xV31 Somma_reattivaI2xV31 
-                                somma_reattivaI3xV12 Somma_reattivaI3xV12 media_potenza_nel_periodo 
+                                somma_reattivaI3xV12 Somma_reattivaI3xV12 quad_V13 somma_quad_V13 
+                                somma_potenzaI1xV13 Somma_potenzaI1xV13 media_potenza_nel_periodo 
                                 potenzaI1xV1 potenzaI2xV2 potenzaI3xV3 reattivaI1xV23 
-                                reattivaI2xV31 reattivaI3xV12 media_quad_Id 
-                                calcolo_medie_quadrati Id_rms fattore_Id valore_efficace 
-                                media_quad_I1 I1_rms media_quad_I2 I2_rms media_quad_I3 
-                                I3_rms media_quad_V1 V1_rms media_quad_V2 V2_rms 
-                                media_quad_V3 V3_rms media_potenzaI1xV1 
-                                calcolo_valor_medio_potenze media_potenzaI2xV2 media_potenzaI3xV3 
-                                media_reattivaI1xV23 media_reattivaI2xV31 media_reattivaI3xV12 DAC 
-                                set media_temperatura fattore_portata 
-                                media_pressione cosfi potenza_media tensione_media 
+                                reattivaI2xV31 reattivaI3xV12 potenzaI1xV13 media_quad_Id 
+                                calcolo_medie_quadrati Id_rms fattore_Id valore_efficace I1_rms 
+                                media_quad_I1 media_quad_I2 I2_rms media_quad_I3 I3_rms 
+                                media_quad_V1 V1_rms media_quad_V13 V13_rms media_quad_V2 
+                                V2_rms media_quad_V3 V3_rms media_potenzaI1xV1 
+                                calcolo_valor_medio_potenze media_potenzaI1xV13 media_potenzaI2xV2 
+                                media_potenzaI3xV3 media_reattivaI1xV23 media_reattivaI2xV31 
+                                media_reattivaI3xV12 DAC duemila507 media_temperatura 
+                                fattore_portata media_pressione cosfi potenza_media 
+                                reattiva_media calcolo_del_fattore_di_potenza tensione_media 
                                 corrente_media calcolo_del_fattore_di_potenza_monofase 
-                                reattiva_media calcolo_del_fattore_di_potenza 
                                 lettura_pulsanti comando_del_display 
                                 disinserzione_condensatore_avviamento calcolo_tensione_relais timer_inc_dec 
                                 timer_piu_meno timer_attesa_differenziale 
@@ -1748,22 +1789,23 @@ SPI1                      USES _SPI1S _SPI1D16 scrivi_eeprom SPI1
                                 indirizzo_scrivi_eeprom lunghezza_salvataggio indirizzo_buffer_eeprom 
                                 buffer_eeprom leggi_eeprom primo_indirizzo_lettura 
                                 contatore_leggi_eeprom ultimo_dato_in_lettura salvataggio_allarme 
-trasmissione_misure_istantanee USES allarme_in_lettura V1_rms buffer_USB 
-                                V2_rms V3_rms I1_rms I2_rms I3_rms potenzaI1xV1 cosfi 
-                                media_pressione media_temperatura 
+trasmissione_misure_istantanee USES allarme_in_lettura set V13_rms buffer_USB 
+                                V1_rms V2_rms V3_rms I1_rms I2_rms I3_rms 
+                                potenzaI1xV1 cosfi media_pressione media_temperatura 
 trasmissione_tarature     USES allarme_in_lettura set buffer_USB 
 presenta_menu             USES display 
 presenta_scritta          USES display 
 modifica_unsigned         USES salita_piu timer_inc_dec timer_piu_meno 
                                 salita_meno piu filtro_pulsanti meno 
+presenta_signed           USES presenta_signed display cifre 
 presenta_unsigned         USES presenta_unsigned cifre display 
 salva_reset_default       USES eeprom_impegnata reset_default 
                                 indirizzo_scrivi_eeprom ultimo_indirizzo_scrittura 
                                 lunghezza_salvataggio scrivi_eeprom _PTED _SPI1D16 set toggle_func 
                                 salita_start toggle_stop cursore_menu dati_di_fabbrica 
-                                buffer_eeprom indirizzo_buffer_eeprom abilita_reset 
-                                conta_secondi_attivita calcolo_delle_costanti 
-                                primo_indirizzo_funzioni ultimo_indirizzo_funzioni salvataggio_funzioni 
+                                buffer_eeprom indirizzo_buffer_eeprom conta_secondi_attivita 
+                                calcolo_delle_costanti primo_indirizzo_funzioni 
+                                ultimo_indirizzo_funzioni salvataggio_funzioni 
 salva_impostazioni        USES eeprom_impegnata reset_default 
                                 salvataggio_funzioni indirizzo_buffer_eeprom lunghezza_salvataggio 
                                 primo_indirizzo_funzioni indirizzo_scrivi_eeprom 
@@ -1796,37 +1838,39 @@ lettura_allarme_messo_in_buffer_USB USES eeprom_impegnata leggi_impostazioni
                                 primo_indirizzo_lettura contatore_leggi_eeprom ultimo_dato_in_lettura 
                                 leggi_eeprom _PTED _SPI1D16 buffer_eeprom buffer_USB 
                                 pronto_alla_risposta 
-calcolo_delle_costanti    USES set seimila400 delta_Tn fattore_I2xT mille678 
-                                sovraccarico mille515 sovraccarico_moderato fattore_Id 
-programmazione            USES salita_func programmazione toggle_stop 
+calcolo_delle_costanti    USES set delta_Tn fattore_I2xT mille678 sovraccarico 
+                                mille515 sovraccarico_moderato dissimmetria_tollerata 
+                                dissimmetria_emergenza squilibrio_tollerato squilibrio_emergenza 
+                                sovratensione_consentita sottotensione_consentita fattore_Id 
+programmazione            USES salita_func timer_reset toggle_stop 
                                 cursore_menu allarme_in_lettura toggle_func 
                                 calcolo_delle_costanti salvataggio_funzioni comandi_da_effettuare set 
-                                presenta_menu menu_principale salita_stop salita_meno 
-                                funzioni_avanzate salita_piu _Jump_Table_Header_Addr 
-                                presenta_unsigned numero_ingresso presenta_monofase_trifase 
-                                presenta_tipo_start_stop comando_reset presenta_scritta 
-                                modifica_unsigned piu meno DAC abilita_reset reset_default 
-                                timer_reset indirizzo_scrivi_eeprom 
-                                indirizzo_buffer_eeprom lunghezza_salvataggio 
+                                presenta_menu programmazione menu_principale salita_stop 
+                                salita_meno numero_ingresso salita_piu 
+                                _Jump_Table_Header_Addr modifica_unsigned piu meno 
+                                presenta_monofase_trifase lettura_allarmi DAC presenta_unsigned 
+                                presenta_tipo_start_stop comando_reset presenta_scritta reset_default 
+                                indirizzo_scrivi_eeprom indirizzo_buffer_eeprom lunghezza_salvataggio 
                                 ultimo_indirizzo_scrittura buffer_eeprom scrivi_eeprom _PTED _SPI1D16 
-                                pronto_alla_risposta buffer_USB lettura_allarmi 
-                                Nallarme_ora_minuto_secondo messaggio_allarme 
-messaggio_allarme         USES _Jump_Table_Addr messaggio_allarme 
+                                pronto_alla_risposta buffer_USB Nallarme_ora_minuto_secondo 
+                                messaggio_allarme 
+messaggio_allarme         USES _Jump_Table_Header_Addr messaggio_allarme 
                                 lettura_allarmi set presenta_scritta 
-misure_medie              USES set V1_rms I1_rms corrente_media 
-                                media_potenzaI1xV1 media_potenzaI3xV3 misure_medie V2_rms 
-                                tensione_media V3_rms I2_rms I3_rms media_potenzaI2xV2 
+misure_medie              USES set V13_rms I1_rms media_potenzaI1xV13 
+                                misure_medie V1_rms V2_rms V3_rms I2_rms I3_rms 
+                                media_potenzaI1xV1 media_potenzaI2xV2 media_potenzaI3xV3 
                                 media_reattivaI1xV23 media_reattivaI2xV31 media_reattivaI3xV12 
-                                potenza_media reattiva_media dissimmetria squilibrio 
+                                potenza_media reattiva_media tensione_media corrente_media 
+                                dissimmetria squilibrio 
 Nallarme_ora_minuto_secondo USES display 
 presenta_stato_motore     USES toggle_func set presenta_stato_motore 
                                 timer_aggiorna_misure media_pressione media_temperatura 
-                                alternanza_presentazione presenta_menu corrente_media cosfi I1_rms 
-                                I2_rms presenta_unsigned I3_rms display 
+                                alternanza_presentazione presenta_menu tensione_media corrente_media 
+                                cosfi I1_rms I2_rms presenta_unsigned I3_rms display 
                                 eeprom_impegnata in_salvataggio comandi_da_effettuare 
-                                tensione_media lettura_allarmi presenta_scritta 
+                                potenza_media lettura_allarmi presenta_scritta 
                                 conta_secondi_attivita registrazione Nallarme_ora_minuto_secondo 
-                                messaggio_allarme potenza_media dati_presentati_in_ON 
+                                messaggio_allarme presenta_signed dati_presentati_in_ON 
 marcia_arresto            USES media_pressione prima_accensione set 
                                 registrazione marcia_arresto salita_start toggle_stop 
                                 toggle_func calcolo_delle_costanti salvataggio_funzioni 
@@ -1834,19 +1878,22 @@ marcia_arresto            USES media_pressione prima_accensione set
                                 comandi_da_effettuare presenta_menu relais_alimentazione remoto 
                                 timer_eccitazione_relais picco_corrente_avviamento corrente_test 
                                 timer_avviamento_monofase timer_mandata_chiusa timer_attesa_secco 
-                                relais_avviamento 
-protezione_termica        USES media_quad_I1 media_quad_I2 media_quad_I3 
-                                fattore_I2xT delta_T set 
+                                timer_attesa_squilibrio timer_attesa_tensione 
+                                timer_attesa_differenziale relais_avviamento 
+protezione_termica        USES corrente_media fattore_I2xT delta_T set 
 disinserzione_condensatore_avviamento USES set timer_avviamento_monofase 
                                 inizio_lettura_I_avviamento corrente_media picco_corrente_avviamento 
                                 corrente_test 
-condizioni_di_allarme     USES set media_pressione media_temperatura delta_T 
+condizioni_di_allarme     USES media_pressione media_temperatura delta_T set 
                                 relais_alimentazione condizioni_di_allarme Id_rms 
-                                timer_attesa_differenziale registrazione sovraccarico squilibrio 
-                                timer_attesa_squilibrio tensione_media timer_attesa_tensione 
-                                timer_riavviamento dissimmetria potenza_media 
-                                timer_mandata_chiusa timer_attesa_secco sovraccarico_moderato 
-                                V1_rms V2_rms V3_rms relais_avviamento 
+                                timer_attesa_differenziale dissimmetria_emergenza dissimmetria 
+                                timer_attesa_tensione registrazione sovraccarico 
+                                squilibrio_emergenza squilibrio timer_attesa_squilibrio 
+                                potenza_media timer_mandata_chiusa timer_attesa_secco 
+                                timer_riavviamento sovraccarico_moderato dissimmetria_tollerata 
+                                squilibrio_tollerato relais_avviamento timer_eccitazione_relais 
+                                picco_corrente_avviamento corrente_test timer_avviamento_monofase 
+                                sovratensione_consentita tensione_media sottotensione_consentita 
 condizioni_iniziali       USES _MCGC1 _MCGC2 _MCGC3 _PTADD _PTAD _PTBDD _PTBD 
                                 _APCTL1 _APCTL2 _ADCSC1 _ADCSC2 _ADCCFG _ADCCV 
                                 contatore_AD _PTCDD _PTCD _PTDDD _PTDD _PTEDD _PTED _SPI1S 
@@ -1854,44 +1901,46 @@ condizioni_iniziali       USES _MCGC1 _MCGC2 _MCGC3 _PTADD _PTAD _PTBDD _PTBD
                                 _TPM1C3SC _TPM1C4SC _TPM1C5SC _TPM1MOD _TPM1C2V _TPM1C3V 
                                 _TPM1C4V _TPM1C5V _TPM2C0SC _TPM2C1SC _TPM2MOD _TPM2C0V 
                                 _TPM2C1V _TPM1CNT _TPM2CNT _TPM1SC _TPM2SC _PTGDD _PTGD 
-                                offset_I1letta offset_I3letta offset_V12letta offset_V13letta 
-                                offset_Idletta allarme_in_lettura precedente_lettura_allarme 
+                                allarme_in_lettura precedente_lettura_allarme 
                                 pronto_alla_risposta timer_20ms timer_1s timer_inc_dec 
                                 timer_piu_meno timer_lampeggio timer_lampeggio_LED_emergenza 
                                 timer_commuta_presentazione timer_avviamento_monofase 
                                 timer_attesa_squilibrio timer_attesa_tensione 
                                 timer_attesa_differenziale timer_riavviamento timer_eccitazione_relais 
-                                PWM_relais quad_Id somma_quad_Id somma_quad_I1 
-                                somma_quad_I2 somma_quad_I3 somma_quad_V1 somma_quad_V2 
-                                somma_quad_V3 somma_potenzaI1xV1 somma_potenzaI2xV2 
-                                somma_potenzaI3xV3 somma_reattivaI1xV23 somma_reattivaI2xV31 
-                                somma_reattivaI3xV12 Somma_potenzaI1xV1 Somma_potenzaI2xV2 
-                                Somma_potenzaI3xV3 Somma_reattivaI1xV23 Somma_reattivaI2xV31 
-                                Somma_reattivaI3xV12 media_temperatura media_pressione quad_I1 
-                                quad_I2 quad_I3 quad_V1 quad_V2 quad_V3 potenzaI1xV1 
-                                potenzaI2xV2 potenzaI3xV3 reattivaI1xV23 reattivaI2xV31 
-                                reattivaI3xV12 media_quad_Id media_quad_I1 media_quad_I2 
-                                media_quad_I3 media_quad_V1 media_quad_V2 media_quad_V3 
-                                media_potenzaI1xV1 media_potenzaI2xV2 media_potenzaI3xV3 
-                                media_reattivaI1xV23 media_reattivaI2xV31 media_reattivaI3xV12 
-                                delta_T Id_rms I1_rms I2_rms I3_rms V1_rms V2_rms 
-                                V3_rms attesa_invio relais_alimentazione 
-                                relais_avviamento contatore_display cursore_menu 
-                                funzioni_avanzate numero_ingresso abilita_reset potenza_media 
-                                reattiva_media tensione_media corrente_media 
-                                picco_corrente_avviamento corrente_test dissimmetria squilibrio 
-                                prima_accensione comando_display timer_rinfresco_display 
+                                timer_mandata_chiusa timer_attesa_secco PWM_relais attesa_invio 
+                                relais_alimentazione relais_avviamento contatore_display 
+                                cursore_menu numero_ingresso potenza_media reattiva_media 
+                                tensione_media corrente_media picco_corrente_avviamento 
+                                corrente_test dissimmetria squilibrio prima_accensione 
+                                comando_display timer_rinfresco_display 
                                 alternanza_presentazione USB_comm_init dati_di_fabbrica set 
                                 buffer_eeprom scrivi_eeprom leggi_eeprom timer_rilascio 
                                 reset_default salvataggio_funzioni salvataggio_allarme 
                                 salva_conta_secondi lunghezza_salvataggio leggi_impostazioni 
                                 timer_reset_display timer_1min timer_aggiorna_misure 
-                                lettura_impostazioni conta_secondi_attivita registrazione 
-                                precedente_segnalazione start salita_start stop salita_stop 
-                                toggle_stop func salita_func toggle_func meno salita_meno 
-                                piu salita_piu remoto salita_remoto 
-                                ultimo_indirizzo_scrittura indirizzo_scrivi_eeprom timer_mandata_chiusa 
-                                timer_attesa_secco _SRS 
+                                condizioni_iniziali lettura_impostazioni offset_I1letta 
+                                offset_I3letta offset_V12letta offset_V13letta offset_Idletta 
+                                Id_rms I1_rms I2_rms I3_rms V1_rms V2_rms V3_rms 
+                                quad_Id somma_quad_Id somma_quad_I1 somma_quad_I2 
+                                somma_quad_I3 somma_quad_V13 somma_quad_V1 somma_quad_V2 
+                                somma_quad_V3 somma_potenzaI1xV13 somma_potenzaI1xV1 
+                                somma_potenzaI2xV2 somma_potenzaI3xV3 somma_reattivaI1xV23 
+                                somma_reattivaI2xV31 somma_reattivaI3xV12 Somma_potenzaI1xV13 
+                                Somma_potenzaI1xV1 Somma_potenzaI2xV2 Somma_potenzaI3xV3 
+                                Somma_reattivaI1xV23 Somma_reattivaI2xV31 Somma_reattivaI3xV12 
+                                media_temperatura media_pressione quad_I1 quad_I2 quad_I3 
+                                quad_V13 quad_V1 quad_V2 quad_V3 potenzaI1xV1 
+                                potenzaI2xV2 potenzaI3xV3 reattivaI1xV23 reattivaI2xV31 
+                                reattivaI3xV12 media_quad_Id media_quad_I1 media_quad_I2 
+                                media_quad_I3 media_quad_V13 media_quad_V1 media_quad_V2 
+                                media_quad_V3 media_potenzaI1xV13 media_potenzaI1xV1 
+                                media_potenzaI2xV2 media_potenzaI3xV3 media_reattivaI1xV23 
+                                media_reattivaI2xV31 media_reattivaI3xV12 delta_T 
+                                conta_secondi_attivita sequenza_fasi start salita_start stop 
+                                salita_stop toggle_stop func salita_func toggle_func meno 
+                                salita_meno piu salita_piu remoto salita_remoto 
+                                registrazione precedente_segnalazione 
+                                ultimo_indirizzo_scrittura indirizzo_scrivi_eeprom _SRS 
 main                      USES condizioni_iniziali _SRS marcia_arresto 
                                 salva_reset_default salva_impostazioni salva_allarme_in_eepprom 
                                 salva_conta_secondi_attivita lettura_impostazioni 
@@ -2035,18 +2084,18 @@ DEPENDENCY TREE
  |  |  |  
  |  |  +- _Jump_Table_Header_Addr
  |  |  |    
+ |  |  +- modifica_unsigned   
+ |  |  |    
  |  |  +- presenta_unsigned   
  |  |  |    
  |  |  +- presenta_scritta    
- |  |  |    
- |  |  +- modifica_unsigned   
  |  |  |    
  |  |  +- Nallarme_ora_minuto_secondo
  |  |  |    
  |  |  +- messaggio_allarme   
  |  |     | 
- |  |     +- _Jump_Table_Addr    
- |  |     |    
+ |  |     +- _Jump_Table_Header_Addr (see above)
+ |  |     |  
  |  |     +- presenta_scritta     (see above)
  |  |        
  |  +- misure_medie        
@@ -2062,7 +2111,9 @@ DEPENDENCY TREE
  |  |  +- Nallarme_ora_minuto_secondo (see above)
  |  |  |  
  |  |  +- messaggio_allarme    (see above)
- |  |     
+ |  |  |  
+ |  |  +- presenta_signed     
+ |  |       
  |  +- condizioni_di_allarme
  |  |    
  |  +- USB_comm_process    
@@ -2205,9 +2256,9 @@ DEPENDENCY TREE
  |  |    
  |  +- calcolo_valor_medio_potenze
  |  |    
- |  +- calcolo_del_fattore_di_potenza_monofase
- |  |    
  |  +- calcolo_del_fattore_di_potenza
+ |  |    
+ |  +- calcolo_del_fattore_di_potenza_monofase
  |  |    
  |  +- lettura_pulsanti    
  |  |    
@@ -2326,5 +2377,5 @@ STATISTIC SECTION
 ExeFile:
 --------
 Number of blocks to be downloaded: 4
-Total size of all blocks to be downloaded: 23497
+Total size of all blocks to be downloaded: 24057
 
