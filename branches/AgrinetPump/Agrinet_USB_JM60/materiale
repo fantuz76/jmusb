@@ -1,13 +1,17 @@
 Elenco componenti da ordinare a Digi-Key:
 
 Quarzi: 300-8195-1-ND
-        ABM3B-10.000MHz-10-1-U-T                 quantità 80
+        ABM3B-10.000MHz-10-1-U-T                 quantità 100
         
 Integrato: 336-1631-5-ND
-           SI4421-A1-FT                          quantità 62
+           SI4421-A1-FT                          quantità 100
            
 Induttanza 100nH:  408-1049-1-ND
                    TFL0816-R10                   quantità 100
+
+Induttanza  22nH:  DN42013DKR-ND                 quantità 100
+
+Induttanza  3nH:   0805-3N0K-ND                  quantità 200
 
 Condensatori 1.2pF  478-1293-1-ND                quantità 100
 
@@ -17,10 +21,20 @@ Condensatori 2.7pF  478-1297-1-ND                quantità 100
 
 
 
-Elenco componenti da ordinare a Distrelec:
 
+
+
+
+
+
+
+
+(per emergenza) Elenco componenti da ordinare a Distrelec:
+
+al posto della 22nH:
 Induttanza 18nH;  351666                         quantità 100
                   B82496C3180J
 
-Induttanza 18nH;  351658                         quantità 200
+al posto della   3nH:
+Induttanza 3.9nH;  351658                         quantità 200
                   B82496C3399J                  
