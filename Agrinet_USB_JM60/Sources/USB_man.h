@@ -17,7 +17,6 @@
 // Lunghezza Massima Comandi in byte dati su USB (compresi checksum, length etc..)
 // Definisce la dimensione degli Array utilizzati in lettura da PC->scheda e all'interno delle
 // routine coivolte. (Non aumentarlo troppo, se non serve, per evitare occupazione di memoria inutile)
-#define MAX_LEN_CMD       30
 
 
 #define FIRST_BYTE_EMPTY  0x80
