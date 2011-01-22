@@ -15,7 +15,7 @@
 static byte usbNumByteLen;
 static byte usbPayloadLen;
 
-static char usbrxar[MAX_LEN_CMD];
+//static char usbrxar[MAX_LEN_CMD];
 
 static byte usbrxar_ndx;
 //static word TimerUSB_1;
@@ -72,7 +72,8 @@ void USB_comm_init(void)
 
 void Init_USB_man(void){
   cdc_init();   
-  usbrxar[sizeof(usbrxar)-1]='\0';   
+  //usbrxar[sizeof(usbrxar)-1]='\0';   
+  
   ResetPkt_ndx();
   USB_flags1=0x00;    
 }
@@ -158,7 +159,6 @@ void USB_SendHello(void)
       }
     break;
     
-    
   }       
 }
     
@@ -174,7 +174,7 @@ void USB_SendHello(void)
 void USB_SendTuttiInterventi(void)
 {  
   word cntInt;
-  byte _myarr[MAX_LEN_CMD];
+  byte _myarr[INTERVENTO_LENGTH];
   switch (state_USBSend) {
     case 0:        
       allarme_in_lettura = 1;
@@ -183,7 +183,7 @@ void USB_SendTuttiInterventi(void)
     break;
     
     case 1:
-      if (pronto_alla_risposta) {        
+      if (pronto_alla_risposta) {    
         USB_PktSend(buffer_USB,INTERVENTO_LENGTH,0);          
         allarme_in_lettura++;
         pronto_alla_risposta = 0; 
@@ -226,25 +226,26 @@ void USB_ReadRequest(void)
   
     char c;
     c=(char)(cdc_getch)();        
-    usbrxar[usbrxar_ndx++]=c;
+    buffer_USB[usbrxar_ndx++]=c;
     
-    if (usbrxar_ndx >= MAX_LEN_CMD)   // Overflow 
+    
+    if (usbrxar_ndx >= 96)   // Overflow 
       ResetPkt_ndx();
       
     
     if (usbrxar_ndx-1==0) {              
    
       // --> è primo byte rx
-      if ((usbrxar[usbrxar_ndx-1] & 0xF0) == FIRST_BYTE_EMPTY) {        
+      if ((buffer_USB[usbrxar_ndx-1] & 0xF0) == FIRST_BYTE_EMPTY) {        
         // C'è la Lunghezza?  
-        usbNumByteLen = (usbrxar[usbrxar_ndx-1] & 0x01);
+        usbNumByteLen = (buffer_USB[usbrxar_ndx-1] & 0x01);
       } else {        
         ResetPkt_ndx();         // Error - pkt unknown
       }      
 
     } else if ( (usbNumByteLen==1) &&  (usbrxar_ndx-1==1)) {
       // --> Sono in lunghezza      
-        usbPayloadLen = usbrxar[1];         
+        usbPayloadLen = buffer_USB[1];         
     
     } else if ((usbrxar_ndx-1 >= usbNumByteLen+1)  && (usbrxar_ndx-1 < usbPayloadLen+usbNumByteLen+1)) {
       // --> Sono in PayLoad
@@ -252,9 +253,9 @@ void USB_ReadRequest(void)
       
     } else if (usbrxar_ndx-1 == usbPayloadLen+usbNumByteLen+1) {
       // --> Sono in ChkSum
-      for (i=0,cks=0; i<usbrxar_ndx-1; cks += usbrxar[i++]);
+      for (i=0,cks=0; i<usbrxar_ndx-1; cks += buffer_USB[i++]);
               
-      if (cks != usbrxar[i])
+      if (cks != buffer_USB[i])
       {
         ResetPkt_ndx();
       } else {
@@ -289,7 +290,7 @@ void USB_ReadRequest(void)
     if (usbPayloadLen==0) {
       USB_PktSend(0,0,0);     // Messaggio vuoto       
     } else {
-      switch (usbrxar[usbNumByteLen+1]) {
+      switch (buffer_USB[usbNumByteLen+1]) {
 
         case REQ_HELLO:
           USBSendHello_en = TRUE;                    
