@@ -148,12 +148,12 @@ void USB_SendHello(void)
 { 
   switch (state_USBSend) {
     case 0:        
-      allarme_in_lettura = 2000;
+      allarme_in_lettura = lettura_tarature;
       state_USBSend = 1;
     break;
     
     case 1:
-      if (allarme_in_lettura == 2001) {        
+      if (allarme_in_lettura == operazione_effettuata) {        
         USB_PktSend(buffer_USB,96, REQ_HELLO);          
         USBSendHello_en = FALSE; 
       }
