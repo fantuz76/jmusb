@@ -465,8 +465,7 @@ dati_di_fabbrica[4][48]={
 0,    //motore_on
 0,    //numero_segnalazione
 0,0,  //conta_ore[2]
-0,0,  //conta_ore_funzionamento[2]   
-0,0,0, //riserva[3]
+0,0,0,0,0,//riserva[5]
 
 //1=trifase 2.2KW,
 1,    //numero_serie,
@@ -511,8 +510,7 @@ dati_di_fabbrica[4][48]={
 0,    //motore_on
 0,    //numero_segnalazione
 0,0,  //conta_ore[2]
-0,0,  //conta_ore_funzionamento[2]   
-0,0,0, //riserva[3]
+0,0,0,0,0,//riserva[5]
 
 //2=monofase 2.2KW,
 1,    //numero_serie,
@@ -557,8 +555,7 @@ dati_di_fabbrica[4][48]={
 0,    //motore_on
 0,    //numero_segnalazione
 0,0,  //conta_ore[2]
-0,0,  //conta_ore_funzionamento[2]   
-0,0,0, //riserva[3]
+0,0,0,0,0,//riserva[5]
 
 //3=?
 1,    //numero_serie,
@@ -603,8 +600,7 @@ dati_di_fabbrica[4][48]={
 0,    //motore_on
 0,    //numero_segnalazione
 0,0,  //conta_ore[2]
-0,0,  //conta_ore_funzionamento[2]   
-0,0,0 //riserva[3]
+0,0,0,0,0 //riserva[5]
 },
 
 limiti_inferiori[4][48]={
@@ -651,8 +647,7 @@ limiti_inferiori[4][48]={
 0,    //motore_on
 0,    //numero_segnalazione
 0,0,  //conta_ore[2]   
-0,0,  //conta_ore_funzionamento[2]   
-0,0,0, //riserva[3]
+0,0,0,0,0,//riserva[5]
 
 //1=trifase 2.2KW,
 1,    //numero_serie,
@@ -697,8 +692,7 @@ limiti_inferiori[4][48]={
 0,    //motore_on
 0,    //numero_segnalazione
 0,0,  //conta_ore[2]   
-0,0,  //conta_ore_funzionamento[2]   
-0,0,0, //riserva[3]
+0,0,0,0,0,//riserva[5]
 
 //2=monofase 2.2KW,
 1,    //numero_serie,
@@ -743,8 +737,7 @@ limiti_inferiori[4][48]={
 0,    //motore_on
 0,    //numero_segnalazione
 0,0,  //conta_ore[2]   
-0,0,  //conta_ore_funzionamento[2]   
-0,0,0, //riserva[3]
+0,0,0,0,0,//riserva[5]
 
 //3=?
 1,    //numero_serie,
@@ -789,8 +782,7 @@ limiti_inferiori[4][48]={
 0,    //motore_on
 0,    //numero_segnalazione
 0,0,  //conta_ore[2]   
-0,0,  //conta_ore_funzionamento[2]   
-0,0,0 //riserva[3]
+0,0,0,0,0 //riserva[5]
 },
 
 limiti_superiori[4][48]={
@@ -837,8 +829,7 @@ limiti_superiori[4][48]={
 1,    //motore_on
 503,  //numero_segnalazione
 65535,65535,  //conta_ore[2]   
-65535,65535,  //conta_ore_funzionamento[2]   
-0,0,0, //riserva[3]
+0,0,0,0,0,//riserva[5]
 
 //1=trifase 2.2KW,
 65535,//numero_serie,
@@ -883,8 +874,7 @@ limiti_superiori[4][48]={
 1,    //motore_on
 503,  //numero_segnalazione
 65535,65535,  //conta_ore[2]   
-65535,65535,  //conta_ore_funzionamento[2]   
-0,0,0, //riserva[3]
+0,0,0,0,0,//riserva[5]
 
 //2=monofase 2.2KW,
 65535,//numero_serie,
@@ -929,8 +919,7 @@ limiti_superiori[4][48]={
 1,    //motore_on
 503,  //numero_segnalazione
 65535,65535,  //conta_ore[2]   
-65535,65535,  //conta_ore_funzionamento[2]   
-0,0,0, //riserva[3]
+0,0,0,0,0,//riserva[5]
 
 //3=?
 65535,//numero_serie,
@@ -975,8 +964,7 @@ limiti_superiori[4][48]={
 1,    //motore_on
 503,  //numero_segnalazione
 65535,65535,  //conta_ore[2]   
-65535,65535,  //conta_ore_funzionamento[2]   
-0,0,0 //riserva[3]
+0,0,0,0,0 //riserva[5]
 };
 
 struct
@@ -1024,8 +1012,7 @@ calibrazione_I3,
 motore_on,//0-1         
 numero_segnalazione,//0-503
 conta_ore[2],
-conta_ore_funzionamento[2],//s
-riserva[3];
+riserva[5];
 }set;
 
 struct
@@ -1140,7 +1127,7 @@ offset_V12letta,
 offset_Idletta;
 
 long //letture sommate
-conta_secondi, conta_secondi_attivita,
+conta_secondi_attivita,
 delta_T,//sovra_temperatura calcolata
 quad_Id,
 somma_quad_Id,
@@ -3166,20 +3153,6 @@ per_timer_attesa_squilibrio:
  STA timer_attesa_squilibrio
  
 per_conta_secondi: 
- LDA conta_secondi:3
- ADD #1
- STA conta_secondi:3
- LDA conta_secondi:2
- ADC #0
- STA conta_secondi:2
- LDA conta_secondi:1
- ADC #0
- STA conta_secondi:1
- LDA conta_secondi
- ADC #0
- STA conta_secondi
- LDA relais_alimentazione
- BEQ per_timer_1min
  LDA conta_secondi_attivita:3
  ADD #1
  STA conta_secondi_attivita:3
@@ -3193,7 +3166,6 @@ per_conta_secondi:
  ADC #0
  STA conta_secondi_attivita
 
-per_timer_1min:
  LDA timer_1min
  CMP #59
  BCC per_reset_timer_1min
@@ -4665,10 +4637,10 @@ assegna_parametri: //mette dati di fabbrica
  CLRA
  STA indirizzo_buffer_eeprom
  STA reset_default 
- STA conta_secondi
- STA conta_secondi:1
- STA conta_secondi:2
- STA conta_secondi:3
+ STA conta_secondi_attivita
+ STA conta_secondi_attivita:1
+ STA conta_secondi_attivita:2
+ STA conta_secondi_attivita:3
 
  JSR calcolo_delle_costanti
  
@@ -4803,9 +4775,9 @@ assegna_a_buffer_eeprom:
 // 1 byte = temperatura  0-255 °C
  LDA segnalazione_;//tipo intervento:
  STA buffer_eeprom
- LDHX conta_secondi
+ LDHX conta_secondi_attivita
  STHX buffer_eeprom:1
- LDHX conta_secondi:2
+ LDHX conta_secondi_attivita:2
  STHX buffer_eeprom:3
  LDHX tensione_media
  STHX buffer_eeprom:5
@@ -4883,25 +4855,23 @@ asm
  STA salva_conta_secondi
  LDHX indirizzo_conta_ore
  STHX indirizzo_scrivi_eeprom
+//motore_on
+//numero_segnalazione
+//conta_ore[2]
+//riserva[10]
  LDHX set.motore_on
  STHX buffer_eeprom
  LDHX set.numero_segnalazione
  STHX buffer_eeprom:2
- LDHX conta_secondi
+ LDHX conta_secondi_attivita
  STHX set.conta_ore
  STHX buffer_eeprom:4
- LDHX conta_secondi:2
+ LDHX conta_secondi_attivita:2
  STHX set.conta_ore:2
  STHX buffer_eeprom:6
- LDHX conta_secondi_attivita
- STHX set.conta_ore_funzionamento
- STHX buffer_eeprom:8
- LDHX conta_secondi_attivita:2
- STHX set.conta_ore_funzionamento:2
- STHX buffer_eeprom:10
  CLRA
  STA indirizzo_buffer_eeprom
- LDA #16
+ LDA #10
  STA lunghezza_salvataggio
  LDA #1
  STA eeprom_impegnata 
@@ -6386,13 +6356,13 @@ if(toggle_func==0)//presenta le letture
      if(remoto==0)//abilitazione_OFF
       {
       presenta_scritta((unsigned char *)&lettura_allarmi,0,(char)set.lingua,25,0,0,16);
-      Nallarme_ora_minuto_secondo(conta_secondi,0);
+      Nallarme_ora_minuto_secondo(conta_secondi_attivita,0);
       presenta_scritta((unsigned char *)&abilitazione_OFF,0,(char)set.lingua,1,1,0,16);
       } 
      else if(segnalazione_)
       {
       presenta_scritta((unsigned char *)&lettura_allarmi,0,(char)set.lingua,25,0,0,16);
-      Nallarme_ora_minuto_secondo(conta_secondi,segnalazione_);
+      Nallarme_ora_minuto_secondo(conta_secondi_attivita,segnalazione_);
       messaggio_allarme(segnalazione_);
       } 
      }
@@ -6438,13 +6408,13 @@ if(toggle_func==0)//presenta le letture
      if(remoto==0)//abilitazione_OFF
       {
       presenta_scritta((unsigned char *)&lettura_allarmi,0,(char)set.lingua,25,0,0,16);
-      Nallarme_ora_minuto_secondo(conta_secondi,0);
+      Nallarme_ora_minuto_secondo(conta_secondi_attivita,0);
       presenta_scritta((unsigned char *)&abilitazione_OFF,0,(char)set.lingua,1,1,0,16);
       }
      else if(segnalazione_)
       {
       presenta_scritta((unsigned char *)&lettura_allarmi,0,(char)set.lingua,25,0,0,16);
-      Nallarme_ora_minuto_secondo(conta_secondi,segnalazione_);
+      Nallarme_ora_minuto_secondo(conta_secondi_attivita,segnalazione_);
       messaggio_allarme(segnalazione_);
       }
      }
@@ -7228,12 +7198,8 @@ salita_remoto=1;
 asm  //inizializza il conta_secondi
  {
  LDHX set.conta_ore:2
- STHX conta_secondi:2
- LDHX set.conta_ore
- STHX conta_secondi
- LDHX set.conta_ore_funzionamento:2
  STHX conta_secondi_attivita:2
- LDHX set.conta_ore_funzionamento
+ LDHX set.conta_ore
  STHX conta_secondi_attivita
  }
 sequenza_fasi=0;

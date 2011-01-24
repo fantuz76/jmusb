@@ -15,4 +15,6 @@ extern unsigned char pronto_alla_risposta;
 extern char buffer_USB[];
 
 extern const totale_indicazioni_fault;
+extern const operazione_effettuata;
+extern const lettura_tarature;
 #endif
