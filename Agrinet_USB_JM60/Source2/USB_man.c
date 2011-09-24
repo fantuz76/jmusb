@@ -379,7 +379,8 @@ void USB_ReadRequest(void)
 *****************************************************************************/
 void USB_comm_process(void)
 {
-  if (SuspendAllUSB) return;
+  if ((usb_get_state() != USBST_CONFIGURED) || (SuspendAllUSB)) 
+    return;  
 
   // Se è attiva una richiesta di invio la esegue 
   // (ordine di priorità dalla più alta)

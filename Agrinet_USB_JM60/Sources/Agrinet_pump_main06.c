@@ -352,7 +352,7 @@ char
 display[2][17],
 lampeggio_da, N_cifre_lampeggianti,
 cifre[16], 
-buffer_USB[256],//contiene i 24 bytes degli errori
+buffer_USB[128],//contiene i 24 bytes degli errori
 cursore_menu, cursore_sottomenu,
 comando_display;
 
@@ -401,12 +401,11 @@ tentativi_avviamento_a_secco;
 
 int 
 I1,//A*.004*5/.512* 4096/5 = A*32
+I2,
 I3,//A*.004*5/.512* 4096/5 = A*32
 V31,//V* 33/680/6 /2 *4096/5 = V*3.313
 V32,//V* 33/680/6 /2 *4096/5 = V*3.313
-Id,//corrente differenziale
-V1, V2, V3,//V*3.313 * 3
-I2;
+V1, V2, V3;//V*3.313 * 3
 
 unsigned int //timer
 timer_presenta_data,
@@ -7190,12 +7189,12 @@ if(toggle_func)//lettura e modifica delle funzioni
      */
     case 2://dati_motore
      {
-     if(salita_piu)
+     if(salita_meno)
       {
       salita_piu=0;
       cursore_sottomenu=1;
       }
-     else if(salita_meno)
+     else if(salita_piu)
       {
       salita_meno=0;
       cursore_sottomenu=0;
@@ -7209,7 +7208,7 @@ if(toggle_func)//lettura e modifica delle funzioni
      } break;
     case 3://protezione_voltaggio
      {
-     if(salita_piu)
+     if(salita_meno)
       {
       salita_piu=0;
       if(cursore_sottomenu<6) cursore_sottomenu++;
@@ -7218,7 +7217,7 @@ if(toggle_func)//lettura e modifica delle funzioni
        if((cursore_sottomenu==3)||(cursore_sottomenu==4)) cursore_sottomenu=5;
        }
       } 
-     else if(salita_meno)
+     else if(salita_piu)
       {
       salita_meno=0;
       if(cursore_sottomenu>0) cursore_sottomenu--;
@@ -7235,13 +7234,13 @@ if(toggle_func)//lettura e modifica delle funzioni
       case 2: presenta_unsigned(set.tensione_restart,0,1,10,3); break;
       case 3: presenta_unsigned(set.limite_segnalazione_dissimmetria,0,1,10,3); break;
       case 4: presenta_unsigned(set.limite_intervento_dissimmetria,0,1,10,3); break;
-      case 5: presenta_unsigned(set.ritardo_protezione_tensione,0,1,12,3); break;
-      case 6: presenta_unsigned(set.ritardo_riaccensione_da_emergenza_V,0,1,12,3); break;
+      case 5: presenta_unsigned(set.ritardo_protezione_tensione,0,1,10,3); break;
+      case 6: presenta_unsigned(set.ritardo_riaccensione_da_emergenza_V,0,1,10,3); break;
       }
      } break;
     case 4://protezione_corrente
      {
-     if(salita_piu)
+     if(salita_meno)
       {
       salita_piu=0;
       if(cursore_sottomenu<5) cursore_sottomenu++;
@@ -7250,7 +7249,7 @@ if(toggle_func)//lettura e modifica delle funzioni
        if((cursore_sottomenu==2)||(cursore_sottomenu==3)) cursore_sottomenu=4;
        }
       } 
-     else if(salita_meno)
+     else if(salita_piu)
       {
       salita_meno=0;
       if(cursore_sottomenu>0) cursore_sottomenu--;
@@ -7271,7 +7270,7 @@ if(toggle_func)//lettura e modifica delle funzioni
      } break;
     case 5://controllo_pressione
      {
-     if(salita_piu)
+     if(salita_meno)
       {
       salita_piu=0;
       if((set.abilita_sensore_pressione)&&(cursore_sottomenu<8)) cursore_sottomenu++;
@@ -7280,7 +7279,7 @@ if(toggle_func)//lettura e modifica delle funzioni
        if((cursore_sottomenu==3)||(cursore_sottomenu==4)) cursore_sottomenu=5;
        }
       } 
-     else if(salita_meno)
+     else if(salita_piu)
       {
       salita_meno=0;
       if(cursore_sottomenu>0) cursore_sottomenu--;
@@ -7305,12 +7304,12 @@ if(toggle_func)//lettura e modifica delle funzioni
      } break;
     case 6://controllo_potenza
      {
-     if(salita_piu)
+     if(salita_meno)
       {
       salita_piu=0;
       if(cursore_sottomenu<5) cursore_sottomenu++;
       } 
-     else if(salita_meno)
+     else if(salita_piu)
       {
       salita_meno=0;
       if(cursore_sottomenu>0) cursore_sottomenu--;
@@ -7328,12 +7327,12 @@ if(toggle_func)//lettura e modifica delle funzioni
      } break;
     case 7://sensore_di_flusso
      {
-     if(salita_piu)
+     if(salita_meno)
       {
       salita_piu=0;
       if((set.abilita_sensore_flusso)&&(cursore_sottomenu<3)) cursore_sottomenu++;
       } 
-     else if(salita_meno)
+     else if(salita_piu)
       {
       salita_meno=0;
       if(cursore_sottomenu>0) cursore_sottomenu--;
@@ -7342,19 +7341,19 @@ if(toggle_func)//lettura e modifica delle funzioni
      switch(cursore_sottomenu)
       {
       case 0: if(set.abilita_sensore_flusso) presenta_scritta((char*)&lettura_allarmi,22,0,24,1,8,7); else presenta_scritta((char*)&lettura_allarmi,5,0,24,1,8,7); break;
-      case 1: presenta_unsigned(set.limite_minimum_flow,1,1,8,3); break;
-      case 2: presenta_unsigned(set.limite_maximum_flow,0,1,8,4); break;
-      case 3: presenta_unsigned(set.scala_sensore_di_flusso,3,1,7,5); break;
+      case 1: presenta_unsigned(set.limite_minimum_flow,1,1,6,3); break;
+      case 2: presenta_unsigned(set.limite_maximum_flow,1,1,6,4); break;
+      case 3: presenta_unsigned(set.scala_sensore_di_flusso,3,1,6,5); break;
       }
      } break;
     case 8://sensore_temperatura
      {
-     if(salita_piu)
+     if(salita_meno)
       {
       salita_piu=0;
       if((set.abilita_sensore_temperatura)&&(cursore_sottomenu<3)) cursore_sottomenu++;
       } 
-     else if(salita_meno)
+     else if(salita_piu)
       {
       salita_meno=0;
       if(cursore_sottomenu>0) cursore_sottomenu--;
@@ -7551,13 +7550,13 @@ if(toggle_func)//lettura e modifica delle funzioni
      case 5:
       {
       modifica_unsigned((unsigned int*)&set.ritardo_protezione_tensione,tabella_ritardo_protezione_tensione[1],tabella_ritardo_protezione_tensione[2],1);
-      presenta_unsigned(set.ritardo_protezione_tensione,0,1,12,3);
+      presenta_unsigned(set.ritardo_protezione_tensione,0,1,10,3);
       N_cifre_lampeggianti=3;
       } break;
      case 6:
       {
       modifica_unsigned((unsigned int*)&set.ritardo_riaccensione_da_emergenza_V,tabella_ritardo_riaccensione_da_emergenza_V[1],tabella_ritardo_riaccensione_da_emergenza_V[2],1);
-      presenta_unsigned(set.ritardo_riaccensione_da_emergenza_V,0,1,12,3);
+      presenta_unsigned(set.ritardo_riaccensione_da_emergenza_V,0,1,10,3);
       N_cifre_lampeggianti=3;
       } break;
      } 
@@ -7606,49 +7605,51 @@ if(toggle_func)//lettura e modifica delle funzioni
       {
       modifica_unsigned((unsigned int*)&set.abilita_sensore_pressione,0,1,0);
       if(set.abilita_sensore_pressione) presenta_scritta((char*)&lettura_allarmi,22,0,24,1,8,7); else presenta_scritta((char*)&lettura_allarmi,5,0,24,1,8,7);
-      N_cifre_lampeggianti=1;
+      lampeggio_da=25;
+      N_cifre_lampeggianti=3;
       } break;
      case 1:
       {
       modifica_unsigned((unsigned int*)&set.pressione_emergenza,tabella_pressione_emergenza[1],tabella_pressione_emergenza[2],1);
-      presenta_unsigned(set.pressione_emergenza,1,1,9,3);
+      presenta_unsigned(set.pressione_emergenza,1,1,8,3);
       N_cifre_lampeggianti=3;
       } break;
      case 2:
       {
       modifica_unsigned((unsigned int*)&set.modo_start_stop,0,1,0);
       if(set.modo_start_stop) presenta_scritta((char*)&presenta_tipo_start_stop,17,0,2,1,0,16); else presenta_scritta((char*)&presenta_tipo_start_stop,0,0,2,1,0,16);
-      N_cifre_lampeggianti=1;
+      lampeggio_da=19;
+      N_cifre_lampeggianti=6;
       } break;
      case 3:
       {
       modifica_unsigned((unsigned int*)&set.pressione_spegnimento,tabella_pressione_spegnimento[1],tabella_pressione_spegnimento[2],1);
       presenta_unsigned(set.pressione_spegnimento,1,1,9,3);
-      N_cifre_lampeggianti=3;
+      N_cifre_lampeggianti=4;
       } break;
      case 4:
       {
       modifica_unsigned((unsigned int*)&set.pressione_accensione,tabella_pressione_accensione[1],tabella_pressione_accensione[2],1);
       presenta_unsigned(set.pressione_accensione,1,1,9,3);
-      N_cifre_lampeggianti=3;
+      N_cifre_lampeggianti=4;
       } break;
      case 5:
       {
       modifica_unsigned((unsigned int*)&set.corrente_minima_sensore,tabella_corrente_minima_sensore[1],tabella_corrente_minima_sensore[2],1);
       presenta_unsigned(set.corrente_minima_sensore,1,1,10,3);
-      N_cifre_lampeggianti=3;
+      N_cifre_lampeggianti=4;
       } break;
      case 6:
       {
       modifica_unsigned((unsigned int*)&set.corrente_massima_sensore,tabella_corrente_massima_sensore[1],tabella_corrente_massima_sensore[2],1);
       presenta_unsigned(set.corrente_massima_sensore,1,1,10,3);
-      N_cifre_lampeggianti=3;
+      N_cifre_lampeggianti=4;
       } break;
      case 7:
       {
       modifica_unsigned((unsigned int*)&set.portata_sensore_pressione,tabella_portata_sensore_pressione[1],tabella_portata_sensore_pressione[2],1);
       presenta_unsigned(set.portata_sensore_pressione,1,1,10,3);
-      N_cifre_lampeggianti=3;
+      N_cifre_lampeggianti=4;
       } break;
      case 8:
       {
@@ -7708,25 +7709,26 @@ if(toggle_func)//lettura e modifica delle funzioni
       {
       modifica_unsigned((unsigned int*)&set.abilita_sensore_flusso,0,1,0);
       if(set.abilita_sensore_flusso) presenta_scritta((char*)&lettura_allarmi,22,0,24,1,8,7); else presenta_scritta((char*)&lettura_allarmi,5,0,24,1,8,7);
-      N_cifre_lampeggianti=1;
+      lampeggio_da=26;
+      N_cifre_lampeggianti=3;
       } break;
      case 1:
       {
       modifica_unsigned((unsigned int*)&set.limite_minimum_flow,tabella_limite_minimum_flow[1],tabella_limite_minimum_flow[2],1);
-      presenta_unsigned(set.limite_minimum_flow,1,1,8,3);
-      N_cifre_lampeggianti=3;
+      presenta_unsigned(set.limite_minimum_flow,1,1,6,4);
+      N_cifre_lampeggianti=5;
       } break;
      case 2:
       {
       modifica_unsigned((unsigned int*)&set.limite_maximum_flow,tabella_limite_maximum_flow[1],tabella_limite_maximum_flow[2],1);
-      presenta_unsigned(set.limite_maximum_flow,0,1,8,4);
-      N_cifre_lampeggianti=4;
+      presenta_unsigned(set.limite_maximum_flow,1,1,6,4);
+      N_cifre_lampeggianti=5;
       } break;
      case 3:
       {
       modifica_unsigned((unsigned int*)&set.scala_sensore_di_flusso,tabella_scala_sensore_di_flusso[1],tabella_scala_sensore_di_flusso[2],1);
-      presenta_unsigned(set.scala_sensore_di_flusso,3,1,7,5);
-      N_cifre_lampeggianti=5;
+      presenta_unsigned(set.scala_sensore_di_flusso,3,1,6,5);
+      N_cifre_lampeggianti=6;
       } break;
      }
     } break;
@@ -7738,7 +7740,8 @@ if(toggle_func)//lettura e modifica delle funzioni
       {
       modifica_unsigned((unsigned int*)&set.abilita_sensore_temperatura,0,1,0);
       if(set.abilita_sensore_temperatura) presenta_scritta((char*)&lettura_allarmi,22,0,24,1,8,7); else presenta_scritta((char*)&lettura_allarmi,5,0,24,1,8,7);
-      N_cifre_lampeggianti=1;
+      lampeggio_da=26;
+      N_cifre_lampeggianti=3;
       } break;
      case 1:
       { 
@@ -7750,13 +7753,13 @@ if(toggle_func)//lettura e modifica delle funzioni
       {
       modifica_unsigned((unsigned int*)&set.resistenza_PT100_a_0gradi,tabella_resistenza_PT100_a_0gradi[1],tabella_resistenza_PT100_a_0gradi[2],1);
       presenta_unsigned(set.resistenza_PT100_a_0gradi,1,1,8,4);
-      N_cifre_lampeggianti=4;
+      N_cifre_lampeggianti=5;
       } break;
      case 3:
       {
       modifica_unsigned((unsigned int*)&set.resistenza_PT100_a_100gradi,tabella_resistenza_PT100_a_100gradi[1],tabella_resistenza_PT100_a_100gradi[2],1);
       presenta_unsigned(set.resistenza_PT100_a_100gradi,1,1,8,4);
-      N_cifre_lampeggianti=4;
+      N_cifre_lampeggianti=5;
       } break;
      }
     } break;
