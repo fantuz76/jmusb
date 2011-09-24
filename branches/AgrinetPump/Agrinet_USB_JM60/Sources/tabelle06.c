@@ -189,10 +189,10 @@ sensore_di_flusso[8][17]={
 sensore_temperatura[10][17]={
 "9.1)Tmperat.Tran", 
 "ducer:          ",    
-"9.2)Stop Limit  ", 
-"Temper:       °C",   
-"9.3)Wires Number",
+"9.2)Wires Number",
 "Resitor:        ",
+"9.3)Stop Limit  ", 
+"Temper:       °C",   
 "9.4)Resistance  ",
 "0°C:         Ohm",
 "9.5)Resistance  ",
