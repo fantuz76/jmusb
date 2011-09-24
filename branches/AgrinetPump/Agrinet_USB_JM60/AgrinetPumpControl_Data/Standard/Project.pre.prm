@@ -1,0 +1,43 @@
+
+
+#line 1 "F:\AgrinetPumpControl\AgrinetPumpControl\prm\Project.prm"
+
+#line 5
+ 
+
+#line 1 "F:\AgrinetPumpControl\AgrinetPumpControl\prm\Project.prm"
+
+
+NAMES END
+
+SEGMENTS
+    Z_RAM                    =  READ_WRITE   0x00B0 TO 0x00FF;
+    RAM                      =  READ_WRITE   0x0100 TO 0x10AF;
+    RAM1                     =  READ_WRITE   0x1860 TO 0x195F;
+    ROM                      =  READ_ONLY    0x1960 TO 0xFFAD;
+    ROM1                     =  READ_ONLY    0x10B0 TO 0x17FF;
+    ROM2                     =  READ_ONLY    0xFFC0 TO 0xFFC3;
+
+END
+
+PLACEMENT
+    DEFAULT_RAM
+                                        INTO  RAM,RAM1;
+
+    _PRESTART,
+    STARTUP,
+    ROM_VAR,
+    STRINGS,
+    VIRTUAL_TABLE_SEGMENT,
+    DEFAULT_ROM,
+    COPY
+                                        INTO  ROM;
+
+    _DATA_ZEROPAGE,
+    MY_ZEROPAGE                         INTO  Z_RAM;
+END
+
+
+STACKSIZE 0x50
+
+VECTOR 0 _Startup
