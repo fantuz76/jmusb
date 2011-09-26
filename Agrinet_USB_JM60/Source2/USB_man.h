@@ -13,10 +13,9 @@
 #define REQ_SATELLITARE   0x51
 
 
-extern const char byte_tabella;
-extern const int  lettura_satellitare;
+
 #define INTERVENTO_LENGTH 20
-#define SATELLITARE_LENGTH 24+7 // 31 bytes
+
           
 // Lunghezza Massima Comandi in byte dati su USB (compresi checksum, length etc..)
 // Definisce la dimensione degli Array utilizzati in lettura da PC->scheda e all'interno delle
@@ -41,7 +40,11 @@ typedef union {
 } byte_def;
   
 
+extern const char byte_tabella;
+extern const int  lettura_satellitare;
 
+//#define SATELLITARE_LENGTH 29+7 // 36 bytes
+extern const int lunghezza_trasmissione_satellitare;
 void Init_USB_man(void);
 void USB_comm_init(void);
 void USB_comm_process(void);
