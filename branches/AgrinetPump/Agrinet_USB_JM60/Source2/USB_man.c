@@ -1,4 +1,4 @@
-#include "USB_man.h"
+#include ".\Source2\USB_man.h"
 #include "usb_cdc.h" 
 #include "Agrinet_pump.h"
 
@@ -249,7 +249,7 @@ void USB_SendSatellitare(void)
     
     case 1:
       if (allarme_in_lettura == operazione_effettuata) {                
-        USB_SimpleSend(buffer_USB, SATELLITARE_LENGTH);
+        USB_SimpleSend(buffer_USB, lunghezza_trasmissione_satellitare + 7);
         USBSendSatellitare_en = FALSE; 
       }
     break;

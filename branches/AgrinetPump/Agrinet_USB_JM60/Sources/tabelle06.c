@@ -1,6 +1,8 @@
 const unsigned char
-presentazione_iniziale[16][17]={
-"BOX PCT5.5   V06",
+presentazione_iniziale[18][17]={
+"   PCT5.5-V06   ",
+"   PCM3.0-V06   ",
+
 "ThreePhase0.37KW",
 "ThreePhase0.55KW",
 "ThreePhase0.75KW",
@@ -10,12 +12,14 @@ presentazione_iniziale[16][17]={
 "ThreePhase3.00KW",
 "ThreePhase4.00KW",
 "ThreePhase5.50KW",
+
 "SinglePhase.37KW",
 "SinglePhase.55KW",
 "SinglePhase.75KW",
 "SinglePhase1.1KW",
 "SinglePhase1.5KW",
-"SinglePhase2.2KW"},
+"SinglePhase2.2KW",
+"SinglePhase3.0KW"},
 
 abilitazione_OFF[17]={
 "Not enable      "},
@@ -27,12 +31,12 @@ dati_presentati_in_ON[4][2][17]={
 "   V,     W    B",//monofase
 ' ',' ',' ',' ','A',' ',' ',' ',' ','P','F',' ',' ',' ',0xcd,'C',0,
 "   V,     W    B",//monofase alternato
-' ',' ',' ',' ','A',' ',' ',' ',' ','P','F',' ',' ',' ',0xcd,'C',0,
+' ',' ',' ',' ','A',' ',' ',' ',' ','P','F',' ',' ',' ','l','/',0,
 
 "   V,     W    B",//trifase 
-"    A    A     A",
-' ',' ',' ',0xcd,'C',' ',' ',' ',' ',' ','W',' ',' ',' ',' ','B',0,//trifase alternato
-"PF.  ,.  ,.   S "},
+"               A",
+' ',' ',' ',0xcd,'C',' ',' ',' ',' ',' ','W',' ',' ',' ','l','/',0,//trifase alternato
+"PF.   .   .   S "},
 
 lettura_allarmi[25][17]={
 "      OFF       ",
@@ -43,22 +47,22 @@ lettura_allarmi[25][17]={
 "Minimum Flow  ON",
 "Dry Working   ON",
 "Over Temperat.ON",
-"Isolat.Fault  ON",
+"Maximum Flow  ON",
 "Current Diff. ON",
 "Voltage Diff. ON",
 "Over Pressure ON",
-"Over Current OFF",
-"Over Voltage OFF",
-"UnderVoltage OFF",
-"Minimum Flow OFF",
-"Dry Working  OFF",
-"OverTemperat.OFF",
-"Isolat.Fault OFF",
-"Current Diff.OFF",
-"Voltage Diff.OFF",
-"PressureSens.OFF",
-"OverPressure OFF",
-"ShortCircuit OFF",
+"OverCurrent OFF ",
+"OverVoltage OFF ",
+"UnderVoltageOFF ",
+"MinimumFlow OFF ",
+"Dry Working OFF ",
+"OverTemperatOFF ",
+"MaximumFlow OFF ",
+"CurrentDiff.OFF ",
+"VoltageDiff.OFF ",
+"PressureSensOFF ",
+"OverPressureOFF ",
+"ShortCircuitOFF ",
 " END OF ALARM   "},
 
 presenta_tipo_start_stop[2][17]={
@@ -73,10 +77,10 @@ in_salvataggio[17]=
 " Save Data      ",
 
 menu_principale[32][17]={//Menu' principale: elenco delle funzioni di taratura
-"1) NUMBER       ",
-"PASSWORD:       ",
-"2)PUMP POWER    ",
+"1)PUMP POWER    ",
 "                ",
+"2) NUMBER       ",
+"PASSWORD:       ",
 "3) MOTOR        ",
 "   DATA         ",
 "4) VOLTAGE      ",
@@ -120,13 +124,13 @@ protezione_voltaggio[14][17]={
 "4.3)MinimumVolt.",
 "Restart:       %",
 "4.4)Dissimmetric",
-"V.Alarm:       %",
+"Volt.Alarm:    %",
 "4.5)Dissimmetric",
-"V.Stop:        %",
+"Volt.Stop:     %",
 "4.6)ErrorV.delay",
 "time:          s",
-"4.7)ErrorV.delay",
-"Restart:       s"},
+"4.7)RestartError",
+"V.delay:     min"},
 
 protezione_corrente[12][17]={
 "5.1)Over Current",
@@ -135,10 +139,10 @@ protezione_corrente[12][17]={
 "Alarm:         %",   
 "5.3)Unbalanced I",
 "Stop:          %",   
-"5.4)ErrorI delay",
-"Time:          %",
+"5.4)Unbal.I Dela",
+"y Time:        s",
 "5.5)RestartError",
-"I delay:       %",
+"I delay:     min",
 "5.6)K temperatu-",
 "re Motor:      s"},
 
@@ -158,7 +162,7 @@ controllo_pressione[18][17]={
 "6.7)Press.Trans.",
 "Max.Out:      mA",
 "6.8)Press.Trans.",
-"range:        mA",
+"range:       Bar",
 "6.9)DelayErr.Sen",
 "Restart:       s"},
 
@@ -166,7 +170,7 @@ controllo_potenza[12][17]={
 "7.1)Minimum Flow",
 "PwrStop:       %",    
 "7.2)Minimum Flow",
-"StopDelay:     %",
+"StopDelay:     s",
 "7.3)DelayMinimum",
 "FlowRestart    s",
 "7.4)MinimumPower",
@@ -188,7 +192,7 @@ sensore_di_flusso[8][17]={
 
 sensore_temperatura[10][17]={
 "9.1)Tmperat.Tran", 
-"ducer:          ",    
+"sducer:         ",    
 "9.2)Wires Number",
 "Resitor:        ",
 "9.3)Stop Limit  ", 
@@ -219,14 +223,18 @@ calibrazione[6][17]={
 "I1:    ,I2:     "}; 
 
 const unsigned int
-tabella_potenza_nominale[15]=//KW*100
-{   37,   55,   75,  110,  150,  220,  300,  400,  550,             37,   55,   75,  110,  150,  220},
+tabella_potenza_nominale[16]=//KW*100
+{   37,   55,   75,  110,  150,  220,  300,  400,  550,             37,   55,   75,  110,  150,  220, 300},
+
+tabella_calibrazione[3]=//dei sensori di corrente
+{     128,    112,    144},
+
 
 tabella_ritardo_protezione_squilibrio[3]=//s
-{       4,      1,    120},
+{      10,      1,    120},
 
 tabella_ritardo_protezione_tensione[3]=//s
-{      10,      1,    120},
+{      10,      2,    160},
 
 tabella_ritardo_riaccensione_da_emergenza_V[3]=//minuti
 {       4,      1,    999}, 
@@ -235,119 +243,107 @@ tabella_ritardo_riaccensione_da_emergenza_I[3]=//minuti
 {       4,      1,    999}, 
 
 tabella_ritardo_stop_mandata_chiusa[3]=//s
-{      20,      1,    120}, 
+{      20,      5,    120}, 
 
 tabella_ritardo_stop_funzionamento_a_secco[3]=//s
-{      20,     10,    120}, 
+{      10,      5,    120}, 
 
 tabella_ritardo_riaccensione_mandata_chiusa[3]=//s
-{      10,      1,    120}, 
+{     240,      3,    999}, 
 
 tabella_ritardo_riaccensione_funzionamento_a_secco[3]=//minuti
-{       4,      1,    100},
+{      10,      1,    100},
 
 tabella_timer_ritorno_da_emergenza_sensore[3]=//s
 {      10,      1,    999}, 
 
 tabella_portata_sensore_pressione[3]=//Bar*10
-{     160,     50,    500},
+{     160,     40,    500},
 
 tabella_corrente_minima_sensore[3]=//mA*10
 {      40,     10,    100},
 
 tabella_corrente_massima_sensore[3]=//mA*10
-{     200,    100,    250},
+{     200,    120,    250},
 
 tabella_scala_sensore_di_flusso[3]=//litri*1000/impulso
-{     100,      1,  10000},
+{    1000,      1,  60000},
 
 tabella_tipo_sonda_PT100[3]=//numero dei fili
 {       4,      2,      4},
 
 tabella_resistenza_PT100_a_0gradi[3]=//Ohm*10
-{    1000,  10000,    100},
+{    1000,    100,   9999},
 
 tabella_resistenza_PT100_a_100gradi[3]=//Ohm*10
-{    1385,  20000,    200},
+{    1385,    200,   9999},
 
 tabella_limite_intervento_temper_motore[3]=//°C
 {     100,     80,    150},
 
 tabella_pressione_emergenza[3]=//Bar*10
-{  160,   50,  250},
+{  160,   40,  450},
    
 tabella_pressione_spegnimento[3]=//Bar*10
-{   60,   10,  200},
+{   60,   10,  400},
    
 tabella_pressione_accensione[3]=//Bar*10
-{   40,   10,  200},
+{   40,    5,  400},
    
 tabella_limite_minimum_flow[3]=//litri/minuto
-{   10,    0,  100},
+{    0,    0, 1000},
    
 tabella_limite_maximum_flow[3]=//litri/minuto
-{  100,   10, 1000},
+{ 1000,    1, 1000},
    
 tabella_potenza_minima_mandata_chiusa[3]=//%
 {   70,   10,  100},
    
 tabella_potenza_minima_funz_secco[3]=//%
-{   50,   10,   80},
+{   50,   10,  100},
    
 tabella_K_di_tempo_riscaldamento[3]=//s
-{   60,    2,  200},
+{   60,   10,  180},
    
-tabella_calibrazione[3]=//dei sensori di corrente
-{     128,    112,    144},
+tabella_limite_sovratensione[3]=//%
+{  107,  100,  125},
+   
+tabella_limite_sottotensione[3]=//%
+{   88,   60,   95},
 
-tabella_limite_segnalazione_dissimmetria[3][9]=//%
-{   12,   12,   12,   12,   12,   12,   12,   12,   12,
-     8,    8,    8,    8,    8,    8,    8,    8,    8,
-    20,   20,   20,   20,   20,   20,   20,   20,   20},
-   
-tabella_limite_intervento_dissimmetria[3][9]=//%
-{   15,   15,   15,   15,   15,   15,   15,   15,   15,
-    12,   12,   12,   12,   12,   12,   12,   12,   12,
-    25,   25,   25,   25,   25,   25,   25,   25,   25},
-   
-tabella_limite_segnalazione_squilibrio[3][9]=//%
-{   12,   12,   12,   12,   12,   12,   12,   12,   12,
-     8,    8,    8,    8,    8,    8,    8,    8,    8,
-    20,   20,   20,   20,   20,   20,   20,   20,   20},
-   
-tabella_limite_intervento_squilibrio[3][9]=//%
-{   15,   15,   15,   15,   15,   15,   15,   15,   15,
-    12,   12,   12,   12,   12,   12,   12,   12,   12,
-    25,   25,   25,   25,   25,   25,   25,   25,   25},
+tabella_tensione_restart[3]=//%
+{   92,   60,  100},
 
-tabella_tensione_nominale[3][15]=//V
-{  400,  400,  400,  400,  400,  400,  400,  400,  400,            230,  230,  230,  230,  230,  230,
-   220,  220,  220,  220,  220,  220,  220,  220,  220,            110,  110,  110,  110,  110,  110,
-   460,  460,  460,  460,  460,  460,  460,  460,  460,            260,  260,  260,  260,  260,  260},
+tabella_limite_sovracorrente[3]=//%
+{  115,  105,  140},
+   
+   
+tabella_limite_segnalazione_dissimmetria[3][10]=//%
+{   12,   12,   12,   12,   12,   12,   12,   12,   12,   12,
+     5,    5,    5,    5,    5,    5,    5,    5,    5,    5,
+    20,   20,   20,   20,   20,   20,   20,   20,   20,   20},
+   
+tabella_limite_intervento_dissimmetria[3][10]=//%
+{   15,   15,   15,   15,   15,   15,   15,   15,   15,   15,
+     5,    5,    5,    5,    5,    5,    5,    5,    5,    5,
+    25,   25,   25,   25,   25,   25,   25,   25,   25,   25},
+   
+tabella_limite_segnalazione_squilibrio[3][10]=//%
+{   12,   12,   12,   12,   12,   12,   12,   12,   12,   12,
+     5,    5,    5,    5,    5,    5,    5,    5,    5,    5,
+    20,   20,   20,   20,   20,   20,   20,   20,   20,   20},
+   
+tabella_limite_intervento_squilibrio[3][10]=//%
+{   15,   15,   15,   15,   15,   15,   15,   15,   15,   15,
+     5,    5,    5,    5,    5,    5,    5,    5,    5,    5,
+    25,   25,   25,   25,   25,   25,   25,   25,   25,   25},
 
-tabella_corrente_nominale[3][15]=//A*10
-{   10,   20,   25,   30,   34,   55,   70,   95,  140,             25,   50,   65,   80,  100,  150,
-     5,   10,   12,   20,   20,   30,   50,   60,  100,             20,   30,   50,   65,   80,  110,
-    20,   30,   40,   50,   55,   80,  110,  150,  200,             60,  100,  130,  160,  200,  300},
+tabella_tensione_nominale[3][16]=//V
+{  400,  400,  400,  400,  400,  400,  400,  400,  400,            230,  230,  230,  230,  230,  230,  230,
+   380,  380,  380,  380,  380,  380,  380,  380,  380,            200,  200,  200,  200,  200,  200,  200,
+   440,  440,  440,  440,  440,  440,  440,  440,  440,            240,  240,  240,  240,  240,  240,  240},
 
-tabella_limite_sovratensione[3][15]=//%
-{  115,  115,  115,  115,  115,  115,  115,  115,  115,            115,  115,  115,  115,  115,  115,
-   106,  106,  106,  106,  106,  106,  106,  106,  106,            106,  106,  106,  106,  106,  106,
-   125,  125,  125,  125,  125,  125,  125,  125,  125,            125,  125,  125,  125,  125,  125},
-   
-tabella_limite_sottotensione[3][15]=//%
-{   88,   88,   88,   88,   88,   88,   88,   88,   88,             88,   88,   88,   88,   88,   88,
-    80,   80,   80,   80,   80,   80,   80,   80,   80,             80,   80,   80,   80,   80,   80,
-    90,   90,   90,   90,   90,   90,   90,   90,   90,             90,   90,   90,   90,   90,   90},
-   
-tabella_tensione_restart[3][15]=//%
-{   92,   92,   92,   92,   92,   92,   92,   92,   92,             92,   92,   92,   92,   92,   92,
-    80,   80,   80,   80,   80,   80,   80,   80,   80,             80,   80,   80,   80,   80,   80,
-   100,  100,  100,  100,  100,  100,  100,  100,  100,            100,  100,  100,  100,  100,  100},
-   
-tabella_limite_sovracorrente[3][15]=//%
-{  115,  115,  115,  115,  115,  115,  115,  115,  115,            115,  115,  115,  115,  115,  115,
-   106,  106,  106,  106,  106,  106,  106,  106,  106,            106,  106,  106,  106,  106,  106,
-   125,  125,  125,  125,  125,  125,  125,  125,  125,            125,  125,  125,  125,  125,  125};
-   
-   
+tabella_corrente_nominale[3][16]=//A*10
+{   16,   19,   23,   31,   40,   56,   74,   98,  137,             37,   50,   62,   81,  104,  150,  227,
+    13,   15,   18,   25,   32,   45,   59,   78,  110,             30,   40,   50,   65,   83,  120,  182, 
+    19,   23,   28,   37,   48,   67,   89,  118,  164,             45,   60,   74,   97,  125,  180,  272};
