@@ -31,11 +31,11 @@ dati_presentati_in_ON[4][2][17]={
 "   V,     W    B",//monofase
 ' ',' ',' ',' ','A',' ',' ',' ',' ','P','F',' ',' ',' ',0xcd,'C',0,
 "   V,     W    B",//monofase alternato
-' ',' ',' ',' ','A',' ',' ',' ',' ','P','F',' ',' ',' ','l','/',0,
+' ',' ',' ',' ','A',' ',' ',' ',' ','P','F',' ',' ',' ',' ','L',0,
 
 "   V,     W    B",//trifase 
 "               A",
-' ',' ',' ',0xcd,'C',' ',' ',' ',' ',' ','W',' ',' ',' ','l','/',0,//trifase alternato
+' ',' ',' ',0xcd,'C',' ',' ',' ',' ',' ','W',' ',' ',' ',' ','L',0,//trifase alternato
 "PF.   .   .   S "},
 
 lettura_allarmi[25][17]={
@@ -51,18 +51,18 @@ lettura_allarmi[25][17]={
 "Current Diff. ON",
 "Voltage Diff. ON",
 "Over Pressure ON",
-"OverCurrent OFF ",
-"OverVoltage OFF ",
-"UnderVoltageOFF ",
-"MinimumFlow OFF ",
-"Dry Working OFF ",
-"OverTemperatOFF ",
-"MaximumFlow OFF ",
-"CurrentDiff.OFF ",
-"VoltageDiff.OFF ",
-"PressureSensOFF ",
-"OverPressureOFF ",
-"ShortCircuitOFF ",
+"OverCurrent  OFF",
+"OverVoltage  OFF",
+"UnderVoltage OFF",
+"MinimumFlow  OFF",
+"Dry Working  OFF",
+"OverTemperat OFF",
+"MaximumFlow  OFF",
+"CurrentDiff. OFF",
+"VoltageDiff. OFF",
+"PressureSens OFF",
+"OverPressure OFF",
+"ShortCircuit OFF",
 " END OF ALARM   "},
 
 presenta_tipo_start_stop[2][17]={
@@ -147,8 +147,8 @@ protezione_corrente[12][17]={
 "re Motor:      s"},
 
 controllo_pressione[18][17]={
-"6.1)Pressure    ",
-"Sensor:         ",    
+"6.1)PressureTran",
+"sducer:         ",    
 "6.2)Max.Pressure",
 "Alarm:       Bar",
 "6.3)Manual/Press",
@@ -184,11 +184,11 @@ sensore_di_flusso[8][17]={
 "8.1)Flow Transdu", 
 "cer:            ",    
 "8.2)Minimum Flow",
-"Limit:     l/min",
+"Limit:     L/min",
 "8.3)Maximum Flow",
-"Limit:     l/min",
+"Limit:     L/min",
 "8.4)Flow Transd.",
-"Const:      l/Pu"},
+"Const:      L/Pu"},
 
 sensore_temperatura[10][17]={
 "9.1)Tmperat.Tran", 
@@ -282,40 +282,40 @@ tabella_limite_intervento_temper_motore[3]=//°C
 {     100,     80,    150},
 
 tabella_pressione_emergenza[3]=//Bar*10
-{  160,   40,  450},
+{     160,     40,    450},
    
 tabella_pressione_spegnimento[3]=//Bar*10
-{   60,   10,  400},
+{      60,     10,    400},
    
 tabella_pressione_accensione[3]=//Bar*10
-{   40,    5,  400},
+{      40,      5,    400},
    
 tabella_limite_minimum_flow[3]=//litri/minuto
-{    0,    0, 1000},
+{       0,      0,   1000},
    
 tabella_limite_maximum_flow[3]=//litri/minuto
-{ 1000,    1, 1000},
+{    1000,      1,   1000},
    
 tabella_potenza_minima_mandata_chiusa[3]=//%
-{   70,   10,  100},
+{      70,     10,    100},
    
 tabella_potenza_minima_funz_secco[3]=//%
-{   50,   10,  100},
+{      50,     10,    100},
    
 tabella_K_di_tempo_riscaldamento[3]=//s
-{   60,   10,  180},
+{      60,     10,    180},
    
 tabella_limite_sovratensione[3]=//%
-{  107,  100,  125},
+{     107,    100,    125},
    
 tabella_limite_sottotensione[3]=//%
-{   88,   60,   95},
+{      88,     60,     95},
 
 tabella_tensione_restart[3]=//%
-{   92,   60,  100},
+{      92,     60,    100},
 
 tabella_limite_sovracorrente[3]=//%
-{  115,  105,  140},
+{     115,    105,    140},
    
    
 tabella_limite_segnalazione_dissimmetria[3][10]=//%
