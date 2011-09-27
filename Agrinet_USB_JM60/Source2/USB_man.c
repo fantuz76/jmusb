@@ -210,7 +210,9 @@ void USB_SendTuttiInterventi(void)
     
     case 1:
       if (pronto_alla_risposta) {    
-        USB_PktSend(buffer_USB,INTERVENTO_LENGTH,0);          
+        
+        USB_PktSend(buffer_USB,INTERVENTO_LENGTH,0);       
+
         allarme_in_lettura++;
         pronto_alla_risposta = 0; 
         

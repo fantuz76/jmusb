@@ -18,6 +18,7 @@ __interrupt  void SPI1(void);
 __interrupt  void usb_it_handler(void);
 __interrupt  void AD_conversion_completeISR(void);
 __interrupt  void timer2_captureISR(void);
+__interrupt  void timer2_overflowISR(void);
 __interrupt void timer1_overflowISR(void); //timer 100 us per relay
 __interrupt  void UnimplementedISR(void)
 {
@@ -43,7 +44,7 @@ const tIsrFunc _vect[] @0xffca={     /* Interrupt table */
    UnimplementedISR,                 /* SCI1 Transmit  0xffd4*/
    UnimplementedISR,                 /* SCI1 Receive   0xffd6*/
    UnimplementedISR,                 /* SCI1 error     0xffd8*/
-   UnimplementedISR,                 /* TPM2 Overflow  0xffda*/
+   timer2_overflowISR,               /* TPM2 Overflow  0xffda*/
    UnimplementedISR,                 /* TPM2 Channel 1 0xffdc*/
    timer2_captureISR,                /* TPM2 Channel 0 0xffde*/
    timer1_overflowISR,               /* TPM1 Overflow  0xffe0*/
@@ -78,7 +79,7 @@ void (* volatile const _Usr_Vector[])()@0xFBC4= {
     UnimplementedISR,             // Int.no.21 SCI1 Transmit     (at FBD4) (at FFD4)
     UnimplementedISR,             // Int.no.20 SCI1 Receive      (at FBD6) (at FFD6)
     UnimplementedISR,             // Int.no.19 SCI1 error        (at FBD8) (at FFD8)
-    UnimplementedISR,             // Int.no.18 TPM2 Overflow     (at FBDA) (at FFDA)
+    timer2_overflowISR,           // Int.no.18 TPM2 Overflow     (at FBDA) (at FFDA)
     UnimplementedISR,             // Int.no.17 TPM2 CH1          (at FBDC) (at FFDC)
     timer2_captureISR,            // Int.no.16 TPM2 CH0          (at FBDE) (at FFDE)
     timer1_overflowISR,           // Int.no.15 TPM1 Overflow     (at FBE0) (at FFE0)
