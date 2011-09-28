@@ -76,6 +76,12 @@ attivazione_comando_reset[2][17]={
 in_salvataggio[17]=
 " Save Data      ",
 
+chiamata_reset[17]=
+"RESET?          ",
+
+reset_eseguito[17]=
+"RESET EXECUTED  ",
+
 menu_principale[32][17]={//Menu' principale: elenco delle funzioni di taratura
 "1)PUMP POWER    ",
 "                ",
