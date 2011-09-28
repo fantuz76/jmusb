@@ -116,7 +116,6 @@ void presenta_cursore_eeprom(long var);
 void salva_impostazioni(void);
 void salva_segnalazione_fault(void);
 void prepara_per_salvataggio_allarme(void);
-void salva_conta_secondi_attivita(void);
 void lettura_impostazioni(void);
 void lettura_allarme_messo_in_buffer_USB(void);//con allarme_in_lettura <totale_indicazioni_fault
 
@@ -140,6 +139,8 @@ lettura_allarmi[25][17],
 presenta_tipo_start_stop[2][17],
 attivazione_comando_reset[2][17],
 in_salvataggio[17],
+chiamata_reset[17],
+reset_eseguito[17],
 menu_principale[32][17],//Menu' principale: elenco delle funzioni di taratura
 dati_motore[4][17],
 protezione_voltaggio[14][17],
@@ -177,6 +178,7 @@ comando_AD[20]={
 0x47},//tensione_15V
 N_letture_AD=20, N_letture_AD_men1=19,
 N_bytes_messaggio_fault=20,
+incremento_ultimo_indirizzo=19,
 filtro_pulsanti=21,
 prepara[7]={0x01,0x02,0x06,0x0c,0x14,0x3c,0x01},
 limite_segnalazioni=32;
@@ -192,7 +194,7 @@ massimo_delta_T=120,//gradi
 delta_T_riavviamento=60, //°C
 fattore_PT100=18016,
 fattore_portata_sensore_pressione=1966,//16*.15/5*4096 DAC portata
-fattore_portata_acqua=5625,
+fattore_portata_acqua=22500,
 durata_avviamento=1000, inizio_lettura_I_avviamento=950,
 durata_cc=3000,
 tempo_eccitazione_relay=500,//.5s
@@ -200,8 +202,10 @@ chiave_ingresso=541, chiave_ingresso2=4682,
 totale_indicazioni_fault=6539,//totale delle registrazioni di 20 bytes salvate in 129280 bytes
 disturbo_I_pos=54,
 disturbo_I_neg=-54,
-emergenza_sensore_pressione=-20,//Bar*10
-tot_righe_menu=32;
+tot_righe_menu=32,
+timeout_lettura_flusso=5000,
+max_pressione_negativa=-10,//Bar*10
+tot_variabili_escludendo_struct=938;
 
 extern const unsigned int
 tabella_potenza_nominale[16],//KW*100
@@ -302,11 +306,11 @@ modo_start_stop,//0=remoto o 1=pressione
 
 motore_on,//45 //0-1
 numero_segnalazione,//46 //0-6539
-conta_ore[2],//47
-conta_ore_funzionamento[2],//49 //s
-energia[2],//51 //KWh
-totalizzatore_litri[2],//53
-riserva[8];//55
+conta_ore[3],//47
+conta_ore_funzionamento[3],//50 //s
+energia[3],//53 //KWh
+totalizzatore_litri[3],//56
+riserva[4];//59
 }set;
 
 struct
@@ -422,6 +426,7 @@ timer_eccitazione_relay,
 timer_commuta_presentazione,
 timer_aggiorna_misure,
 timer_aggiorna_menu,
+timer_lampeggio_storici,
 timer_avviamento_monofase,
 timer_allarme_avviamento,
 timer_inc_dec,
@@ -439,7 +444,6 @@ timer_flusso, timer_flusso0, delta_timer_flusso,
 numeratore_flusso,
 timer_riavviamento,
 incremento_volume,//litri*65536/impulso
-conta_secondi, conta_secondi_attivita,
 istante,//s dall'orologio
 delta_T,//sovra_temperatura calcolata
 somma_quad_I1,
@@ -510,8 +514,6 @@ potenzaI3xV3,
 reattivaI1xV23,//VAR
 reattivaI2xV31,
 reattivaI3xV12,
-conta_litri[3],
-misura_energia[3],
 
 delta_PT100_0_100gradi,
 flusso,//litri/minuto
@@ -558,7 +560,6 @@ segnalazione_, precedente_segnalazione,
 comando_reset,
 salvataggio_funzioni, //!=0 solo durante il salvataggio delle funzioni o reset eeprom
 salvataggio_allarme,
-salva_conta_secondi,
 
 leggi_impostazioni;
 
@@ -879,7 +880,7 @@ void calcolo_medie_quadrati(unsigned long *media_quad, unsigned long quad)
 long media, delta;
 asm
  {
- /*LDHX media_quad
+ LDHX media_quad
  LDA 0,X
  STA media:0
  LDA 1,X
@@ -936,7 +937,7 @@ asm
  LDA media:2
  STA 2,X
  LDA media:3
- STA 3,X     */
+ STA 3,X
  }
 }
 
@@ -2310,6 +2311,7 @@ return radice;
 
 __interrupt  void timer2_captureISR(void)
 {
+long timer;
 asm
  {
  SEI  /*disabilita interrupt*/
@@ -2320,25 +2322,29 @@ asm
  
  LDA timer_flusso:3
  SUB timer_flusso0:3
- STA delta_timer_flusso:3
+ STA timer:3
  LDA timer_flusso:2
  SBC timer_flusso0:2
- STA delta_timer_flusso:2
+ STA timer:2
  LDA timer_flusso:1
  SBC timer_flusso0:1
- STA delta_timer_flusso:1
+ STA timer:1
 
- LDA delta_timer_flusso:1
+ LDA timer:1
  BNE aggiorna_timer_flusso0
- LDHX delta_timer_flusso:2
- CPHX #2812//.03s  antirimbalzo
+ LDHX timer:2
+ CPHX #938//.01s  antirimbalzo
  BCS fine
 aggiorna_timer_flusso0: 
+ LDHX timer:2
+ STHX delta_timer_flusso:2
+ LDA timer:1
+ STA delta_timer_flusso:1
  LDHX timer_flusso:2
  STHX timer_flusso0:2
  LDA timer_flusso:1
  STA timer_flusso0:1
- LDHX #5000
+ LDHX timeout_lettura_flusso
  STHX timer_flusso_nullo
  LDA #1
  STA impulso_flusso
@@ -2490,8 +2496,16 @@ per_timer_1min:
 per_reset_timer_1min: 
  CLRA
  STA timer_1min
+ LDA eeprom_impegnata
+ BNE per_calcolo_istante
+ LDA reset_default
+ BNE per_calcolo_istante
+ LDA salvataggio_funzioni
+ BNE per_calcolo_istante
+ LDA salvataggio_allarme
+ BNE per_calcolo_istante
  LDA #1
- STA salva_conta_secondi
+ STA salvataggio_funzioni 
 
 per_calcolo_istante:
 //per ogni secondo
@@ -2503,24 +2517,24 @@ per_calcolo_istante:
  BEQ per_protezione_termica
  LDA somma_energia_attiva
  BMI per_protezione_termica
- LDA misura_energia:5
+ LDA set.energia:5
  ADD somma_energia_attiva:3
- STA misura_energia:5
- LDA misura_energia:4
+ STA set.energia:5
+ LDA set.energia:4
  ADC somma_energia_attiva:2
- STA misura_energia:4
- LDA misura_energia:3
+ STA set.energia:4
+ LDA set.energia:3
  ADC somma_energia_attiva:1
- STA misura_energia:3
- LDA misura_energia:2
+ STA set.energia:3
+ LDA set.energia:2
  ADC somma_energia_attiva
- STA misura_energia:2
- LDA misura_energia:1
+ STA set.energia:2
+ LDA set.energia:1
  ADC #0
- STA misura_energia:1
- LDA misura_energia
+ STA set.energia:1
+ LDA set.energia
  ADC #0
- STA misura_energia
+ STA set.energia
 
 per_protezione_termica: 
  LDHX #0
@@ -2609,32 +2623,32 @@ per_timer_attesa_squilibrio:
  STA timer_attesa_squilibrio
  
 per_conta_secondi: 
- LDA conta_secondi:3
+ LDA set.conta_ore:3
  ADD #1
- STA conta_secondi:3
- LDA conta_secondi:2
+ STA set.conta_ore:3
+ LDA set.conta_ore:2
  ADC #0
- STA conta_secondi:2
- LDA conta_secondi:1
+ STA set.conta_ore:2
+ LDA set.conta_ore:1
  ADC #0
- STA conta_secondi:1
- LDA conta_secondi
+ STA set.conta_ore:1
+ LDA set.conta_ore
  ADC #0
- STA conta_secondi
+ STA set.conta_ore
  LDA relay_alimentazione
  BEQ per_timer_1ms
- LDA conta_secondi_attivita:3
+ LDA set.conta_ore_funzionamento:3
  ADD #1
- STA conta_secondi_attivita:3
- LDA conta_secondi_attivita:2
+ STA set.conta_ore_funzionamento:3
+ LDA set.conta_ore_funzionamento:2
  ADC #0
- STA conta_secondi_attivita:2
- LDA conta_secondi_attivita:1
+ STA set.conta_ore_funzionamento:2
+ LDA set.conta_ore_funzionamento:1
  ADC #0
- STA conta_secondi_attivita:1
- LDA conta_secondi_attivita
+ STA set.conta_ore_funzionamento:1
+ LDA set.conta_ore_funzionamento
  ADC #0
- STA conta_secondi_attivita
+ STA set.conta_ore_funzionamento
 
 per_timer_1ms:
 //per ogni ms 
@@ -3128,7 +3142,7 @@ per_timer_allarme_avviamento:
   
 per_timer_aggiorna_misure:
  LDHX timer_aggiorna_misure
- BEQ per_timer_aggiorna_menu
+ BEQ per_timer_lampeggio_stirici
  LDA timer_aggiorna_misure:1
  SUB #1
  STA timer_aggiorna_misure:1
@@ -3136,6 +3150,16 @@ per_timer_aggiorna_misure:
  SBC #0
  STA timer_aggiorna_misure
 
+per_timer_lampeggio_stirici: 
+ LDHX timer_lampeggio_storici
+ BEQ per_timer_aggiorna_menu
+ LDA timer_lampeggio_storici:1
+ SUB #1
+ STA timer_lampeggio_storici:1
+ LDA timer_lampeggio_storici
+ SBC #0
+ STA timer_lampeggio_storici
+ 
 per_timer_aggiorna_menu:
  LDHX timer_aggiorna_menu
  BEQ per_timer_attesa_segnalazione_fault
@@ -3288,10 +3312,17 @@ asm
 ;  contatore_scrivi_eeprom=0;
 ;  scrivi_eeprom++;
 ;  }
-; else if(contatore_scrivi_eeprom<=lunghezza_salvataggio)
+; else if(scrivi_eeprom==7) //scrivi parte bassa indirizzo
 ;  {
-;  dato_scritto=buffer_eeprom[contatore_scrivi_eeprom];
-;  if(contatore_scrivi_eeprom<lunghezza_salvataggio) contatore_scrivi_eeprom++; else goto chiusura_scrittura;
+;  if(contatore_scrivi_eeprom<=lunghezza_salvataggio)
+;   {
+;   dato_scritto=buffer_eeprom[contatore_scrivi_eeprom];
+;   if(contatore_scrivi_eeprom<lunghezza_salvataggio) contatore_scrivi_eeprom++; else scrivi_eeprom++;
+;   }
+;  }
+; else if(scrivi_eeprom==8) //ultimo carattere
+;  {
+;  scrivi_eeprom++;
 ;  }
 ; else if(scrivi_eeprom<80) //pausa salvataggio
 ;  {
@@ -3411,22 +3442,33 @@ parte_bassa_indirizzo:
  BRA fine_SPID
 
 scrittura_del_dato: 
-; else if(contatore_scrivi_eeprom<=lunghezza_salvataggio)
+; else if(scrivi_eeprom==7) //scrivi parte bassa indirizzo
 ;  {
-;  dato_scritto=buffer_eeprom[contatore_scrivi_eeprom];
-;  if(contatore_scrivi_eeprom<lunghezza_salvataggio) contatore_scrivi_eeprom++; else goto chiusura_scrittura;
+;  if(contatore_scrivi_eeprom<=lunghezza_salvataggio)
+;   {
+;   dato_scritto=buffer_eeprom[contatore_scrivi_eeprom];
+;   if(contatore_scrivi_eeprom<lunghezza_salvataggio) contatore_scrivi_eeprom++; else scrivi_eeprom++;
+;   }
 ;  }
+ LDA scrivi_eeprom
+ CMP #7
+ BNE chiusura_scrittura
  LDX contatore_scrivi_eeprom
  CLRH
  LDA @buffer_eeprom,X
  STA dato_scritto//_SPID
  LDA contatore_scrivi_eeprom
  CMP lunghezza_salvataggio
- BCC chiusura_scrittura
+ BCC ultimo_byte
  INCA
  STA contatore_scrivi_eeprom
  BRA fine_SPID
-
+ultimo_byte:
+ LDA scrivi_eeprom
+ INCA
+ STA scrivi_eeprom
+ BRA fine_SPID
+ 
 chiusura_scrittura:
  LDA scrivi_eeprom
  CMP #80 
@@ -3612,6 +3654,7 @@ Fine:
 
 void trasmissione_misure_istantanee(void) //con allarme_in_lettura == 9000
 {
+int flusso_medio;
 asm
  {
 //36 bytes nell'ordine:
@@ -3675,6 +3718,12 @@ asm
  LDHX media_pressione
  STHX buffer_USB:24
  LDHX media_flusso
+ STHX flusso_medio
+ LSR flusso_medio
+ ROR flusso_medio:1
+ LSR flusso_medio
+ ROR flusso_medio:1
+ LDHX flusso_medio
  STHX buffer_USB:26
  LDA media_temperatura:1
  STA buffer_USB:28
@@ -4461,8 +4510,8 @@ fine:
 
 void misura_della_portata(void)
 {
-char j, prod[6], delta[2];
-long delta_timer;
+char j, prod[7];
+long delta_timer, delta;
 asm
  {
  LDHX timer_flusso_nullo
@@ -4472,48 +4521,85 @@ asm
  BRA fine
 
 per_calcolo:
- LDA impulso_flusso
- BEQ fine
- CLRA
- STA impulso_flusso
-// conta_litri +=scala_sensore_di_flusso[litri*1000/impulso]/1000*65536;
-// conta_litri +=incremento_volume;
- LDA conta_litri:5
- ADD incremento_volume:3
- STA conta_litri:5
- LDA conta_litri:4
- ADC incremento_volume:2
- STA conta_litri:4
- LDA conta_litri:3
- ADC incremento_volume:1
- STA conta_litri:3
- LDA conta_litri:2
- ADC incremento_volume
- STA conta_litri:2
- LDA conta_litri:1
- ADC #0
- STA conta_litri:1
- LDA conta_litri
- ADC #0
- STA conta_litri
- 
-//portata[l/min] = scala_sensore_di_flusso[litri*1000/impulso]/1000 *60*1000000/10.66667/delta_timer_flusso;
-//portata[l/min] = scala_sensore_di_flusso[litri*1000/impulso]*5625/delta_timer_flusso;
- LDHX numeratore_flusso:2
- STHX prod:4
- LDHX numeratore_flusso
- STHX prod:2
- CLR prod:1
- CLR prod
-
  SEI
  LDHX delta_timer_flusso:2
  STHX delta_timer:2
  LDHX delta_timer_flusso
  CLI
  STHX delta_timer
+  
+ LDA impulso_flusso
+ BNE lettura_standard
+
+ LDA timeout_lettura_flusso:1
+ SUB timer_flusso_nullo:1
+ STA delta:1
+ LDA timeout_lettura_flusso
+ SBC timer_flusso_nullo
+ STA delta
+ LDA delta:1
+ LDX #94
+ MUL
+ STA delta:3
+ STX delta:2
+ LDA delta
+ LDX #94
+ MUL
+ ADD delta:2
+ STA delta:2
+ TXA
+ ADC #0
+ STA delta:1
+
+ LDA delta_timer:1
+ CMP delta:1
+ BCS assegna_delta
+ LDHX delta_timer:2
+ CPHX delta:2
+ BCC calcolo_della_portata
+assegna_delta:
+ LDHX delta:2
+ STHX delta_timer:2
+ LDA delta:1
+ STA delta_timer:1
+ BRA calcolo_della_portata
+
+lettura_standard: 
+ CLRA
+ STA impulso_flusso
+// set.totalizzatore_litri +=scala_sensore_di_flusso[litri*1000/impulso]/1000*65536;
+// set.totalizzatore_litri +=incremento_volume;
+ LDA set.totalizzatore_litri:5
+ ADD incremento_volume:3
+ STA set.totalizzatore_litri:5
+ LDA set.totalizzatore_litri:4
+ ADC incremento_volume:2
+ STA set.totalizzatore_litri:4
+ LDA set.totalizzatore_litri:3
+ ADC incremento_volume:1
+ STA set.totalizzatore_litri:3
+ LDA set.totalizzatore_litri:2
+ ADC incremento_volume
+ STA set.totalizzatore_litri:2
+ LDA set.totalizzatore_litri:1
+ ADC #0
+ STA set.totalizzatore_litri:1
+ LDA set.totalizzatore_litri
+ ADC #0
+ STA set.totalizzatore_litri
  
- LDA #$19
+calcolo_della_portata:
+//portata[l/min] = scala_sensore_di_flusso[litri*1000/impulso]/1000 *60*1000000/10.66667/delta_timer_flusso;
+//portata[l/min] = scala_sensore_di_flusso[litri*1000/impulso]*22500/delta_timer_flusso;
+ LDHX numeratore_flusso:2
+ STHX prod:5
+ LDHX numeratore_flusso
+ STHX prod:3
+ CLR prod:2
+ CLR prod:1
+ CLR prod
+
+ LDA #$21
  STA j
 ripeti:
  LDA prod:2
@@ -4529,6 +4615,7 @@ ripeti:
  LDHX delta
  STHX prod:1
 alla_rotazione:
+ ROL prod:6 
  ROL prod:5 
  ROL prod:4 
  ROL prod:3 
@@ -4536,15 +4623,12 @@ alla_rotazione:
  ROL prod:1 
  ROL prod 
  DBNZ j,ripeti
+ COM prod:6
  COM prod:5
- COM prod:4
- LDHX prod:4
- CPHX #9999
- BCC segno_negativo
- STHX flusso
- BRA fine
-segno_negativo: 
- LDHX #9999
+ LDHX prod:5
+ BPL assegna_flusso
+ LDHX #$7fff
+assegna_flusso: 
  STHX flusso
 fine: 
  }
@@ -4938,6 +5022,16 @@ per_default_parametri:
  LDHX set.calibrazione_I3
  STHX funzioni_non_modif:6
 
+ LDA mono_tri_fase
+ BNE per_trifase
+ LDHX #15
+ STHX set.N_tabella_potenza
+ BRA assegna_prime_limitazioni
+per_trifase: 
+ LDHX #8 //motore trifase 5.5KW
+ STHX set.N_tabella_potenza
+assegna_prime_limitazioni:
+ 
  JSR prime_limitazioni_funzioni
  JSR assegna_valori_default
  JSR calcolo_delle_costanti
@@ -4949,6 +5043,18 @@ per_default_parametri:
  STHX set.abilita_sensore_temperatura
  STHX set.modo_start_stop
  STHX set.motore_on
+ STHX set.conta_ore
+ STHX set.conta_ore:2
+ STHX set.conta_ore:4
+ STHX set.conta_ore_funzionamento
+ STHX set.conta_ore_funzionamento:2
+ STHX set.conta_ore_funzionamento:4
+ STHX set.energia
+ STHX set.energia:2
+ STHX set.energia:4
+ STHX set.totalizzatore_litri
+ STHX set.totalizzatore_litri:2
+ STHX set.totalizzatore_litri:4
 
 //le tarature rimangono fisse insieme al numero di serie
  LDHX funzioni_non_modif
@@ -4960,32 +5066,6 @@ per_default_parametri:
  LDHX funzioni_non_modif:6
  STHX set.calibrazione_I3
 
- CLRA
- STA set.conta_ore
- STA set.conta_ore:1
- STA set.conta_ore:2
- STA set.conta_ore:3
- STA set.conta_ore_funzionamento
- STA set.conta_ore_funzionamento:1
- STA set.conta_ore_funzionamento:2
- STA set.conta_ore_funzionamento:3
- STA set.energia
- STA set.energia:1
- STA set.energia:2
- STA set.energia:3
- STA set.totalizzatore_litri
- STA set.totalizzatore_litri:1
- STA set.totalizzatore_litri:2
- STA set.totalizzatore_litri:3
- STA conta_secondi
- STA conta_secondi:1
- STA conta_secondi:2
- STA conta_secondi:3
- STA conta_secondi_attivita
- STA conta_secondi_attivita:1
- STA conta_secondi_attivita:2
- STA conta_secondi_attivita:3
- 
  LDX byte_tabella
  CLRH
 metti_in_buffer_eeprom:
@@ -5089,7 +5169,7 @@ asm
  CMP #1
  BNE secondo_salvataggio 
  LDA indirizzo_scrivi_eeprom:2
- ADD N_bytes_messaggio_fault
+ ADD incremento_ultimo_indirizzo
  STA ultimo_indirizzo_scrittura:2
  LDA indirizzo_scrivi_eeprom:1
  ADC #0
@@ -5100,17 +5180,13 @@ asm
 
  LDHX ultimo_indirizzo_scrittura
  CPHX indirizzo_scrivi_eeprom
- BCC semplice_salvataggio
+ BEQ semplice_salvataggio
  LDA #2
  STA salvataggio_allarme
  BRA primo_salvataggio
 semplice_salvataggio:
- CLRA
- STA salvataggio_allarme
- LDA N_bytes_messaggio_fault
- DECA
- STA lunghezza_salvataggio
- TAX
+ LDX incremento_ultimo_indirizzo
+ STX lunghezza_salvataggio
  CLRH
 metti_in_buffer_eeprom:
  LDA @buffer_fault,X
@@ -5123,14 +5199,15 @@ metti_in_buffer_eeprom:
  STA scrivi_eeprom
  BSET 7,_PTED;//disabilitazione eeprom
  MOV #$ff,SPI1D
+ CLRA
+ STA salvataggio_allarme
  BRA fine
  
 primo_salvataggio:
- LDA indirizzo_scrivi_eeprom:2
- COMA
- STA primo_elemento_buffer
- STA lunghezza_salvataggio
- TAX
+ LDX indirizzo_scrivi_eeprom:2
+ COMX
+ STX primo_elemento_buffer
+ STX lunghezza_salvataggio
  CLRH
 metti_fault_buffer_eeprom:
  LDA @buffer_fault,X
@@ -5151,7 +5228,6 @@ secondo_salvataggio:
  CLRA
  STA indirizzo_scrivi_eeprom:2
  LDA ultimo_indirizzo_scrittura:2
- DECA
  STA lunghezza_salvataggio
  CLR j
  CLRH
@@ -5167,13 +5243,13 @@ metti_Fault_buffer_eeprom:
  CMP lunghezza_salvataggio
  BCS metti_Fault_buffer_eeprom
  BEQ metti_Fault_buffer_eeprom
- CLRA
- STA salvataggio_allarme
  LDA #1
  STA eeprom_impegnata 
  STA scrivi_eeprom
  BSET 7,_PTED;//disabilitazione eeprom
  MOV #$ff,SPI1D
+ CLRA
+ STA salvataggio_allarme
 
 fine: 
  }
@@ -5480,6 +5556,12 @@ Rotazione_6_volte:
  STHX buffer_fault:15
 
  LDHX media_flusso
+ STHX data
+ LSR data
+ ROR data:1
+ LSR data
+ ROR data:1
+ LDHX data
  STHX buffer_fault:17
 
  LDA media_temperatura:1
@@ -5506,72 +5588,6 @@ fine:
  } 
 }
 
-void salva_conta_secondi_attivita(void)//ogni 1 minuti
-{
-asm
- {
- LDA salva_conta_secondi
- BEQ fine
- LDA eeprom_impegnata
- BNE fine
- LDA reset_default
- BNE fine
- LDA salvataggio_funzioni
- BNE fine
- LDA salvataggio_allarme
- BNE fine
- CLRA
- STA salva_conta_secondi
-
- LDHX set.motore_on
- STHX buffer_eeprom
-
- LDHX set.numero_segnalazione
- STHX buffer_eeprom:2
-
- LDHX conta_secondi
- STHX set.conta_ore
- STHX buffer_eeprom:4
- LDHX conta_secondi:2
- STHX set.conta_ore:2
- STHX buffer_eeprom:6
-
- LDHX conta_secondi_attivita
- STHX set.conta_ore_funzionamento
- STHX buffer_eeprom:8
- LDHX conta_secondi_attivita:2
- STHX set.conta_ore_funzionamento:2
- STHX buffer_eeprom:10
-
- LDHX misura_energia
- STHX set.energia
- STHX buffer_eeprom:12
- LDHX misura_energia:2
- STHX set.energia:2
- STHX buffer_eeprom:14
-
- LDHX conta_litri
- STHX set.totalizzatore_litri
- STHX buffer_eeprom:16
- LDHX conta_litri:2
- STHX set.totalizzatore_litri:2
- STHX buffer_eeprom:18
-
- LDHX set.riserva
- STHX buffer_eeprom:20
- LDHX set.riserva:2
- STHX buffer_eeprom:22
- LDHX set.riserva:4
- STHX buffer_eeprom:24
- LDHX set.riserva:6
- STHX buffer_eeprom:26
-
- LDA #1
- STA salvataggio_funzioni 
-fine: 
- }
-}
-
 void lettura_impostazioni(void)
 {
 asm
@@ -5585,8 +5601,6 @@ asm
  LDA salvataggio_funzioni
  BNE fine
  LDA salvataggio_allarme
- BNE fine
- LDA salva_conta_secondi
  BNE fine
  LDA #2
  CMP leggi_impostazioni
@@ -5649,8 +5663,6 @@ asm
  BNE fine
  LDA salvataggio_funzioni
  BNE fine
- LDA salva_conta_secondi
- BNE fine
  LDA salvataggio_allarme
  BNE fine
  LDA attesa_invio
@@ -5676,8 +5688,7 @@ asm
  ADC #0
  STA primo_indirizzo_lettura
  
- LDA N_bytes_messaggio_fault
- DECA
+ LDA incremento_ultimo_indirizzo
  STA ultimo_dato_in_lettura
  LDA #1
  STA eeprom_impegnata 
@@ -6079,7 +6090,7 @@ scorrimento:
  STHX incremento_volume:2
 
 //portata[l/min] = scala_sensore_di_flusso[litri*1000/impulso]/1000 *60*1000000/10.66667/delta_timer_flusso;
-//portata[l/min] = scala_sensore_di_flusso[litri*1000/impulso]*5625/delta_timer_flusso;
+//portata[l/min] = scala_sensore_di_flusso[litri*1000/impulso]*22500/delta_timer_flusso;
  LDA set.scala_sensore_di_flusso:1
  LDX fattore_portata_acqua:1
  MUL 
@@ -7176,6 +7187,7 @@ if(toggle_func==0)
   start=0;
   segnalazione_=0;
   timer_aggiorna_menu=0;
+  timer_lampeggio_storici=0;
   prepara_chiave=0;
   set.motore_on=0;
   relay_alimentazione=0;
@@ -7480,8 +7492,8 @@ if(toggle_func)//lettura e modifica delle funzioni
      switch(cursore_sottomenu)
       {
       case 0: if(set.abilita_sensore_flusso) presenta_scritta((char*)&lettura_allarmi,22,0,24,1,8,7); else presenta_scritta((char*)&lettura_allarmi,5,0,24,1,8,7); break;
-      case 1: presenta_unsigned(set.limite_minimum_flow,1,1,6,4); break;
-      case 2: presenta_unsigned(set.limite_maximum_flow,1,1,6,4); break;
+      case 1: presenta_unsigned(set.limite_minimum_flow,0,1,6,4); break;
+      case 2: presenta_unsigned(set.limite_maximum_flow,0,1,6,4); break;
       case 3: presenta_unsigned(set.scala_sensore_di_flusso,3,1,6,5); break;
       }
      } break;
@@ -7509,8 +7521,8 @@ if(toggle_func)//lettura e modifica delle funzioni
      } break;
     case 9://storia emergenze
      {
-     allarme_in_lettura=set.numero_segnalazione-1; 
-     timer_aggiorna_menu=2000;
+     allarme_in_lettura=set.numero_segnalazione; 
+     timer_lampeggio_storici=2000;
      salita_meno=0;
      salita_piu=0;
      cursore_sottomenu=0;
@@ -7523,9 +7535,9 @@ if(toggle_func)//lettura e modifica delle funzioni
      cursore_sottomenu=0;
      asm
       {
-      LDHX misura_energia
+      LDHX set.energia
       STHX KWh
-      LDHX misura_energia:2
+      LDHX set.energia:2
       STHX KWh:2
       }
      presenta_energia(KWh,3,1,0,8);
@@ -7534,6 +7546,7 @@ if(toggle_func)//lettura e modifica delle funzioni
      display[1][11]='W';
      display[1][12]='h';
      display[1][13]=' ';
+     display[1][14]=' ';
      } break;
     case 11://contatore_litri
      {
@@ -7543,16 +7556,16 @@ if(toggle_func)//lettura e modifica delle funzioni
      asm
       {
       LDHX #100
-      LDA conta_litri
+      LDA set.totalizzatore_litri
       DIV
       STA KWh
-      LDA conta_litri:1
+      LDA set.totalizzatore_litri:1
       DIV
       STA KWh:1
-      LDA conta_litri:2
+      LDA set.totalizzatore_litri:2
       DIV
       STA KWh:2
-      LDA conta_litri:3
+      LDA set.totalizzatore_litri:3
       DIV
       STA KWh:3
       }
@@ -7562,6 +7575,7 @@ if(toggle_func)//lettura e modifica delle funzioni
      display[1][11]='^';
      display[1][12]='3';
      display[1][13]=' ';
+     display[1][14]=' ';
      } break;
     case 12://data
      {
@@ -7927,13 +7941,13 @@ if(toggle_func)//lettura e modifica delle funzioni
      case 1:
       {
       modifica_unsigned((unsigned int*)&set.limite_minimum_flow,tabella_limite_minimum_flow[1],tabella_limite_minimum_flow[2],0);
-      presenta_unsigned(set.limite_minimum_flow,1,1,6,4);
+      presenta_unsigned(set.limite_minimum_flow,0,1,6,4);
       N_cifre_lampeggianti=5;
       } break;
      case 2:
       {
       modifica_unsigned((unsigned int*)&set.limite_maximum_flow,tabella_limite_maximum_flow[1],tabella_limite_maximum_flow[2],0);
-      presenta_unsigned(set.limite_maximum_flow,1,1,6,4);
+      presenta_unsigned(set.limite_maximum_flow,0,1,6,4);
       N_cifre_lampeggianti=5;
       } break;
      case 3:
@@ -7991,7 +8005,7 @@ if(toggle_func)//lettura e modifica delle funzioni
       if(allarme_in_lettura<=set.numero_segnalazione) 
        {
        allarme_in_lettura++;
-       timer_aggiorna_menu=2000;
+       timer_lampeggio_storici=2000;
        pronto_alla_risposta=0;
        }
       } 
@@ -8001,7 +8015,7 @@ if(toggle_func)//lettura e modifica delle funzioni
       if(allarme_in_lettura>0)
        {
        allarme_in_lettura--;
-       timer_aggiorna_menu=2000;
+       timer_lampeggio_storici=2000;
        pronto_alla_risposta=0;
        }
       }
@@ -8020,7 +8034,7 @@ if(toggle_func)//lettura e modifica delle funzioni
       Nallarme_ora_minuto_secondo(secondi,allarme_in_lettura,buffer_USB[0]);
       } 
      else Nallarme_ora_minuto_secondo(istante,allarme_in_lettura,99);//fine degli allarmi
-     lampeggio_da=17;
+     lampeggio_da=0;
      N_cifre_lampeggianti=16;
      }
     } break;
@@ -8028,17 +8042,21 @@ if(toggle_func)//lettura e modifica delle funzioni
     {
     if(meno==filtro_pulsanti)
      {
+     salita_meno=0;
+     presenta_scritta((unsigned char*)&chiamata_reset,0,0,1,1,0,16);
      presenta_unsigned(timer_reset,0,1,14,2);
      if((timer_reset==0)&&(comando_reset==0))
       {
       N_cifre_lampeggianti=0;
-      salita_start=0;
       start=0;
       comando_reset=1;
-      misura_energia[0]=0;
-      misura_energia[1]=0;
-      misura_energia[2]=0;
+      toggle_enter=0;
+      set.energia[0]=0;
+      set.energia[1]=0;
+      set.energia[2]=0;
+      presenta_scritta((unsigned char*)&reset_eseguito,0,0,1,1,0,16);
       salvataggio_funzioni=1;
+      timer_aggiorna_menu=1000;
       }
      } 
     else
@@ -8046,78 +8064,36 @@ if(toggle_func)//lettura e modifica delle funzioni
      timer_reset=5;//5 s attesa reset
      comando_reset=0;
      }
-    if(timer_aggiorna_menu==0)
-     {
-     timer_aggiorna_menu=250;
-     presenta_menu((unsigned char*)&menu_principale,0,tot_righe_menu,cursore_menu<<1);
-     asm
-      {
-      LDHX misura_energia
-      STHX KWh
-      LDHX misura_energia:2
-      STHX KWh:2
-      }
-     presenta_energia(KWh,3,1,0,8);
-     display[1][9]=' ';
-     display[1][10]='K';
-     display[1][11]='W';
-     display[1][12]='h';
-     display[1][13]=' ';
-     }
-    lampeggio_da=0;
+    lampeggio_da=17;
     N_cifre_lampeggianti=16;
     } break;
    case 11://contatore_litri
     {
     if(meno==filtro_pulsanti)
      {
+     salita_meno=0;
+     presenta_scritta((unsigned char*)&chiamata_reset,0,0,1,1,0,16);
      presenta_unsigned(timer_reset,0,1,14,2);
      if((timer_reset==0)&&(comando_reset==0))
       {
       N_cifre_lampeggianti=0;
-      salita_start=0;
       start=0;
       comando_reset=1;
-      conta_litri[0]=0;
-      conta_litri[1]=0;
-      conta_litri[2]=0;
+      toggle_enter=0;
+      set.totalizzatore_litri[0]=0;
+      set.totalizzatore_litri[1]=0;
+      set.totalizzatore_litri[2]=0;
+      presenta_scritta((unsigned char*)&reset_eseguito,0,0,1,1,0,16);
       salvataggio_funzioni=1;
+      timer_aggiorna_menu=1000;
       }
      } 
     else
      {
      timer_reset=5;//5 s attesa reset
      comando_reset=0;
-     N_cifre_lampeggianti=0;
      }
-    if(timer_aggiorna_menu==0)
-     {
-     timer_aggiorna_menu=250;
-     presenta_menu((unsigned char*)&menu_principale,0,tot_righe_menu,cursore_menu<<1);
-     asm
-      {
-      LDHX #100
-      LDA conta_litri
-      DIV
-      STA KWh
-      LDA conta_litri:1
-      DIV
-      STA KWh:1
-      LDA conta_litri:2
-      DIV
-      STA KWh:2
-      LDA conta_litri:3
-      DIV
-      STA KWh:3
-      }
-     presenta_energia(KWh,1,1,0,8);
-     display[1][9]=' ';
-     display[1][10]='m';
-     display[1][11]='^';
-     display[1][12]='3';
-     display[1][13]=' ';
-     }
-    lampeggio_da=0;
+    lampeggio_da=17;
     N_cifre_lampeggianti=16;
     } break;
    case 12://data
@@ -8470,7 +8446,11 @@ asm
  LDA secondi:3
  STA anni
 
- LDHX timer_aggiorna_menu
+ LDHX timer_lampeggio_storici
+ BNE presentazione
+ LDHX #2000
+ STHX timer_lampeggio_storici
+presentazione: 
  CPHX #1000
  BCS per_seconda_presentazione
  LDA #' '
@@ -8605,7 +8585,7 @@ per_seconda_presentazione:
  LDA #'N'
  STA display
  
- LDHX timer_aggiorna_menu
+ LDHX timer_lampeggio_storici
  CPHX #1000
  BCC fine
 
@@ -8667,6 +8647,10 @@ if(toggle_func==0)//presenta le letture
     STHX pressione
     LDHX media_flusso
     STHX flusso_medio
+    LSR flusso_medio
+    ROR flusso_medio:1
+    LSR flusso_medio
+    ROR flusso_medio:1
     LDA set.abilita_sensore_temperatura:1
     BNE per_temperatura_letta
     LDA delta_T:1
@@ -8759,7 +8743,7 @@ if(toggle_func==0)//presenta le letture
      presenta_unsigned(potenza_media,0,0,5,5);
      if(set.abilita_sensore_pressione) 
       {
-      presenta_signed(pressione,1,0,12,3);
+      presenta_signed(pressione,1,0,11,3);
       display[0][15]='B';
       }
      else if(set.abilita_sensore_flusso)
@@ -8784,7 +8768,7 @@ if(toggle_func==0)//presenta le letture
       }
      else if(set.abilita_sensore_pressione)
       {
-      presenta_signed(pressione,1,0,12,3);
+      presenta_signed(pressione,1,0,11,3);
       display[0][15]='B';
       }
      else display[0][15]=' ';//elimina 'L'
@@ -8842,7 +8826,7 @@ if(set.motore_on)//condizioni per riavviamento
    &&(remoto==filtro_pulsanti))
     {
     if((set.abilita_sensore_pressione==0)||
-    ((set.abilita_sensore_pressione)&&(pressione<set.pressione_accensione)&&(pressione>emergenza_sensore_pressione)))
+    ((set.abilita_sensore_pressione)&&(pressione<set.pressione_accensione)&&(pressione>max_pressione_negativa)))
      {
      if((mono_tri_fase==0)||                               
      ((mono_tri_fase)&&(dissimmetria<dissimmetria_tollerata)))
@@ -9173,6 +9157,10 @@ asm
  
  LDHX media_flusso
  STHX flusso_medio
+ LSR flusso_medio
+ ROR flusso_medio:1
+ LSR flusso_medio
+ ROR flusso_medio:1
  
  LDA set.limite_intervento_temper_motore:1
  SUB #5
@@ -9184,7 +9172,7 @@ asm
 if((relay_alimentazione)&&(segnalazione_<20)) //alimentazione presente
  {
  //segnalazioni ed arresto
- if((set.abilita_sensore_pressione)&&(pressione<emergenza_sensore_pressione)) //allarme sensore
+ if((set.abilita_sensore_pressione)&&(pressione<max_pressione_negativa)) //allarme sensore
   {
   relay_alimentazione=0;
   segnalazione_=29;
@@ -9209,7 +9197,7 @@ if((relay_alimentazione)&&(segnalazione_<20)) //alimentazione presente
   if((segnalazione_==0)&&(tentativi_avviamento)) tentativi_avviamento--;
   relay_alimentazione=0;
   segnalazione_=30;
-  timer_riavviamento=10;//timer_ritorno_da_emergenza;
+  timer_riavviamento=set.ritardo_riaccensione_mandata_chiusa;
   } 
  else
   {
@@ -9389,6 +9377,7 @@ if((relay_alimentazione)&&(segnalazione_<20)) //alimentazione presente
 
 void condizioni_iniziali(void)
 {
+int k;
 asm
  {
  SEI
@@ -9462,19 +9451,28 @@ PTGDD=0x0c;
 PTGD=0;
 
 //--------inizializzazione delle variabili-------------
+asm
+ {
+ CLR k
+ CLR k:1
+azzeramento: 
+ LDHX k
+ CLRA
+ STA @mono_tri_fase,X
+ LDA k:1
+ ADD #1
+ STA k:1
+ LDA k
+ ADC #0
+ STA k
+ LDHX k
+ CPHX tot_variabili_escludendo_struct
+ BCS azzeramento
+ }
+
 mono_tri_fase=Mono_tri_fase;
 precedente_lettura_allarme=allarme_in_lettura=10000;
-pronto_alla_risposta=0;
-prima_segnalazione=0;
-timer_flusso_nullo=0;
-timer_20ms=0;
-timer_1s=0;
-timer_inc_dec=0;
-timer_piu_meno=0;
-timer_lampeggio=0;
-timer_lampeggio_LED_emergenza=0;
-timer_attesa_segnalazione_fault=0;
-timer_commuta_presentazione=0;
+
 timer_attesa_squilibrio=100;
 timer_attesa_intervento_tensione=100;
 timer_mandata_chiusa=100;
@@ -9482,29 +9480,10 @@ timer_attesa_secco=100;
 timer_1_ora=3600;
 delta_timer_flusso=0xffff;
 
-attesa_invio=0;
-relay_alimentazione=0;
-relay_avviamento=0;
-contatore_display=0;
-cursore_menu=0;
-numero_ingresso=0;
-potenza_media=0;
-reattiva_media=0;
-tensione_media=0;
-corrente_media=0;
-picco_corrente_avviamento=0;
 corrente_test=200;//20A
-dissimmetria=0;
-squilibrio=0;
-comando_display=0;
-
-indirizzo_scrivi_eeprom=0;
-ultimo_indirizzo_scrittura=0;
 
 timer_rinfresco_display=255;
 alternanza_presentazione=0x81;
-lampeggio_da=0;
-N_cifre_lampeggianti=0;
 asm
  {
  LDA #' '
@@ -9519,18 +9498,9 @@ asm
  { 
  CLI//abilita interrupt
  }
-scrivi_eeprom=0;
-leggi_eeprom=0;
-reset_default=0;
-comando_reset=0;
-salvataggio_funzioni=0;
-salvataggio_allarme=0;
-salva_conta_secondi=0;
-lunghezza_salvataggio=0;
 timer_reset_display=100;
 timer_1min=0;
 timer_aggiorna_misure=2000; 
-timer_aggiorna_menu=0;
 comando_display=1;
 while(timer_reset_display)
  {
@@ -9549,92 +9519,9 @@ while(leggi_impostazioni)
  }
 calcolo_delle_costanti();
 offset_I1letta=offset_I3letta=offset_V32letta=offset_V31letta=0x20000000;
-segno_V12=0;
-segno_V13=0;
-anticipo_V12_su_V13=0;
-Id_rms=0;
-I1_rms=0;
-I2_rms=0;
-I3_rms=0;
-V12_rms=0;
-V23_rms=0;
-V31_rms=0;
-/*
-somma_quad_I1=0;
-somma_quad_I2=0;
-somma_quad_I3=0;
-somma_quad_V12=0;
-somma_quad_V23=0;
-somma_quad_V31=0;
-somma_potenzaI1xV13=0;
-somma_potenzaI1xV1=0;
-somma_potenzaI2xV2=0;
-somma_potenzaI3xV3=0;
-somma_reattivaI1xV23=0;
-somma_reattivaI2xV31=0;
-somma_reattivaI3xV12=0;
-Somma_potenzaI1xV13=0;
-Somma_potenzaI1xV1=0;
-Somma_potenzaI2xV2=0;
-Somma_potenzaI3xV3=0;
-Somma_reattivaI1xV23=0;
-Somma_reattivaI2xV31=0;
-Somma_reattivaI3xV12=0;
-quad_I1=0;
-quad_I2=0;
-quad_I3=0;
-quad_V12=0;
-quad_V23=0;
-quad_V31=0;
-potenzaI1xV1=0;
-potenzaI2xV2=0;
-potenzaI3xV3=0;
-reattivaI1xV23=0;
-reattivaI2xV31=0;
-reattivaI3xV12=0;
-*/
-media_temperatura=0;
-media_pressione=0;
-media_quad_I1=0;
-media_quad_I2=0;
-media_quad_I3=0;
-media_quad_V31=0;
-media_quad_V12=0;
-media_quad_V23=0;
-media_quad_V31=0;
-media_potenzaI1xV13=0;
-media_potenzaI1xV1=0;
-media_potenzaI2xV2=0;
-media_potenzaI3xV3=0;
-media_reattivaI1xV23=0;
-media_reattivaI2xV31=0;
-media_reattivaI3xV12=0;
-media_flusso=0;
 delta_T=0;
 remoto=filtro_pulsanti;
 salita_remoto=1;
-asm  //inizializza il conta_secondi
- {
- LDHX set.conta_ore:2
- STHX conta_secondi:2
- LDHX set.conta_ore
- STHX conta_secondi
- LDHX set.conta_ore_funzionamento:2
- STHX conta_secondi_attivita:2
- LDHX set.conta_ore_funzionamento
- STHX conta_secondi_attivita
- LDHX set.energia
- STHX misura_energia
- LDHX set.energia:2
- STHX misura_energia:2
- LDHX #0
- STHX misura_energia:4
- STHX conta_litri:4
- LDHX set.totalizzatore_litri
- STHX conta_litri
- LDHX set.totalizzatore_litri:2
- STHX conta_litri:2
- }
 somma_energia_attiva=0; 
 sequenza_fasi=1;
 while(timer_aggiorna_misure)
@@ -9691,7 +9578,6 @@ for(;;)  /* loop forever */
  salva_reset_default();//precedenza 1
  salva_impostazioni();//precedenza 2
  salva_segnalazione_fault();//precedenza 3
- salva_conta_secondi_attivita();//precedenza 4
 
  lettura_impostazioni();//precedenza 5
  lettura_allarme_messo_in_buffer_USB();//precedenza 6
