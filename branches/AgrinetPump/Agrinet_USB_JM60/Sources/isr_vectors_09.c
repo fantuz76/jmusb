@@ -16,9 +16,10 @@ const char security @0xffbf=0xfe; //0xfe=visibile, 0xfc=invisibile
 __interrupt  void SPI1(void);
 
 __interrupt  void usb_it_handler(void);
-__interrupt  void timer1_overflowISR(void);
-__interrupt  void timer2_overflowISR(void);
 __interrupt  void AD_conversion_completeISR(void);
+__interrupt  void timer2_captureISR(void);
+__interrupt  void timer2_overflowISR(void);
+__interrupt void timer1_overflowISR(void); //timer 100 us per relay
 __interrupt  void UnimplementedISR(void)
 {
 asm
@@ -45,7 +46,7 @@ const tIsrFunc _vect[] @0xffca={     /* Interrupt table */
    UnimplementedISR,                 /* SCI1 error     0xffd8*/
    timer2_overflowISR,               /* TPM2 Overflow  0xffda*/
    UnimplementedISR,                 /* TPM2 Channel 1 0xffdc*/
-   UnimplementedISR,                 /* TPM2 Channel 0 0xffde*/
+   timer2_captureISR,                /* TPM2 Channel 0 0xffde*/
    timer1_overflowISR,               /* TPM1 Overflow  0xffe0*/
    UnimplementedISR,                 /* TPM1 Channel 5 0xffe2*/
    UnimplementedISR,                 /* TPM1 Channel 4 0xffe4*/
@@ -80,7 +81,7 @@ void (* volatile const _Usr_Vector[])()@0xFBC4= {
     UnimplementedISR,             // Int.no.19 SCI1 error        (at FBD8) (at FFD8)
     timer2_overflowISR,           // Int.no.18 TPM2 Overflow     (at FBDA) (at FFDA)
     UnimplementedISR,             // Int.no.17 TPM2 CH1          (at FBDC) (at FFDC)
-    UnimplementedISR,             // Int.no.16 TPM2 CH0          (at FBDE) (at FFDE)
+    timer2_captureISR,            // Int.no.16 TPM2 CH0          (at FBDE) (at FFDE)
     timer1_overflowISR,           // Int.no.15 TPM1 Overflow     (at FBE0) (at FFE0)
     UnimplementedISR,             // Int.no.14 TPM1 CH5          (at FBE2) (at FFE2)
     UnimplementedISR,             // Int.no.13 TPM1 CH4          (at FBE4) (at FFE4)
