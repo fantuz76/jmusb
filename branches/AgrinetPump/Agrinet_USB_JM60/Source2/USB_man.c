@@ -253,6 +253,7 @@ void USB_SendSatellitare(void)
       if (allarme_in_lettura == operazione_effettuata) {                
         USB_SimpleSend(buffer_USB, lunghezza_trasmissione_satellitare + 7);
         USBSendSatellitare_en = FALSE; 
+        state_USBSend = 0;
       }
     break;
     
